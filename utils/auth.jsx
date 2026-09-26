@@ -19,7 +19,9 @@ export default async function getCurrentUser() {
 
     await ConnectDb();
 
-    const user = await User.findById(payload.userId).select("+telegramChatId");
+    const user = await User.findById(payload.userId).select(
+      "+telegramChatId +baleChatId +preferredMessenger",
+    );
 
     if (!user) {
       return null;

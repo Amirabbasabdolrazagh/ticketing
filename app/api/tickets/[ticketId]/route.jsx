@@ -10,8 +10,8 @@ import ProjectCounter from "@/models/projectCounter";
 import TicketResolution from "@/models/ticketResolution";
 import {
   assignmentTelegramText,
-  sendTelegramMessage,
 } from "@/utils/telegram";
+import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
 export async function GET(req, { params }) {
   const { ticketId } = await params;
   try {
@@ -173,7 +173,7 @@ export async function PATCH(req, { params }) {
           );
         }
 
-        agent = await User.findById(assignedTo).select("+telegramChatId");
+        agent = await User.findById(assignedTo).select(messengerUserSelect);
 
         if (!agent) {
           return Response.json(
@@ -344,8 +344,8 @@ export async function PATCH(req, { params }) {
         );
         const assignedProject = projects ||
           (ticket.project ? await Project.findById(ticket.project).select("name") : null);
-        await sendTelegramMessage(
-          agent.telegramChatId,
+        await sendMessengerNotification(
+          agent,
           assignmentTelegramText({
             ticket,
             projectName: assignedProject?.name,

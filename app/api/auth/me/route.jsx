@@ -21,6 +21,9 @@ export async function GET() {
       createdAt: user.createdAt,
       profileComplete: isProfileComplete(user.name),
       telegramLinked: Boolean(user.telegramChatId),
+      baleLinked: Boolean(user.baleChatId),
+      messengerLinked: Boolean(user.telegramChatId || user.baleChatId),
+      preferredMessenger: user.preferredMessenger,
     };
     return Response.json(
       { success: true, message: "user authorized", user: safeUser },

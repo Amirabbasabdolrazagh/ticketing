@@ -392,7 +392,7 @@ export default function AdminSetting() {
             >
               ذخیره تغییرات
             </Button>
-            <TelegramConnectButton linked={user.telegramLinked} />
+            <TelegramConnectButton linked={user.telegramLinked} baleLinked={user.baleLinked} />
             {!user.email && (
               <Sheet open={openSheet} onOpenChange={setOpenSheet}>
                 <SheetTrigger

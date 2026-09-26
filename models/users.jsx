@@ -76,6 +76,34 @@ const userSchema = new Schema(
       type: Date,
       select: false,
     },
+    baleChatId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      select: false,
+    },
+    baleUsername: {
+      type: String,
+      trim: true,
+      select: false,
+    },
+    baleLinkedAt: {
+      type: Date,
+      select: false,
+    },
+    baleLinkToken: {
+      type: String,
+      select: false,
+    },
+    baleLinkExpiresAt: {
+      type: Date,
+      select: false,
+    },
+    preferredMessenger: {
+      type: String,
+      enum: ["telegram", "bale"],
+      select: false,
+    },
     passwordResetAttempts: {
       type: Number,
       select: false,

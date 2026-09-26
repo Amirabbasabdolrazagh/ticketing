@@ -6,10 +6,10 @@ import { isValidObjectId } from "mongoose";
 import User from "@/models/users";
 import {
   customerMessageTelegramText,
-  sendTelegramMessage,
   ticketReplyTelegramText,
   isSiteOffline,
 } from "@/utils/telegram";
+import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
 
 export async function POST(req, { params }) {
   try {
@@ -57,10 +57,10 @@ export async function POST(req, { params }) {
         type: "text",
       });
       await messages.populate("sender", "name role");
-      const customer = await User.findById(ticketInfo.creator).select("+telegramChatId siteLastSeenAt");
+      const customer = await User.findById(ticketInfo.creator).select(`${messengerUserSelect} siteLastSeenAt`);
       if (isSiteOffline(customer)) {
-        await sendTelegramMessage(
-          customer?.telegramChatId,
+        await sendMessengerNotification(
+          customer,
           ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "مدیر", serviceName: ticketInfo.project?.name }),
         );
       }
@@ -84,19 +84,19 @@ export async function POST(req, { params }) {
         });
         await messages.populate("sender", "name role");
         if (ticketInfo.assignedTo) {
-          const assignedAgent = await User.findById(ticketInfo.assignedTo).select("+telegramChatId siteLastSeenAt");
+          const assignedAgent = await User.findById(ticketInfo.assignedTo).select(`${messengerUserSelect} siteLastSeenAt`);
           if (isSiteOffline(assignedAgent)) {
-            await sendTelegramMessage(
-              assignedAgent?.telegramChatId,
+            await sendMessengerNotification(
+              assignedAgent,
               customerMessageTelegramText({ ticket: ticketInfo, message, customerName: user.name, serviceName: ticketInfo.project?.name }),
             );
           }
         }
-        const admins = await User.find({ role: "admin" }).select("+telegramChatId siteLastSeenAt");
+        const admins = await User.find({ role: "admin" }).select(`${messengerUserSelect} siteLastSeenAt`);
         await Promise.all(
           admins.filter((admin) => isSiteOffline(admin)).map((admin) =>
-            sendTelegramMessage(
-              admin.telegramChatId,
+            sendMessengerNotification(
+              admin,
               customerMessageTelegramText({
                 ticket: ticketInfo,
                 message,
@@ -137,10 +137,10 @@ export async function POST(req, { params }) {
           type: "text",
         });
         await messages.populate("sender", "name role");
-        const customer = await User.findById(ticketInfo.creator).select("+telegramChatId siteLastSeenAt");
+        const customer = await User.findById(ticketInfo.creator).select(`${messengerUserSelect} siteLastSeenAt`);
         if (isSiteOffline(customer)) {
-          await sendTelegramMessage(
-            customer?.telegramChatId,
+          await sendMessengerNotification(
+            customer,
             ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "پشتیبان", serviceName: ticketInfo.project?.name }),
           );
         }

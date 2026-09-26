@@ -10,7 +10,8 @@ import ProjectCounter from "@/models/projectCounter";
 import User from "@/models/users";
 import { classifyService, ensureDefaultServices } from "@/utils/serviceCatalog";
 import { systemMessage } from "@/utils/createSystemMessage";
-import { assignmentTelegramText, sendTelegramMessage } from "@/utils/telegram";
+import { assignmentTelegramText } from "@/utils/telegram";
+import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
 
 export const runtime = "nodejs";
 
@@ -124,15 +125,15 @@ export async function POST(req) {
     });
 
     const assignedAgent = await User.findById(service.defaultAgent).select(
-      "name +telegramChatId",
+      `name ${messengerUserSelect}`,
     );
     await systemMessage(
       ticket._id,
       user._id,
       `تیکت به‌صورت خودکار در خدمت «${service.name}» دسته‌بندی و به پشتیبان «${assignedAgent?.name || "تعیین‌شده"}» اختصاص داده شد`,
     );
-    await sendTelegramMessage(
-      assignedAgent?.telegramChatId,
+    await sendMessengerNotification(
+      assignedAgent,
       assignmentTelegramText({ ticket, projectName: service.name }),
     );
 

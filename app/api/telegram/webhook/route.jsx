@@ -45,6 +45,7 @@ export async function POST(req) {
           telegramChatId: String(telegramMessage.chat.id),
           telegramUsername: telegramMessage.from?.username || "",
           telegramLinkedAt: new Date(),
+          preferredMessenger: "telegram",
         },
         $unset: { telegramLinkToken: 1, telegramLinkExpiresAt: 1 },
       },
