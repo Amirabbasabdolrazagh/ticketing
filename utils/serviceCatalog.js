@@ -30,6 +30,8 @@ export const DEFAULT_SERVICES = [
   },
 ];
 
+export const DEFAULT_SERVICE_CODES = DEFAULT_SERVICES.map(({ code }) => code);
+
 function normalize(value = "") {
   return value.toLowerCase().replaceAll("ي", "ی").replaceAll("ك", "ک").replace(/[\u200c\s_-]+/g, " ").trim();
 }
@@ -66,9 +68,8 @@ export async function ensureDefaultServices(ownerId) {
     }
   }
 
-  const codes = DEFAULT_SERVICES.map((item) => item.code);
-  const coreServices = await Project.find({ code: { $in: codes } }).lean();
-  const obsoleteServices = await Project.find({ code: { $nin: codes } }).select("_id").lean();
+  const coreServices = await Project.find({ code: { $in: DEFAULT_SERVICE_CODES } }).lean();
+  const obsoleteServices = await Project.find({ code: { $nin: DEFAULT_SERVICE_CODES } }).select("_id").lean();
   const obsoleteIds = obsoleteServices.map((item) => item._id);
   const tickets = await Ticket.find({
     $or: [
@@ -88,7 +89,6 @@ export async function ensureDefaultServices(ownerId) {
 }
 
 export async function classifyService(title) {
-  const codes = DEFAULT_SERVICES.map((item) => item.code);
-  const services = await Project.find({ code: { $in: codes }, status: "active" }).lean();
+  const services = await Project.find({ code: { $in: DEFAULT_SERVICE_CODES }, status: "active" }).lean();
   return pickService(title, services);
 }

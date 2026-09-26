@@ -3,7 +3,7 @@ import getCurrentUser from "@/utils/auth";
 import authorization from "@/utils/authorization";
 import ConnectDb from "@/utils/connectDB";
 import User from "@/models/users";
-import { ensureDefaultServices } from "@/utils/serviceCatalog";
+import { DEFAULT_SERVICE_CODES, ensureDefaultServices } from "@/utils/serviceCatalog";
 import { isValidObjectId } from "mongoose";
 
 export async function POST(req) {
@@ -123,7 +123,9 @@ export async function GET() {
     }
     await ConnectDb();
     await ensureDefaultServices(user._id);
-    const projects = await Project.find({}).populate("defaultAgent", "name phone");
+    const projects = await Project.find({ code: { $in: DEFAULT_SERVICE_CODES } })
+      .sort({ code: 1 })
+      .populate("defaultAgent", "name phone");
     return Response.json(
       {
         success: true,
