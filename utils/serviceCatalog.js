@@ -31,6 +31,7 @@ export const DEFAULT_SERVICES = [
 ];
 
 export const DEFAULT_SERVICE_CODES = DEFAULT_SERVICES.map(({ code }) => code);
+const LEGACY_SERVICE_CODES = ["SEC", "SRV", "SUP"];
 
 function normalize(value = "") {
   return value.toLowerCase().replaceAll("ي", "ی").replaceAll("ك", "ک").replace(/[\u200c\s_-]+/g, " ").trim();
@@ -69,7 +70,7 @@ export async function ensureDefaultServices(ownerId) {
   }
 
   const coreServices = await Project.find({ code: { $in: DEFAULT_SERVICE_CODES } }).lean();
-  const obsoleteServices = await Project.find({ code: { $nin: DEFAULT_SERVICE_CODES } }).select("_id").lean();
+  const obsoleteServices = await Project.find({ code: { $in: LEGACY_SERVICE_CODES } }).select("_id").lean();
   const obsoleteIds = obsoleteServices.map((item) => item._id);
   const tickets = await Ticket.find({
     $or: [

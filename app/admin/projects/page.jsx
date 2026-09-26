@@ -117,9 +117,22 @@ export default function ProjectsInfo() {
             <p className="mt-2 text-sm text-slate-500">دسته‌بندی هوشمند تیکت‌ها و تعیین پشتیبان پیش‌فرض هر خدمت</p>
           </div>
           <Sheet open={openSheet} onOpenChange={setOpenSheet}>
-            <span className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-              ساختار ثابت سه‌خدمتی
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
+                سه خدمت پایه فعال
+              </span>
+              <SheetTrigger
+                render={
+                  <Button
+                    type="button"
+                    className="h-11 rounded-2xl bg-gradient-to-l from-blue-600 to-cyan-500 px-5 font-bold text-white shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:shadow-xl"
+                  >
+                    <MdLibraryAdd className="size-5" />
+                    افزودن خدمت جدید
+                  </Button>
+                }
+              />
+            </div>
             <SheetContent
               className="h-dvh overflow-y-auto overscroll-contain pb-0 data-[side=bottom]:max-h-[90vh] data-[side=top]:max-h-[90vh]"
               side="left"
