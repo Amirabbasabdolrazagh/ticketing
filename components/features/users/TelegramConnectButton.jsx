@@ -7,17 +7,21 @@ import { FaTelegramPlane } from "react-icons/fa";
 import { BellRing, CheckCircle2, ChevronDown, MessageCircle, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function TelegramConnectButton({ linked = false, baleLinked = false, required = false }) {
+export default function TelegramConnectButton({ linked = false, baleLinked = false, required = false, modal = false }) {
   const [status, setStatus] = useState({ telegram: linked, bale: baleLinked });
-  const isLinked = status.telegram || status.bale;
+  const [checking, setChecking] = useState(true);
+  const isLinked = status.telegram || status.bale || linked || baleLinked;
 
   useEffect(() => {
     const checkStatus = async () => {
       try {
         const { data } = await axios.get("/api/auth/me");
         setStatus({ telegram: Boolean(data.user?.telegramLinked), bale: Boolean(data.user?.baleLinked) });
-      } catch {}
+      } catch {} finally {
+        setChecking(false);
+      }
     };
+    checkStatus();
     const interval = window.setInterval(checkStatus, 4000);
     window.addEventListener("focus", checkStatus);
     return () => {
@@ -51,7 +55,7 @@ export default function TelegramConnectButton({ linked = false, baleLinked = fal
 
   if (!required) return actions;
 
-  return (
+  const panel = (
     <section className="mt-4 w-full overflow-hidden rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 via-white to-emerald-50 shadow-sm" dir="rtl">
       <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
@@ -89,4 +93,19 @@ export default function TelegramConnectButton({ linked = false, baleLinked = fal
       </details>
     </section>
   );
+
+  if (modal && !checking && !isLinked) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-md" role="dialog" aria-modal="true">
+        <div className="w-full max-w-2xl animate-in fade-in zoom-in-95 duration-300">
+          <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-black text-amber-900 shadow-lg">
+            تا زمانی که بله یا تلگرام را متصل نکنید، امکان استفاده از بخش‌های دیگر سامانه را ندارید.
+          </div>
+          {panel}
+        </div>
+      </div>
+    );
+  }
+
+  return panel;
 }

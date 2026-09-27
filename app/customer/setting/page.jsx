@@ -35,6 +35,7 @@ import { useRouter } from "next/navigation";
 import ProfileCompletionNotice from "@/components/features/users/ProfileCompletionNotice";
 import { faLabel, roleLabels } from "@/utils/fa-labels";
 import TelegramConnectButton from "@/components/features/users/TelegramConnectButton";
+import { MailPlus } from "lucide-react";
 
 export default function AdminSetting() {
   const router = useRouter();
@@ -366,11 +367,11 @@ export default function AdminSetting() {
             >
               ذخیره تغییرات
             </Button>
-            <TelegramConnectButton linked={user.telegramLinked} baleLinked={user.baleLinked} required />
+            <TelegramConnectButton linked={user.telegramLinked} baleLinked={user.baleLinked} required modal />
             {!user.email && (
               <Sheet open={openSheet} onOpenChange={setOpenSheet}>
                 <SheetTrigger
-                  render={<Button variant="outline">افزودن ایمیل</Button>}
+                  render={<Button variant="outline" className="gap-2 border-violet-400 bg-gradient-to-l from-violet-600 to-blue-600 font-black text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-blue-700 hover:text-white"><MailPlus className="size-5" />افزودن ایمیل</Button>}
                 />
                 <SheetContent
                   className="data-[side=bottom]:max-h-[50vh] data-[side=top]:max-h-[50vh]"
