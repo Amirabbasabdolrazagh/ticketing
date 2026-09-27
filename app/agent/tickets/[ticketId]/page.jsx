@@ -47,6 +47,14 @@ export default function TicketDetails() {
       }
     }
     getTicket();
+
+    const interval = window.setInterval(getTicket, 3000);
+    const refreshOnFocus = () => getTicket();
+    window.addEventListener("focus", refreshOnFocus);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
   }, [ticketId]);
 
   const sendNewMessageHandler = async () => {
@@ -57,7 +65,9 @@ export default function TicketDetails() {
       const data = await res.data;
 
       if (data.success) {
-        setMessages((prev) => [...prev, data.messages]);
+        setMessages((prev) => prev.some((item) => item._id === data.messages._id)
+          ? prev
+          : [...prev, data.messages]);
         setNewMessage("");
         toast.success(data.message);
       }
