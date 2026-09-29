@@ -12,7 +12,6 @@ import {
   QuestionnaireChoices,
   QuestionnaireDescription,
   QuestionnaireError,
-  QuestionnaireInput,
   QuestionnaireItem,
   QuestionnaireSubmit,
   QuestionnaireTitle,
@@ -30,8 +29,8 @@ export default function TicketDetails() {
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [isUpdatedTicket, setIsUpdatedTicket] = useState(false);
   const [resolution, setResolution] = useState(null);
-  const [agentRating, setAgentRating] = useState(0);
-  const [processRating, setProcessRating] = useState(0);
+  const [rating, setRating] = useState(0);
+  const [feedback, setFeedback] = useState("");
 
   const items = [
     {
@@ -118,16 +117,20 @@ export default function TicketDetails() {
     event.preventDefault();
     const answer = new FormData(event.currentTarget).get("isResolved");
     const isResolved = answer === "yes";
-    if (!agentRating || !processRating) {
-      toast.error("لطفاً به پشتیبان و روند رسیدگی امتیاز دهید");
+    if (!rating) {
+      toast.error("لطفاً به تجربه پشتیبانی امتیاز دهید");
+      return;
+    }
+    if (rating <= 3 && !feedback.trim()) {
+      toast.error("لطفاً علت امتیاز پایین را بنویسید");
       return;
     }
 
     try {
       const res = await axios.post(`/api/tickets/${ticketId}/resolution`, {
         isResolved,
-        agentRating,
-        processRating,
+        rating,
+        feedback,
       });
       const data = res.data;
       if (data.success) {
@@ -213,9 +216,23 @@ export default function TicketDetails() {
                 <QuestionnaireError />
               </QuestionnaireItem>
 
-              <div className="my-5 grid gap-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
-                <StarRatingInput label="امتیاز شما به پشتیبان" value={agentRating} onChange={setAgentRating} />
-                <StarRatingInput label="امتیاز شما به روند رسیدگی" value={processRating} onChange={setProcessRating} />
+              <div className="my-5 grid gap-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                <StarRatingInput label="امتیاز شما به تجربه پشتیبانی" value={rating} onChange={setRating} />
+                {rating > 0 && rating <= 3 && (
+                  <label className="grid gap-2 text-sm font-bold text-slate-700">
+                    علت امتیاز پایین را برای بهبود خدمات بنویسید
+                    <textarea
+                      value={feedback}
+                      onChange={(event) => setFeedback(event.target.value)}
+                      maxLength={1000}
+                      rows={4}
+                      required
+                      placeholder="برای مثال: به این علت نمره پایین دادم که..."
+                      className="w-full resize-y rounded-2xl border border-rose-200 bg-white/90 p-3 text-sm font-normal leading-7 outline-none transition focus:border-rose-400 focus:ring-4 focus:ring-rose-100"
+                    />
+                    <span className="text-left text-xs font-normal text-slate-400" dir="ltr">{feedback.length}/1000</span>
+                  </label>
+                )}
               </div>
 
               <QuestionnaireActions>

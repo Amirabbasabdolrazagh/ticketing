@@ -8,7 +8,7 @@ import { isValidObjectId } from "mongoose";
 export async function POST(req, { params }) {
   try {
     const { ticketId } = await params;
-    const { isResolved, agentRating, processRating } = await req.json();
+    const { isResolved, rating, feedback } = await req.json();
     const user = await getCurrentUser();
     const validId = isValidObjectId(ticketId);
     if (!user) {
@@ -65,12 +65,22 @@ export async function POST(req, { params }) {
         { status: 400 },
       );
     }
-    if (
-      !Number.isInteger(agentRating) || agentRating < 1 || agentRating > 5 ||
-      !Number.isInteger(processRating) || processRating < 1 || processRating > 5
-    ) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return Response.json(
-        { success: false, message: "امتیاز پشتیبان و روند رسیدگی باید بین ۱ تا ۵ باشد" },
+        { success: false, message: "امتیاز باید بین ۱ تا ۵ باشد" },
+        { status: 400 },
+      );
+    }
+    const normalizedFeedback = typeof feedback === "string" ? feedback.trim() : "";
+    if (rating <= 3 && !normalizedFeedback) {
+      return Response.json(
+        { success: false, message: "لطفاً علت امتیاز پایین را بنویسید" },
+        { status: 400 },
+      );
+    }
+    if (normalizedFeedback.length > 1000) {
+      return Response.json(
+        { success: false, message: "متن نظرسنجی نباید بیشتر از ۱۰۰۰ نویسه باشد" },
         { status: 400 },
       );
     }
@@ -82,16 +92,16 @@ export async function POST(req, { params }) {
 
     if (existingResolution) {
       existingResolution.isResolved = isResolved;
-      existingResolution.agentRating = agentRating;
-      existingResolution.processRating = processRating;
+      existingResolution.rating = rating;
+      existingResolution.feedback = rating <= 3 ? normalizedFeedback : "";
       ticketResolution = await existingResolution.save();
     } else {
       ticketResolution = await TicketResolution.create({
         ticket: ticketId,
         customer: user._id,
         isResolved,
-        agentRating,
-        processRating,
+        rating,
+        feedback: rating <= 3 ? normalizedFeedback : "",
       });
     }
 
@@ -99,7 +109,11 @@ export async function POST(req, { params }) {
       {
         success: true,
         message: "customer confirming created",
-        ticketResolution,
+        ticketResolution: {
+          isResolved: ticketResolution.isResolved,
+          rating: ticketResolution.rating,
+          createdAt: ticketResolution.createdAt,
+        },
       },
       { status: 200 },
     );

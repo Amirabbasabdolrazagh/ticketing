@@ -19,17 +19,27 @@ const ticketResolutionSchema = new Schema(
       type: Boolean,
       required: true,
     },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    feedback: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+      default: "",
+    },
+    // Legacy fields are kept optional so older survey records remain readable.
     agentRating: {
       type: Number,
       min: 1,
       max: 5,
-      required: true,
     },
     processRating: {
       type: Number,
       min: 1,
       max: 5,
-      required: true,
     },
   },
   {

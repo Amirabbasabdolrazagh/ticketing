@@ -418,7 +418,7 @@ export default function TicketDetails() {
             </div>
           </div>
         </div>
-        <TicketRatingSummary resolution={resolution} />
+        <TicketRatingSummary resolution={resolution} showFeedback />
         <Separator className="my-5" />
         <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
         <div className="flex w-full max-w-full flex-col gap-6 py-12">

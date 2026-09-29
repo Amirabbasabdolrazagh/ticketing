@@ -28,8 +28,12 @@ export function StarRatingInput({ label, value, onChange }) {
   return <Stars label={label} value={value} interactive onChange={onChange} />;
 }
 
-export default function TicketRatingSummary({ resolution }) {
-  if (!resolution?.agentRating || !resolution?.processRating) return null;
+export default function TicketRatingSummary({ resolution, showFeedback = false }) {
+  const legacyRating = resolution?.agentRating && resolution?.processRating
+    ? Math.round((resolution.agentRating + resolution.processRating) / 2)
+    : resolution?.agentRating || resolution?.processRating;
+  const rating = resolution?.rating || legacyRating;
+  if (!rating) return null;
   return (
     <section className="glass-panel my-4 w-full border-amber-200 bg-gradient-to-l from-amber-50/90 to-white p-4 sm:p-5" dir="rtl">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -38,9 +42,16 @@ export default function TicketRatingSummary({ resolution }) {
           {resolution.isResolved ? "مشکل برطرف شده" : "مشکل برطرف نشده"}
         </span>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Stars label="امتیاز پشتیبان" value={resolution.agentRating} />
-        <Stars label="امتیاز روند رسیدگی" value={resolution.processRating} />
+      <div className="grid gap-4">
+        <Stars label="امتیاز تجربه پشتیبانی" value={rating} />
+        {showFeedback && rating <= 3 && resolution.feedback && (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/80 p-4">
+            <p className="mb-2 text-xs font-black text-rose-700">گزارش مشتری درباره امتیاز پایین</p>
+            <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-700">
+              {resolution.feedback}
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

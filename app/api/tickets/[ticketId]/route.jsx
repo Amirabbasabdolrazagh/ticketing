@@ -46,14 +46,21 @@ export async function GET(req, { params }) {
       user.role === "customer" &&
       (!existingResolution || ticket.updatedAt > existingResolution.updatedAt);
 
+    const legacyRating = existingResolution?.agentRating && existingResolution?.processRating
+      ? Math.round((existingResolution.agentRating + existingResolution.processRating) / 2)
+      : existingResolution?.agentRating || existingResolution?.processRating;
+    const rating = existingResolution?.rating || legacyRating;
+
     const response = Response.json({
       success: true,
       ticket,
       needsConfirmation,
       resolution: existingResolution ? {
         isResolved: existingResolution.isResolved,
-        agentRating: existingResolution.agentRating,
-        processRating: existingResolution.processRating,
+        rating,
+        ...(user.role === "admin" && rating <= 3
+          ? { feedback: existingResolution.feedback || "" }
+          : {}),
         createdAt: existingResolution.createdAt,
       } : null,
     });
