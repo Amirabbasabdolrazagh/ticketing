@@ -102,7 +102,8 @@ export default function AgentDashborad() {
     (ticket) => ticket.status === "closed",
   ).length;
   const highPriorityTicket = allTickets.filter(
-    (ticket) => ticket.priority === "high",
+    (ticket) =>
+      ticket.priority === "high" && ["open", "in-progress"].includes(ticket.status),
   );
   const chartData = [
     {
