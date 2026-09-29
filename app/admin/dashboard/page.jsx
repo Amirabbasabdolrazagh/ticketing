@@ -31,6 +31,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Eye, EyeOff, MessageSquareReply } from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
@@ -124,6 +125,9 @@ export default function AdminDashborad() {
   const highPriorityTicket = allTickets.filter(
     (ticket) => ticket.priority === "high" && ticket.status == "in-progress",
   );
+  const assignedTickets = allTickets
+    .filter((ticket) => ticket.assignedTo)
+    .sort((a, b) => new Date(b.assignedAt || b.createdAt) - new Date(a.assignedAt || a.createdAt));
   const chartData = [
     {
       status: "open",
@@ -216,6 +220,68 @@ export default function AdminDashborad() {
               <h1>{numberOfClosedTicket}</h1>
               <p className="text-sm">بسته شده ها</p>
             </div>
+          </div>
+        </div>
+
+        <div className="glass-panel overflow-hidden p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <Label className="text-base font-black">وضعیت مشاهده تیکت‌ها توسط پشتیبان</Label>
+              <p className="mt-1 text-xs text-slate-500">کنترل اولین مشاهده و اولین پاسخ تیکت‌های تخصیص‌یافته</p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+              {assignedTickets.length.toLocaleString("fa-IR")} تیکت
+            </span>
+          </div>
+          <Separator className="my-4" />
+          <div className="max-h-[430px] overflow-auto" dir="rtl">
+            <Table className="min-w-[760px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-right">تیکت</TableHead>
+                  <TableHead className="text-right">پشتیبان</TableHead>
+                  <TableHead className="text-right">زمان تخصیص</TableHead>
+                  <TableHead className="text-right">مشاهده</TableHead>
+                  <TableHead className="text-right">اولین پاسخ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {assignedTickets.length ? assignedTickets.map((ticket) => (
+                  <TableRow key={`seen-${ticket._id}`}>
+                    <TableCell>
+                      <Link href={`/admin/tickets/${ticket._id}`} className="font-bold text-blue-700 hover:underline">
+                        {ticket.ticketNumber || ticket.title}
+                      </Link>
+                      <span className="mt-1 block max-w-[260px] truncate text-xs text-slate-500">{ticket.title}</span>
+                    </TableCell>
+                    <TableCell className="font-medium">{ticket.assignedTo?.name || "نامشخص"}</TableCell>
+                    <TableCell className="text-xs text-slate-600">
+                      {new Date(ticket.assignedAt || ticket.createdAt).toLocaleString("fa-IR", { dateStyle: "short", timeStyle: "short" })}
+                    </TableCell>
+                    <TableCell>
+                      {ticket.agentViewedAt ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                          <Eye className="size-4" /> دیده‌شده
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">
+                          <EyeOff className="size-4" /> دیده‌نشده
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {ticket.agentFirstReplyAt ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700"><MessageSquareReply className="size-4" /> پاسخ داده</span>
+                      ) : (
+                        <span className="text-xs font-bold text-amber-700">بدون پاسخ</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow><TableCell colSpan={5} className="py-10 text-center text-slate-500">تیکت تخصیص‌یافته‌ای وجود ندارد.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
 

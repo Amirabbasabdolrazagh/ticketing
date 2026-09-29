@@ -53,7 +53,7 @@ export async function GET() {
         : {};
     const tickets = await Ticket.find(ticketFilter)
       .populate("assignedTo", "name")
-      .select("title ticketNumber assignedTo creator status deadline deadlineAt updatedAt")
+      .select("title ticketNumber assignedTo creator status deadline deadlineAt updatedAt unseenReminder2hSentAt unseenAlarm3hSentAt unseenEscalation4hSentAt agentViewedAt agentFirstReplyAt")
       .lean();
     const ticketIds = tickets.map((ticket) => ticket._id);
     const ticketMap = new Map(tickets.map((ticket) => [String(ticket._id), ticket]));
@@ -114,7 +114,46 @@ export async function GET() {
       }];
     });
 
-    const notifications = [...messageEvents, ...deadlineEvents]
+    const attentionEvents = user.role === "customer" ? [] : tickets.flatMap((ticket) => {
+      const events = [];
+      const reference = `تیکت ${ticketReference(ticket)}`;
+      if (user.role === "agent" && ticket.unseenReminder2hSentAt) {
+        events.push({
+          _id: `unseen-2h:${ticket._id}:${new Date(ticket.unseenReminder2hSentAt).toISOString()}`,
+          type: "attention-reminder",
+          message: `دو ساعت از تخصیص ${reference} گذشته و هنوز مشاهده نشده است. لطفاً آن را بررسی کنید.`,
+          createdAt: ticket.unseenReminder2hSentAt,
+          ticket: { _id: ticket._id, title: ticket.title, ticketNumber: ticket.ticketNumber },
+        });
+      }
+      if (ticket.unseenAlarm3hSentAt) {
+        const message = user.role === "agent"
+          ? `هشدار: سه ساعت از تخصیص ${reference} گذشته و هنوز آن را مشاهده نکرده‌اید.`
+          : `هشدار: پشتیبان ${ticket.assignedTo?.name || "تعیین‌شده"} پس از سه ساعت هنوز ${reference} را مشاهده نکرده است.`;
+        events.push({
+          _id: `unseen-3h:${ticket._id}:${new Date(ticket.unseenAlarm3hSentAt).toISOString()}`,
+          type: "attention-alarm",
+          message,
+          createdAt: ticket.unseenAlarm3hSentAt,
+          ticket: { _id: ticket._id, title: ticket.title, ticketNumber: ticket.ticketNumber },
+        });
+      }
+      if (user.role === "admin" && ticket.unseenEscalation4hSentAt) {
+        const state = !ticket.agentViewedAt
+          ? "هنوز مشاهده نکرده"
+          : "دیده اما هنوز پاسخی برای آن ثبت نکرده";
+        events.push({
+          _id: `unseen-4h:${ticket._id}:${new Date(ticket.unseenEscalation4hSentAt).toISOString()}`,
+          type: "attention-escalation",
+          message: `پیگیری فوری: پشتیبان ${ticket.assignedTo?.name || "تعیین‌شده"} پس از چهار ساعت ${reference} را ${state} است.`,
+          createdAt: ticket.unseenEscalation4hSentAt,
+          ticket: { _id: ticket._id, title: ticket.title, ticketNumber: ticket.ticketNumber },
+        });
+      }
+      return events;
+    });
+
+    const notifications = [...messageEvents, ...deadlineEvents, ...attentionEvents]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 100);
     return Response.json({ success: true, notifications });

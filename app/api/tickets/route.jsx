@@ -120,6 +120,7 @@ export async function POST(req) {
       attachment: attachmentData,
       project: service._id,
       assignedTo: service.defaultAgent,
+      assignedAt: new Date(),
       ticketNumber,
       status: "in-progress",
     });

@@ -18,6 +18,10 @@ export default function TicketDetails() {
   const [isUpdatedTicket, setIsUpdatedTicket] = useState(false);
   const [openSheet, setOpenSheet] = useState(false);
   useEffect(() => {
+    axios.post(`/api/tickets/${ticketId}/seen`).catch(() => {});
+  }, [ticketId]);
+
+  useEffect(() => {
     async function getTicket() {
       try {
         const res = await axios.get(`/api/tickets/${ticketId}`);

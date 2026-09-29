@@ -35,6 +35,12 @@ const ticketSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    assignedAt: { type: Date, default: null, index: true },
+    agentViewedAt: { type: Date, default: null },
+    agentFirstReplyAt: { type: Date, default: null },
+    unseenReminder2hSentAt: { type: Date, default: null },
+    unseenAlarm3hSentAt: { type: Date, default: null },
+    unseenEscalation4hSentAt: { type: Date, default: null },
     status: {
       type: String,
       enum: ["open", "in-progress", "resolved", "closed"],

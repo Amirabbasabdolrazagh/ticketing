@@ -271,6 +271,14 @@ export async function PATCH(req, { params }) {
       // Update assigned agent
       if (assignedTo !== undefined) {
         ticket.assignedTo = agent._id;
+        if (oldAssignedTo?.toString() !== agent._id.toString()) {
+          ticket.assignedAt = new Date();
+          ticket.agentViewedAt = null;
+          ticket.agentFirstReplyAt = null;
+          ticket.unseenReminder2hSentAt = null;
+          ticket.unseenAlarm3hSentAt = null;
+          ticket.unseenEscalation4hSentAt = null;
+        }
       }
       if (deadline !== undefined) {
         const deadlineDays = Number(deadline);

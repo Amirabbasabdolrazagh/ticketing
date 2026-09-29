@@ -131,6 +131,10 @@ export async function POST(req, { params }) {
           ticket: ticketId,
           type: "text",
         });
+        if (!ticketInfo.agentFirstReplyAt) {
+          ticketInfo.agentFirstReplyAt = new Date();
+          await ticketInfo.save();
+        }
         await messages.populate("sender", "name role");
         const customer = await User.findById(ticketInfo.creator).select(`${messengerUserSelect} siteLastSeenAt`);
         await sendMessengerNotification(
