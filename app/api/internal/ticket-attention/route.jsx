@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
-  const configuredSecret = process.env.TICKET_ATTENTION_SECRET;
+  const configuredSecret = process.env.TICKET_ATTENTION_SECRET || process.env.BALE_WEBHOOK_SECRET;
   const authorization = req.headers.get("authorization");
   if (!configuredSecret) {
     return Response.json({ success: false, message: "تنظیمات هشدار کامل نیست" }, { status: 503 });
