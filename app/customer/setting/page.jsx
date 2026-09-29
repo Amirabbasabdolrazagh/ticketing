@@ -235,13 +235,19 @@ export default function AdminSetting() {
                 <bdi dir="ltr" className="mt-1 inline-block font-mono tracking-wide">
                   {formatPhone(user.phone)}
                 </bdi>
-                {user.email && (
-                  <span dir="ltr" className="mt-2 flex items-center gap-1.5 break-all text-xs font-medium text-blue-700">
-                    <Mail className="size-4 shrink-0" />{user.email}
-                  </span>
-                )}
               </p>
             </div>
+
+            {user.email && (
+              <div className="flex items-center gap-3 sm:gap-5">
+                <Mail className="shrink-0" size={26} />
+                <p className="min-w-0 text-sm sm:text-base">
+                  <span className="text-gray-400">ایمیل</span>
+                  <br />
+                  <bdi dir="ltr" className="mt-1 inline-block max-w-full break-all font-medium text-blue-700">{user.email}</bdi>
+                </p>
+              </div>
+            )}
 
             <div className="flex items-center gap-3 sm:gap-5">
               <LuCalendar className="shrink-0" size={26} />
