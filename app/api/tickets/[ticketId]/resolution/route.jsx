@@ -8,7 +8,7 @@ import { isValidObjectId } from "mongoose";
 export async function POST(req, { params }) {
   try {
     const { ticketId } = await params;
-    const { isResolved } = await req.json();
+    const { isResolved, agentRating, processRating } = await req.json();
     const user = await getCurrentUser();
     const validId = isValidObjectId(ticketId);
     if (!user) {
@@ -65,6 +65,15 @@ export async function POST(req, { params }) {
         { status: 400 },
       );
     }
+    if (
+      !Number.isInteger(agentRating) || agentRating < 1 || agentRating > 5 ||
+      !Number.isInteger(processRating) || processRating < 1 || processRating > 5
+    ) {
+      return Response.json(
+        { success: false, message: "امتیاز پشتیبان و روند رسیدگی باید بین ۱ تا ۵ باشد" },
+        { status: 400 },
+      );
+    }
     const existingResolution = await TicketResolution.findOne({
       ticket: ticketId,
     });
@@ -73,12 +82,16 @@ export async function POST(req, { params }) {
 
     if (existingResolution) {
       existingResolution.isResolved = isResolved;
+      existingResolution.agentRating = agentRating;
+      existingResolution.processRating = processRating;
       ticketResolution = await existingResolution.save();
     } else {
       ticketResolution = await TicketResolution.create({
         ticket: ticketId,
         customer: user._id,
         isResolved,
+        agentRating,
+        processRating,
       });
     }
 

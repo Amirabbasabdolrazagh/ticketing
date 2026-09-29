@@ -39,19 +39,23 @@ export async function GET(req, { params }) {
         { status: 404 },
       );
     }
-    const existingResolution = await TicketResolution.findOne({
-      ticket: ticket._id,
-      customer: user._id,
-    });
+    const existingResolution = await TicketResolution.findOne({ ticket: ticket._id }).lean();
 
     const needsConfirmation =
       ticket.status === "resolved" &&
+      user.role === "customer" &&
       (!existingResolution || ticket.updatedAt > existingResolution.updatedAt);
 
     const response = Response.json({
       success: true,
       ticket,
       needsConfirmation,
+      resolution: existingResolution ? {
+        isResolved: existingResolution.isResolved,
+        agentRating: existingResolution.agentRating,
+        processRating: existingResolution.processRating,
+        createdAt: existingResolution.createdAt,
+      } : null,
     });
     if (user.role === "admin") {
       return response;

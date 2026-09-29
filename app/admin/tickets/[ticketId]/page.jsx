@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TicketAttachment from "@/components/features/tickets/ticketAttachment/TicketAttachment";
 import { CalendarClock, Check } from "lucide-react";
+import TicketRatingSummary from "@/components/features/tickets/TicketRating";
 
 export default function TicketDetails() {
   const [ticket, setTicket] = useState({});
@@ -46,6 +47,7 @@ export default function TicketDetails() {
   const [isUpdatedTicket, setIsUpdatedTicket] = useState(false);
   const [openSheet, setOpenSheet] = useState(false);
   const [resolveDeadline, setResolveDeadline] = useState("");
+  const [resolution, setResolution] = useState(null);
   const DeadLineitems = [
     { label: "۱ روز", value: "1" },
     { label: "۲ روز", value: "2" },
@@ -63,6 +65,7 @@ export default function TicketDetails() {
 
         if (data.success) {
           setTicket(data.ticket);
+          setResolution(data.resolution);
           setStatus(data.ticket?.status);
           setPriority(data.ticket?.priority);
           setAssignedTo(data.ticket?.assignedTo || "");
@@ -415,6 +418,7 @@ export default function TicketDetails() {
             </div>
           </div>
         </div>
+        <TicketRatingSummary resolution={resolution} />
         <Separator className="my-5" />
         <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
         <div className="flex w-full max-w-full flex-col gap-6 py-12">

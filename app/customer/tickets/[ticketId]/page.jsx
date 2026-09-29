@@ -20,6 +20,7 @@ import {
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import TicketAttachment from "@/components/features/tickets/ticketAttachment/TicketAttachment";
+import TicketRatingSummary, { StarRatingInput } from "@/components/features/tickets/TicketRating";
 
 export default function TicketDetails() {
   const [ticket, setTicket] = useState({});
@@ -28,6 +29,9 @@ export default function TicketDetails() {
   const { ticketId } = useParams();
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [isUpdatedTicket, setIsUpdatedTicket] = useState(false);
+  const [resolution, setResolution] = useState(null);
+  const [agentRating, setAgentRating] = useState(0);
+  const [processRating, setProcessRating] = useState(0);
 
   const items = [
     {
@@ -45,6 +49,7 @@ export default function TicketDetails() {
         if (data.success) {
           setTicket(data.ticket);
           setNeedsConfirmation(data.needsConfirmation);
+          setResolution(data.resolution);
         }
       } catch (error) {
         console.log(error.response?.data?.message);
@@ -113,15 +118,22 @@ export default function TicketDetails() {
     event.preventDefault();
     const answer = new FormData(event.currentTarget).get("isResolved");
     const isResolved = answer === "yes";
+    if (!agentRating || !processRating) {
+      toast.error("لطفاً به پشتیبان و روند رسیدگی امتیاز دهید");
+      return;
+    }
 
     try {
       const res = await axios.post(`/api/tickets/${ticketId}/resolution`, {
         isResolved,
+        agentRating,
+        processRating,
       });
       const data = res.data;
       if (data.success) {
         toast.success("نظر شما با موفقیت ثبت شد");
         setNeedsConfirmation(false);
+        setResolution(data.ticketResolution);
       } else {
         toast.error("خطایی رخ داد");
       }
@@ -155,6 +167,7 @@ export default function TicketDetails() {
             <TicketAttachment ticketId={ticketId} attachment={ticket.attachment} />
           </div>
         </div>
+        <TicketRatingSummary resolution={resolution} />
         <Separator className="my-5" />
         <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
         <div className="flex w-full max-w-full flex-col gap-6 py-12">
@@ -199,6 +212,11 @@ export default function TicketDetails() {
 
                 <QuestionnaireError />
               </QuestionnaireItem>
+
+              <div className="my-5 grid gap-5 rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+                <StarRatingInput label="امتیاز شما به پشتیبان" value={agentRating} onChange={setAgentRating} />
+                <StarRatingInput label="امتیاز شما به روند رسیدگی" value={processRating} onChange={setProcessRating} />
+              </div>
 
               <QuestionnaireActions>
                 <QuestionnaireSubmit>ثبت پاسخ</QuestionnaireSubmit>

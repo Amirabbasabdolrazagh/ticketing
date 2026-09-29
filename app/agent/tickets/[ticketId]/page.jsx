@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 import TicketAttachment from "@/components/features/tickets/ticketAttachment/TicketAttachment";
+import TicketRatingSummary from "@/components/features/tickets/TicketRating";
 
 export default function TicketDetails() {
   const [ticket, setTicket] = useState({});
@@ -17,6 +18,7 @@ export default function TicketDetails() {
   const { ticketId } = useParams();
   const [isUpdatedTicket, setIsUpdatedTicket] = useState(false);
   const [openSheet, setOpenSheet] = useState(false);
+  const [resolution, setResolution] = useState(null);
   useEffect(() => {
     axios.post(`/api/tickets/${ticketId}/seen`).catch(() => {});
   }, [ticketId]);
@@ -29,6 +31,7 @@ export default function TicketDetails() {
 
         if (data.success) {
           setTicket(data.ticket);
+          setResolution(data.resolution);
         }
       } catch (error) {
         console.log(error.response?.data?.message);
@@ -133,6 +136,7 @@ export default function TicketDetails() {
             )}
           </div>
         </div>
+        <TicketRatingSummary resolution={resolution} />
         <Separator className="my-5" />
         <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
         <div className="flex w-full max-w-full flex-col gap-6 py-12">

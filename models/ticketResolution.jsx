@@ -19,6 +19,18 @@ const ticketResolutionSchema = new Schema(
       type: Boolean,
       required: true,
     },
+    agentRating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      required: true,
+    },
+    processRating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      required: true,
+    },
   },
   {
     timestamps: true,
