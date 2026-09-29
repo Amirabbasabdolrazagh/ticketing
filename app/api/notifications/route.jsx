@@ -5,6 +5,19 @@ import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const TEHRAN_TIME_ZONE = "Asia/Tehran";
+
+function tehranDateParts(value) {
+  return Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: TEHRAN_TIME_ZONE,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    }).formatToParts(value).filter((part) => part.type !== "literal")
+      .map((part) => [part.type, Number(part.value)]),
+  );
+}
 
 function ticketLabel(ticket) {
   return ticket.ticketNumber || ticket.title;
@@ -153,7 +166,25 @@ export async function GET() {
       return events;
     });
 
-    const notifications = [...messageEvents, ...deadlineEvents, ...attentionEvents]
+    const anniversaryEvents = [];
+    if (user.role === "customer" && user.createdAt) {
+      const today = tehranDateParts(new Date());
+      const joined = tehranDateParts(new Date(user.createdAt));
+      const membershipYears = today.year - joined.year;
+      if (membershipYears >= 1 && today.month === joined.month && today.day === joined.day) {
+        const dateKey = `${today.year}-${String(today.month).padStart(2, "0")}-${String(today.day).padStart(2, "0")}`;
+        anniversaryEvents.push({
+          _id: `membership-anniversary:${user._id}:${dateKey}`,
+          type: "membership-anniversary",
+          persistentUntilEndOfDay: true,
+          message: `🎉 سالگرد عضویت شما مبارک! از اینکه ${membershipYears.toLocaleString("fa-IR")} سال همراه ای تی رسام بوده‌اید، صمیمانه سپاسگزاریم.`,
+          createdAt: new Date(),
+          ticket: null,
+        });
+      }
+    }
+
+    const notifications = [...messageEvents, ...deadlineEvents, ...attentionEvents, ...anniversaryEvents]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 100);
     return Response.json({ success: true, notifications });

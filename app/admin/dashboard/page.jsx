@@ -123,7 +123,7 @@ export default function AdminDashborad() {
     (ticket) => ticket.status === "closed",
   ).length;
   const highPriorityTicket = allTickets.filter(
-    (ticket) => ticket.priority === "high" && ticket.status == "in-progress",
+    (ticket) => ticket.priority === "high" && ticket.status === "in-progress",
   );
   const assignedTickets = allTickets
     .filter((ticket) => ticket.assignedTo)

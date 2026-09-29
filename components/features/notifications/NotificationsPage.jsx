@@ -3,7 +3,7 @@
 import axios from "axios";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BellRing, CheckCheck, Clock3, MessageCircleMore } from "lucide-react";
+import { BellRing, CheckCheck, Clock3, Gift, MessageCircleMore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSeenNotificationIds, markNotificationsSeen } from "@/utils/notificationSeen";
 
@@ -18,7 +18,9 @@ export default function NotificationsPage({ role }) {
         const { data } = await axios.get("/api/notifications");
         if (active && data.success) {
           const seen = getSeenNotificationIds(role);
-          const freshNotifications = data.notifications.filter((item) => !seen.has(item._id));
+          const freshNotifications = data.notifications.filter(
+            (item) => item.persistentUntilEndOfDay || !seen.has(item._id),
+          );
           setNotifications(freshNotifications);
           markNotificationsSeen(role, freshNotifications.map((item) => item._id));
           window.dispatchEvent(new Event("notifications-read"));
@@ -63,15 +65,19 @@ export default function NotificationsPage({ role }) {
             {notifications.map((notification) => (
               <Link
                 key={notification._id}
-                href={`/${role}/tickets/${notification.ticket?._id}`}
+                href={notification.ticket?._id ? `/${role}/tickets/${notification.ticket._id}` : `/${role}/notifications`}
                 className="flex gap-4 bg-blue-50/60 p-4 transition hover:bg-blue-100/70 sm:p-5"
               >
                 <span className={`flex size-11 shrink-0 items-center justify-center rounded-2xl ${
-                  notification.type === "new-message"
+                  notification.type === "membership-anniversary"
+                    ? "bg-fuchsia-100 text-fuchsia-700"
+                    : notification.type === "new-message"
                     ? "bg-blue-100 text-blue-700"
                     : "bg-amber-100 text-amber-700"
                 }`}>
-                  {notification.type === "new-message"
+                  {notification.type === "membership-anniversary"
+                    ? <Gift className="size-5" />
+                    : notification.type === "new-message"
                     ? <MessageCircleMore className="size-5" />
                     : <Clock3 className="size-5" />}
                 </span>
