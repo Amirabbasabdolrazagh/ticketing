@@ -260,9 +260,14 @@ export default function AdminDashborad() {
                     </TableCell>
                     <TableCell>
                       {ticket.agentViewedAt ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                          <Eye className="size-4" /> دیده‌شده
-                        </span>
+                        <div>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                            <Eye className="size-4" /> دیده‌شده
+                          </span>
+                          <span className="mt-1.5 block whitespace-nowrap text-[11px] font-medium text-slate-500">
+                            {new Date(ticket.agentViewedAt).toLocaleString("fa-IR", { dateStyle: "short", timeStyle: "short" })}
+                          </span>
+                        </div>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">
                           <EyeOff className="size-4" /> دیده‌نشده

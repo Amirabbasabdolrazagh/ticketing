@@ -35,7 +35,7 @@ import { useRouter } from "next/navigation";
 import ProfileCompletionNotice from "@/components/features/users/ProfileCompletionNotice";
 import { faLabel, roleLabels } from "@/utils/fa-labels";
 import TelegramConnectButton from "@/components/features/users/TelegramConnectButton";
-import { MailPlus } from "lucide-react";
+import { Mail, MailPlus } from "lucide-react";
 
 export default function AdminSetting() {
   const router = useRouter();
@@ -235,6 +235,11 @@ export default function AdminSetting() {
                 <bdi dir="ltr" className="mt-1 inline-block font-mono tracking-wide">
                   {formatPhone(user.phone)}
                 </bdi>
+                {user.email && (
+                  <span dir="ltr" className="mt-2 flex items-center gap-1.5 break-all text-xs font-medium text-blue-700">
+                    <Mail className="size-4 shrink-0" />{user.email}
+                  </span>
+                )}
               </p>
             </div>
 
