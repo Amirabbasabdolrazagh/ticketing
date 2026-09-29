@@ -8,9 +8,9 @@ export const messengerUserSelect =
 export async function sendMessengerNotification(user, text) {
   if (!user) return { sent: false, reason: "no-user" };
 
-  const smsPromise = user.role === "agent"
+  const smsPromise = ["admin", "agent"].includes(user.role)
     ? sendNotificationSms(user.phone, text)
-    : Promise.resolve({ sent: false, reason: "not-agent" });
+    : Promise.resolve({ sent: false, reason: "role-not-enabled" });
   let messengerPromise;
   if (user.preferredMessenger === "bale" && user.baleChatId) {
     messengerPromise = sendBaleMessage(user.baleChatId, text);
