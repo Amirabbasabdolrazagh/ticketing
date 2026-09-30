@@ -10,8 +10,9 @@ import ProjectCounter from "@/models/projectCounter";
 import User from "@/models/users";
 import { classifyService, ensureDefaultServices } from "@/utils/serviceCatalog";
 import { systemMessage } from "@/utils/createSystemMessage";
-import { assignmentTelegramText } from "@/utils/telegram";
+import { assignmentTelegramText, customerMessageTelegramText } from "@/utils/telegram";
 import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
+import TicketMessage from "@/models/ticketMessage";
 
 export const runtime = "nodejs";
 
@@ -23,16 +24,18 @@ export async function POST(req) {
   try {
     const contentType = req.headers.get("content-type") || "";
     let title;
+    let message;
     let priority;
     let attachment;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       title = formData.get("title")?.toString();
+      message = formData.get("message")?.toString();
       priority = formData.get("priority")?.toString();
       attachment = formData.get("attachment");
     } else {
-      ({ title, priority } = await req.json());
+      ({ title, priority, message } = await req.json());
     }
 
     await ConnectDb();
@@ -58,6 +61,18 @@ export async function POST(req) {
     if (!title?.trim()) {
       return Response.json(
         { success: false, message: "وارد کردن عنوان تیکت الزامی است" },
+        { status: 400 },
+      );
+    }
+    if (!message?.trim()) {
+      return Response.json(
+        { success: false, message: "وارد کردن متن اصلی پیام الزامی است" },
+        { status: 400 },
+      );
+    }
+    if (message.trim().length > 5000) {
+      return Response.json(
+        { success: false, message: "متن پیام نباید بیشتر از ۵۰۰۰ نویسه باشد" },
         { status: 400 },
       );
     }
@@ -124,6 +139,12 @@ export async function POST(req) {
       ticketNumber,
       status: "in-progress",
     });
+    await TicketMessage.create({
+      ticket: ticket._id,
+      sender: user._id,
+      message: message.trim(),
+      type: "text",
+    });
 
     const assignedAgent = await User.findById(service.defaultAgent).select(
       `name ${messengerUserSelect}`,
@@ -136,6 +157,15 @@ export async function POST(req) {
     await sendMessengerNotification(
       assignedAgent,
       assignmentTelegramText({ ticket, projectName: service.name }),
+    );
+    await sendMessengerNotification(
+      assignedAgent,
+      customerMessageTelegramText({
+        ticket,
+        message: message.trim(),
+        customerName: user.name,
+        serviceName: service.name,
+      }),
     );
 
     return Response.json(

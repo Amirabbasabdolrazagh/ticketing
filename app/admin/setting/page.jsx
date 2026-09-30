@@ -37,7 +37,7 @@ import { useRouter } from "next/navigation";
 import ProfileCompletionNotice from "@/components/features/users/ProfileCompletionNotice";
 import { faLabel, roleLabels } from "@/utils/fa-labels";
 import TelegramConnectButton from "@/components/features/users/TelegramConnectButton";
-import { Mail, MailPlus } from "lucide-react";
+import { Mail, MailPen, MailPlus } from "lucide-react";
 
 export default function AdminSetting() {
   const router = useRouter();
@@ -144,6 +144,7 @@ export default function AdminSetting() {
       const data = res.data;
       if (data.success) {
         setOpenSheet(false);
+        setPassword("");
         toast.success(data.message);
         setIsChange((prev) => !prev);
       } else {
@@ -405,17 +406,16 @@ export default function AdminSetting() {
               ذخیره تغییرات
             </Button>
             <TelegramConnectButton linked={user.telegramLinked} baleLinked={user.baleLinked} />
-            {!user.email && (
-              <Sheet open={openSheet} onOpenChange={setOpenSheet}>
+            <Sheet open={openSheet} onOpenChange={setOpenSheet}>
                 <SheetTrigger
-                  render={<Button variant="outline" className="gap-2 border-violet-400 bg-gradient-to-l from-violet-600 to-blue-600 font-black text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-blue-700 hover:text-white"><MailPlus className="size-5" />افزودن ایمیل</Button>}
+                  render={<Button variant="outline" className="gap-2 border-violet-400 bg-gradient-to-l from-violet-600 to-blue-600 font-black text-white shadow-lg shadow-violet-500/25 hover:from-violet-700 hover:to-blue-700 hover:text-white">{user.email ? <MailPen className="size-5" /> : <MailPlus className="size-5" />}{user.email ? "تغییر ایمیل" : "افزودن ایمیل"}</Button>}
                 />
                 <SheetContent
                   className="data-[side=bottom]:max-h-[50vh] data-[side=top]:max-h-[50vh]"
                   side="left"
                 >
                   <SheetHeader className="flex flex-col justify-end items-center">
-                    <SheetTitle>ثبت ایمیل و رمز عبور</SheetTitle>
+                    <SheetTitle>{user.email ? "تغییر ایمیل" : "ثبت ایمیل و رمز عبور"}</SheetTitle>
                   </SheetHeader>
                   <div className="px-5 flex flex-col gap-6" dir="ltr">
                     <FieldLabel>ایمیل</FieldLabel>
@@ -427,18 +427,16 @@ export default function AdminSetting() {
                       placeholder="example@gamil.com"
                     />
                     <Separator />
-                    <FieldLabel>رمز عبور</FieldLabel>
+                    <FieldLabel>{user.email ? "رمز عبور فعلی" : "رمز عبور"}</FieldLabel>
 
                     <Input
                       className="w-full"
                       onChange={(e) => setPassword(e.target.value)}
                       value={password}
-                      placeholder="رمز عبور را وارد کنید"
+                      placeholder={user.email ? "رمز عبور فعلی را وارد کنید" : "رمز عبور را وارد کنید"}
+                      type="password"
                     />
-                    <span className="text-center text-xs text-gray-500">
-                      رمز باید شامل ۸ کاراکتر با حروف بزرگ و کوچک و اعداد و یک
-                      نماد باشد
-                    </span>
+                    {!user.email && <span className="text-center text-xs text-gray-500">رمز باید شامل ۸ کاراکتر با حروف بزرگ و کوچک و اعداد و یک نماد باشد</span>}
                   </div>
 
                   <SheetFooter>
@@ -453,7 +451,6 @@ export default function AdminSetting() {
                   </SheetFooter>
                 </SheetContent>
               </Sheet>
-            )}
           </div>
         </div>
 

@@ -38,17 +38,6 @@ export async function POST(req) {
       );
     }
 
-    // User already configured email/password login
-    if (user.email) {
-      return Response.json(
-        {
-          success: false,
-          message: "credentials already configured",
-        },
-        { status: 409 },
-      );
-    }
-
     // Normalize email
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -65,24 +54,10 @@ export async function POST(req) {
       );
     }
 
-    // Validate password
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-
-    if (!passwordRegex.test(password)) {
-      return Response.json(
-        {
-          success: false,
-          message:
-            "password must be at least 8 characters and contain uppercase, lowercase, number and symbol",
-        },
-        { status: 400 },
-      );
-    }
-
     // Check duplicate email
     const existingUser = await User.findOne({
       email: normalizedEmail,
+      _id: { $ne: user._id },
     });
 
     if (existingUser) {
@@ -95,18 +70,48 @@ export async function POST(req) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const account = await User.findById(user._id).select("+password");
+    if (!account) {
+      return Response.json(
+        { success: false, message: "کاربر پیدا نشد" },
+        { status: 404 },
+      );
+    }
 
-    // Save credentials
-    user.email = normalizedEmail;
-    user.password = hashedPassword;
-    await user.save();
+    if (account.email) {
+      const passwordIsValid = account.password
+        ? await bcrypt.compare(password, account.password)
+        : false;
+      if (!passwordIsValid) {
+        return Response.json(
+          { success: false, message: "رمز عبور فعلی صحیح نیست" },
+          { status: 400 },
+        );
+      }
+      account.email = normalizedEmail;
+    } else {
+      const passwordRegex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+      if (!passwordRegex.test(password)) {
+        return Response.json(
+          {
+            success: false,
+            message: "رمز باید حداقل ۸ کاراکتر و شامل حرف بزرگ، حرف کوچک، عدد و نماد باشد",
+          },
+          { status: 400 },
+        );
+      }
+      account.email = normalizedEmail;
+      account.password = await bcrypt.hash(password, 12);
+    }
+    await account.save();
 
     return Response.json(
       {
         success: true,
-        message: "email and password configured successfully",
+        message: user.email
+          ? "ایمیل با موفقیت تغییر کرد"
+          : "ایمیل و رمز عبور با موفقیت ثبت شد",
       },
       { status: 200 },
     );

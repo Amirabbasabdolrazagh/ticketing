@@ -33,6 +33,7 @@ export default function AllTickets() {
   const [ticketPriority, setTicketPriority] = useState(null);
   const [openSheet, setOpenSheet] = useState(false);
   const [ticketTitle, setTicketTitle] = useState("");
+  const [ticketMessage, setTicketMessage] = useState("");
   const [attachment, setAttachment] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
@@ -121,6 +122,9 @@ export default function AllTickets() {
     if (ticketTitle.trim() !== "") {
       payload.append("title", ticketTitle.trim());
     }
+    if (ticketMessage.trim() !== "") {
+      payload.append("message", ticketMessage.trim());
+    }
     if (ticketPriority !== null) {
       payload.append("priority", ticketPriority);
     }
@@ -137,6 +141,7 @@ export default function AllTickets() {
         setOpenSheet(false);
         setIsChanged((prev) => !prev);
         setTicketTitle("");
+        setTicketMessage("");
         setTicketPriority(null);
         setAttachment(null);
       }
@@ -172,7 +177,7 @@ export default function AllTickets() {
                 className="py-5 hover:bg-sky-400 hover:text-white"
               />
               <SheetContent
-                className="data-[side=bottom]:max-h-[50vh] data-[side=top]:max-h-[50vh]"
+                className="overflow-y-auto data-[side=bottom]:max-h-[90vh] data-[side=top]:max-h-[90vh]"
                 side="left"
               >
                 <SheetHeader className="flex flex-col justify-end items-center">
@@ -187,8 +192,23 @@ export default function AllTickets() {
                     <Input
                       placeholder="عنوان تیکت را وارد کنید"
                       onChange={(e) => setTicketTitle(e.target.value)}
+                      value={ticketTitle}
                     />
                   </FieldContent>
+                </Field>
+                <Separator />
+                <Field className="px-5">
+                  <FieldLabel htmlFor="ticket-message">متن اصلی پیام</FieldLabel>
+                  <textarea
+                    id="ticket-message"
+                    value={ticketMessage}
+                    onChange={(e) => setTicketMessage(e.target.value)}
+                    maxLength={5000}
+                    rows={6}
+                    placeholder="مشکل یا درخواست خود را با جزئیات بنویسید؛ این متن اولین پیام گفت‌وگو خواهد بود."
+                    className="w-full resize-y rounded-2xl border border-slate-200 bg-white/80 p-3 text-sm leading-7 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                  />
+                  <span className="text-left text-xs text-slate-400" dir="ltr">{ticketMessage.length}/5000</span>
                 </Field>
                 <Separator />
                 <Field className="px-5">
