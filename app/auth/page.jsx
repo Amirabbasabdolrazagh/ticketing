@@ -17,7 +17,7 @@ import Link from "next/link";
 export default function AuthPage() {
   let initialState = { success: null, message: "" };
   const [phone, setPhone] = useState("");
-  const [phoneLoginMethod, setPhoneLoginMethod] = useState("otp");
+  const [phoneLoginMethod, setPhoneLoginMethod] = useState("password");
   const [phonePassword, setPhonePassword] = useState("");
   const [phonePasswordLoading, setPhonePasswordLoading] = useState(false);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -202,6 +202,8 @@ export default function AuthPage() {
       });
       toast.success(data.message);
       setResetStep(null);
+      setPhonePassword("");
+      setPassword("");
       setResetPhone("");
       setResetCode(["", "", "", "", "", ""]);
       setNewPassword("");
@@ -216,7 +218,7 @@ export default function AuthPage() {
     <>
       <Toaster />
       <section className="fixed inset-0 flex min-h-svh w-full items-center justify-center overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.2),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,.16),transparent_38%)] p-4">
-        {!isSentCode && !signwithEmail && (
+        {!isSentCode && !signwithEmail && !resetStep && (
           <div className="glass-panel flex w-full max-w-md flex-col gap-4 p-6 sm:p-8">
             <h1 className="bg-gradient-to-l from-blue-600 to-violet-600 bg-clip-text text-center text-3xl font-black text-transparent">ای تی رسام</h1>
             <p>ورود | ثبت نام</p>
@@ -287,6 +289,18 @@ export default function AuthPage() {
                   >
                     {phonePasswordLoading ? <PulseLoader color="white" /> : "ورود با رمز عبور"}
                   </button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-violet-700 hover:bg-violet-50 hover:text-violet-800"
+                    onClick={() => {
+                      setResetPhone(phone);
+                      setResetStep("request");
+                    }}
+                  >
+                    <KeyRound className="size-4" />
+                    رمز عبور را فراموش کرده‌اید؟
+                  </Button>
                 </form>
               )}
             </div>
@@ -393,7 +407,10 @@ export default function AuthPage() {
                 type="button"
                 variant="ghost"
                 className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                onClick={() => setResetStep("request")}
+                onClick={() => {
+                  setResetPhone("");
+                  setResetStep("request");
+                }}
               >
                 <KeyRound className="size-4" />
                 رمز عبور را فراموش کرده‌اید؟
@@ -413,7 +430,7 @@ export default function AuthPage() {
             </Field>
           </div>
         )}
-        {signwithEmail && !isSentCode && resetStep && (
+        {!isSentCode && resetStep && (
           <div className="relative w-[92%] max-w-md overflow-hidden rounded-3xl border border-white/70 bg-white/80 p-6 shadow-[0_30px_80px_rgba(67,56,202,0.22)] backdrop-blur-2xl sm:p-8">
             <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-blue-400/25 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-16 size-48 rounded-full bg-violet-500/20 blur-3xl" />
