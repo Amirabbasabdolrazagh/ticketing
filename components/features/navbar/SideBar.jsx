@@ -8,18 +8,16 @@ import {
   FolderKanban,
   BellRing,
   LayoutDashboard,
-  LogOut,
   MessageCircle,
   Settings2,
   Sparkles,
   TicketCheck,
   UsersRound,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -39,7 +37,6 @@ export default function SideBar() {
   const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -93,11 +90,6 @@ export default function SideBar() {
       window.removeEventListener("notifications-read", handleRead);
     };
   }, [user?.role]);
-
-  async function logoutHandler() {
-    const { data } = await axios.post("/api/auth/logout");
-    if (data.success) router.replace("/auth");
-  }
 
   const userRole = user?.role;
   const menuItems = [
@@ -240,22 +232,6 @@ export default function SideBar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="relative z-10 p-5 pt-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={logoutHandler}
-              className="h-14 gap-3 rounded-2xl border border-red-200/60 bg-red-50/60 px-4 text-red-600 backdrop-blur-xl transition-all hover:border-red-200 hover:bg-red-100 hover:text-red-700"
-            >
-              <span className="flex size-9 items-center justify-center rounded-xl bg-white/80 shadow-sm">
-                <LogOut className="size-5" />
-              </span>
-              <span className="text-sm font-bold">خروج از حساب</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <p className="pt-3 text-center text-[10px] text-slate-400">سامانه مدیریت و پشتیبانی تیکت</p>
-      </SidebarFooter>
     </Sidebar>
 
     <nav className="liquid-bottom-nav lg:hidden" aria-label="منوی اصلی موبایل و تبلت">

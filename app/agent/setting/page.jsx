@@ -37,6 +37,7 @@ import { useRouter } from "next/navigation";
 import ProfileCompletionNotice from "@/components/features/users/ProfileCompletionNotice";
 import { faLabel, roleLabels } from "@/utils/fa-labels";
 import TelegramConnectButton from "@/components/features/users/TelegramConnectButton";
+import AccountLogoutCard from "@/components/features/users/AccountLogoutCard";
 import { Mail, MailPen, MailPlus } from "lucide-react";
 
 export default function AdminSetting() {
@@ -561,6 +562,7 @@ export default function AdminSetting() {
             تغییر رمز عبور
           </Button>
         </div>
+        <AccountLogoutCard />
       </section>
     </>
   );
