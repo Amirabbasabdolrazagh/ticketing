@@ -3,7 +3,7 @@
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { ShieldCheck, UserRound } from "lucide-react";
 
-export default function TicketMessages({ message, sender, createdAt, hideSenderIdentity = false }) {
+export default function TicketMessages({ message, sender, createdAt }) {
   const persianDate = createdAt
     ? new Intl.DateTimeFormat("fa-IR-u-nu-latn", {
         year: "numeric",
@@ -34,13 +34,9 @@ export default function TicketMessages({ message, sender, createdAt, hideSenderI
         <div className={`flex items-center gap-1.5 px-1 text-[11px] text-slate-500 ${
           sender?.role === "customer" ? "justify-start" : "justify-end"
         }`}>
-          {!(hideSenderIdentity && ["agent", "admin"].includes(sender?.role)) && (
-            <>
-              {sender?.role === "customer" ? <UserRound className="size-3.5" /> : <ShieldCheck className="size-3.5" />}
-              <span className="font-bold text-slate-600">{sender?.name || "کاربر"}</span>
-              <span>•</span>
-            </>
-          )}
+          {sender?.role === "customer" ? <UserRound className="size-3.5" /> : <ShieldCheck className="size-3.5" />}
+          <span className="font-bold text-slate-600">{sender?.name || "کاربر"}</span>
+          <span>•</span>
           <time>{persianDate}</time>
         </div>
       </Bubble>
