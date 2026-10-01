@@ -106,18 +106,21 @@ export function ticketReplyTelegramText({
   senderName,
   senderRole,
   serviceName,
+  hideSender = false,
 }) {
   const normalizedMessage = String(message).replace(/\s+/g, " ").trim();
   const preview = normalizedMessage.length > 120
     ? `${normalizedMessage.slice(0, 120)}…`
     : normalizedMessage;
   return [
-    `💬 <b>پیام جدید از ${escapeTelegramHtml(senderRole)}</b>`,
+    hideSender
+      ? "💬 <b>پیام جدید درباره تیکت شما</b>"
+      : `💬 <b>پیام جدید از ${escapeTelegramHtml(senderRole)}</b>`,
     "",
     `🎫 شماره تیکت: <b>${escapeTelegramHtml(ticket.ticketNumber || ticket._id)}</b>`,
     `📌 عنوان: ${escapeTelegramHtml(ticket.title)}`,
     `📁 خدمت: ${escapeTelegramHtml(serviceName || "بدون خدمت")}`,
-    `👤 فرستنده: ${escapeTelegramHtml(senderName || senderRole)}`,
+    ...(hideSender ? [] : [`👤 فرستنده: ${escapeTelegramHtml(senderName || senderRole)}`]),
     `✉️ بخشی از پیام: ${escapeTelegramHtml(preview)}`,
     "",
     "برای مشاهده متن کامل و پاسخ‌دادن وارد سامانه شوید.",

@@ -177,7 +177,7 @@ export default function AllTickets() {
                 className="py-5 hover:bg-sky-400 hover:text-white"
               />
               <SheetContent
-                className="overflow-y-auto rounded-[2rem] border border-white/70 bg-gradient-to-br from-white via-blue-50/95 to-violet-50/95 p-1 shadow-[0_30px_100px_rgba(30,64,175,0.3)] backdrop-blur-2xl data-[side=center]:left-1/2 data-[side=center]:top-1/2 data-[side=center]:max-h-[90vh] data-[side=center]:w-[calc(100%-2rem)] data-[side=center]:max-w-2xl data-[side=center]:-translate-x-1/2 data-[side=center]:-translate-y-1/2"
+                className="overflow-hidden rounded-[2rem] border border-white/70 bg-gradient-to-br from-white via-blue-50/95 to-violet-50/95 p-1 shadow-[0_30px_100px_rgba(30,64,175,0.3)] backdrop-blur-2xl data-[side=center]:left-1/2 data-[side=center]:top-1/2 data-[side=center]:w-[calc(100%-2rem)] data-[side=center]:max-w-2xl data-[side=center]:-translate-x-1/2 data-[side=center]:-translate-y-1/2"
                 side="center"
                 dir="rtl"
               >
@@ -210,9 +210,9 @@ export default function AllTickets() {
                     value={ticketMessage}
                     onChange={(e) => setTicketMessage(e.target.value)}
                     maxLength={5000}
-                    rows={6}
+                    rows={4}
                     placeholder="مشکل یا درخواست خود را با جزئیات بنویسید؛ این متن اولین پیام گفت‌وگو خواهد بود."
-                    className="w-full resize-y rounded-2xl border border-slate-200 bg-white/80 p-3 text-sm leading-7 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                    className="w-full resize-none rounded-2xl border border-slate-200 bg-white/80 p-3 text-sm leading-6 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
                   <span className="text-left text-xs text-slate-400" dir="ltr">{ticketMessage.length}/5000</span>
                 </Field>
@@ -236,7 +236,7 @@ export default function AllTickets() {
                     type="single"
                     onValueChange={handleTicketPriority}
                     variant="outline"
-                    className="text-center py-5"
+                    className="py-2 text-center"
                   >
                     <ToggleGroupItem
                       value="low"

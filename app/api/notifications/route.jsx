@@ -53,6 +53,12 @@ function translateSystemMessage(message) {
   return `اولویت تیکت از «${labels[priorityChange[1]]}» به «${labels[priorityChange[2]]}» تغییر کرد`;
 }
 
+function hideSupportIdentity(message) {
+  return String(message)
+    .replace(/پشتیبان «[^»]+»/g, "پشتیبان")
+    .replace(/پشتیبان\s+[^،.]+(?=\s+(?:تیکت|پس|هنوز))/g, "پشتیبان");
+}
+
 export async function GET() {
   try {
     await ConnectDb();
@@ -86,10 +92,11 @@ export async function GET() {
             ? ["admin", "agent"]
             : ["admin", "agent", "customer"];
         if (!visibleTo.includes(user.role)) return [];
+        const translatedMessage = translateSystemMessage(item.message);
         return [{
           _id: `system:${item._id}`,
           type: "system",
-          message: `${translateSystemMessage(item.message)} — تیکت ${ticketReference(ticket)}`,
+          message: `${user.role === "customer" ? hideSupportIdentity(translatedMessage) : translatedMessage} — تیکت ${ticketReference(ticket)}`,
           createdAt: item.createdAt,
           ticket: { _id: ticket._id, title: ticket.title, ticketNumber: ticket.ticketNumber },
         }];
@@ -98,6 +105,15 @@ export async function GET() {
       const incomingForAgent = user.role === "agent" && item.sender.role === "customer";
       const incomingForCustomer = user.role === "customer" && ["agent", "admin"].includes(item.sender.role);
       if (!incomingForAgent && !incomingForCustomer) return [];
+      if (incomingForCustomer) {
+        return [{
+          _id: `message:${item._id}`,
+          type: "new-message",
+          message: `پیام جدیدی برای تیکت ${ticketReference(ticket)} ثبت شده است.`,
+          createdAt: item.createdAt,
+          ticket: { _id: ticket._id, title: ticket.title, ticketNumber: ticket.ticketNumber },
+        }];
+      }
       const senderRole = item.sender.role === "customer" ? "مشتری" : "پشتیبان";
       return [{
         _id: `message:${item._id}`,

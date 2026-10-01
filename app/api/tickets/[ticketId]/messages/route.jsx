@@ -59,7 +59,7 @@ export async function POST(req, { params }) {
       const customer = await User.findById(ticketInfo.creator).select(`${messengerUserSelect} siteLastSeenAt`);
       await sendMessengerNotification(
         customer,
-        ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "مدیر", serviceName: ticketInfo.project?.name }),
+        ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "مدیر", serviceName: ticketInfo.project?.name, hideSender: true }),
       );
       return Response.json(
         { success: true, message: "message create successfully",messages },
@@ -139,7 +139,7 @@ export async function POST(req, { params }) {
         const customer = await User.findById(ticketInfo.creator).select(`${messengerUserSelect} siteLastSeenAt`);
         await sendMessengerNotification(
           customer,
-          ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "پشتیبان", serviceName: ticketInfo.project?.name }),
+          ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "پشتیبان", serviceName: ticketInfo.project?.name, hideSender: true }),
         );
         return Response.json(
           { success: true, message: "message create successfully" ,messages },

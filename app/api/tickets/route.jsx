@@ -162,6 +162,7 @@ export async function POST(req) {
       ticket._id,
       user._id,
       `تیکت به‌صورت خودکار در خدمت «${service.name}» دسته‌بندی و به پشتیبان «${assignedAgent?.name || "تعیین‌شده"}» اختصاص داده شد`,
+      ["admin", "agent"],
     );
     await sendMessengerNotification(
       assignedAgent,
@@ -181,7 +182,7 @@ export async function POST(req) {
       User.find({ role: "admin" }).select(`name ${messengerUserSelect}`),
     ]);
     await Promise.all([
-      sendBotNotification(
+      sendMessengerNotification(
         customerAccount,
         ticketCreatedCustomerText({ ticket }),
       ),
