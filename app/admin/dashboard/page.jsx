@@ -11,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import axios from "axios";
-import { LabelList, RadialBar, RadialBarChart } from "recharts";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaRegCheckCircle } from "react-icons/fa";
@@ -23,21 +22,8 @@ import {
   MdNotificationImportant,
   MdOutlineSupportAgent,
 } from "react-icons/md";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Eye, EyeOff, MessageSquareReply } from "lucide-react";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-export const description = "A radial chart with a label";
+import TicketStatusOverview from "@/components/features/dashboard/TicketStatusOverview";
 
 export default function AdminDashborad() {
   const [allTickets, setAllTickets] = useState([]);
@@ -151,27 +137,6 @@ export default function AdminDashborad() {
       fill: "#64748b",
     },
   ];
-  const chartConfig = {
-    tickets: {
-      label: "تیکت‌ها",
-    },
-    open: {
-      label: "باز",
-      color: "var(--chart-1)",
-    },
-    "in-progress": {
-      label: "در حال بررسی",
-      color: "var(--chart-2)",
-    },
-    resolved: {
-      label: "حل‌شده",
-      color: "var(--chart-3)",
-    },
-    closed: {
-      label: "بسته‌شده",
-      color: "var(--chart-4)",
-    },
-  };
   return (
     <>
       <section className="app-page">
@@ -476,114 +441,8 @@ export default function AdminDashborad() {
             </div>
           </div>
 
-          {/* Ticket Status Distribution */}
-          {/* <div className="col-span-1 min-w-0 rounded-xl border bg-gray-50 p-4 sm:p-5 lg:col-span-4">
-            <div className="flex w-full items-center justify-between">
-              <Label className="text-md">وضعیت تیکت‌ها</Label>
-            </div>
-
-            <Separator className="my-3" />
-
-            <Card className="border-0 bg-transparent shadow-none">
-              <CardContent className="p-0">
-                <ChartContainer
-                  config={chartConfig}
-                  className="mx-auto aspect-square w-full max-w-[280px]"
-                >
-                  <RadialBarChart
-                    data={chartData}
-                    startAngle={-90}
-                    endAngle={380}
-                    innerRadius={30}
-                    outerRadius={110}
-                  >
-                    <ChartTooltip
-                      cursor={false}
-                      content={
-                        <ChartTooltipContent hideLabel nameKey="status" />
-                      }
-                    />
-
-                    <RadialBar dataKey="tickets" background>
-                      <LabelList
-                        position="insideStart"
-                        dataKey="status"
-                        className="fill-white capitalize mix-blend-luminosity"
-                        fontSize={11}
-                      />
-                    </RadialBar>
-                  </RadialBarChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </div> */}
-          <div className="col-span-1 min-w-0 rounded-xl border bg-gray-50 p-4 sm:p-5 lg:col-span-4">
-            <div className="flex w-full items-center justify-between">
-              <Label className="text-md">وضعیت تیکت‌ها</Label>
-            </div>
-
-            <Separator className="my-3" />
-
-            <Card className="border-0 bg-transparent shadow-none">
-              <CardContent className="p-0">
-                <ChartContainer
-                  config={chartConfig}
-                  className="mx-auto aspect-square w-full max-w-[280px]"
-                >
-                  <RadialBarChart
-                    data={chartData}
-                    startAngle={-90}
-                    endAngle={380}
-                    innerRadius={30}
-                    outerRadius={110}
-                  >
-                    <ChartTooltip
-                      cursor={false}
-                      content={
-                        <ChartTooltipContent hideLabel nameKey="status" />
-                      }
-                    />
-
-                    <RadialBar dataKey="tickets" background>
-                      <LabelList
-                        position="insideStart"
-                        dataKey="status"
-                        className="fill-white capitalize mix-blend-luminosity"
-                        fontSize={11}
-                      />
-                    </RadialBar>
-                  </RadialBarChart>
-                </ChartContainer>
-
-                {/* Legend */}
-                <div
-                  dir="rtl"
-                  className="mt-4 grid grid-cols-2  px-3 gap-x-4 gap-y-3"
-                >
-                  {chartData.map((item) => (
-                    <div
-                      key={item.status}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="h-3 w-3 shrink-0 rounded-full"
-                          style={{ backgroundColor: item.fill }}
-                        />
-
-                        <span className="text-xs text-gray-600">
-                          {item.status}
-                        </span>
-                      </div>
-
-                      <span className="text-xs font-semibold">
-                        {item.tickets}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <div className="col-span-1 min-w-0 lg:col-span-4">
+            <TicketStatusOverview data={chartData} />
           </div>
           {/* Customer rejected resolution */}
           <div className="col-span-1 min-w-0 rounded-xl border bg-gray-50 p-4 sm:p-5 lg:col-span-8">

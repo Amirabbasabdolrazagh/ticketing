@@ -177,7 +177,7 @@ export default function AllTickets() {
                 className="py-5 hover:bg-sky-400 hover:text-white"
               />
               <SheetContent
-                className="overflow-hidden rounded-[2rem] border border-white/70 bg-gradient-to-br from-white via-blue-50/95 to-violet-50/95 p-1 shadow-[0_30px_100px_rgba(30,64,175,0.3)] backdrop-blur-2xl data-[side=center]:left-1/2 data-[side=center]:top-1/2 data-[side=center]:w-[calc(100%-2rem)] data-[side=center]:max-w-2xl data-[side=center]:-translate-x-1/2 data-[side=center]:-translate-y-1/2"
+                className="ticket-create-modal max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[2rem] border border-white/70 bg-gradient-to-br from-white via-blue-50/95 to-violet-50/95 p-1 shadow-[0_30px_100px_rgba(30,64,175,0.3)] backdrop-blur-2xl data-[side=center]:left-1/2 data-[side=center]:top-1/2 data-[side=center]:w-[calc(100%-2rem)] data-[side=center]:max-w-2xl data-[side=center]:-translate-x-1/2 data-[side=center]:-translate-y-1/2 lg:overflow-hidden"
                 side="center"
                 dir="rtl"
               >

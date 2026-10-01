@@ -255,6 +255,63 @@
     -webkit-backdrop-filter: blur(28px) saturate(180%);
   }
 
+  .mobile-glass-header {
+    position: fixed;
+    z-index: 55;
+    top: max(0.65rem, env(safe-area-inset-top));
+    right: 50%;
+    display: flex;
+    width: min(32rem, calc(100vw - 1.25rem));
+    min-height: 4.6rem;
+    transform: translateX(50%);
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.78);
+    border-radius: 1.75rem;
+    background:
+      linear-gradient(110deg, rgb(242 246 251 / 0.72), rgb(255 255 255 / 0.46)),
+      rgb(255 255 255 / 0.28);
+    box-shadow:
+      0 16px 42px rgb(10 37 64 / 0.16),
+      inset 0 1px 0 rgb(255 255 255 / 0.96),
+      inset 0 -1px 0 rgb(13 110 253 / 0.08);
+    backdrop-filter: blur(22px) saturate(175%);
+    -webkit-backdrop-filter: blur(22px) saturate(175%);
+  }
+
+  .mobile-glass-header::after {
+    position: absolute;
+    right: 8%;
+    bottom: 0.22rem;
+    left: 8%;
+    height: 1px;
+    content: "";
+    background: linear-gradient(90deg, transparent, rgb(13 110 253 / 0.28), transparent);
+  }
+
+  .mobile-glass-header__glow {
+    position: absolute;
+    top: -2.5rem;
+    left: 12%;
+    width: 9rem;
+    height: 5rem;
+    border-radius: 999px;
+    background: rgb(13 110 253 / 0.16);
+    filter: blur(25px);
+  }
+
+  .ticket-create-modal {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .ticket-create-modal::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
   .liquid-bottom-nav__shine {
     position: absolute;
     inset: 0 8% auto;
