@@ -1,6 +1,7 @@
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
+// The sidebar switches to the compact bottom navigation on phones and tablets.
+const MOBILE_BREAKPOINT = 1024
 
 export function useIsMobile() {
   const query = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`

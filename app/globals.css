@@ -233,6 +233,144 @@
     backdrop-filter: blur(28px) saturate(165%);
     -webkit-backdrop-filter: blur(28px) saturate(165%);
   }
+
+  .liquid-bottom-nav {
+    position: fixed;
+    z-index: 60;
+    right: max(0.65rem, env(safe-area-inset-right));
+    bottom: max(0.65rem, env(safe-area-inset-bottom));
+    left: max(0.65rem, env(safe-area-inset-left));
+    overflow: hidden;
+    min-height: 5.45rem;
+    border: 1px solid rgb(255 255 255 / 0.82);
+    border-radius: 1.75rem;
+    background:
+      radial-gradient(circle at 18% 0%, rgb(13 110 253 / 0.18), transparent 38%),
+      linear-gradient(145deg, rgb(242 246 251 / 0.84), rgb(255 255 255 / 0.62));
+    box-shadow:
+      0 22px 55px rgb(10 37 64 / 0.2),
+      inset 0 1px 0 rgb(255 255 255 / 0.95),
+      inset 0 -1px 0 rgb(31 41 55 / 0.05);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+  }
+
+  .liquid-bottom-nav__shine {
+    position: absolute;
+    inset: 0 8% auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.95), transparent);
+  }
+
+  .liquid-bottom-nav__items {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--bottom-nav-count), minmax(0, 1fr));
+    align-items: center;
+    min-height: 5.45rem;
+    padding: 0.45rem 0.25rem 0.38rem;
+    direction: rtl;
+  }
+
+  .liquid-bottom-nav__item {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    height: 4.55rem;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    color: #1f2937;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 220ms ease, transform 260ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .liquid-bottom-nav__bubble {
+    position: relative;
+    display: flex;
+    width: 2.7rem;
+    height: 2.55rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 1.15rem 1.15rem 1.3rem 0.82rem;
+    transition: all 280ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .liquid-bottom-nav__icon {
+    width: 1.28rem;
+    height: 1.28rem;
+    transition: transform 260ms cubic-bezier(.22, 1, .36, 1);
+  }
+
+  .liquid-bottom-nav__label {
+    max-width: 100%;
+    overflow: hidden;
+    padding-inline: 0.1rem;
+    font-size: clamp(0.58rem, 2.6vw, 0.72rem);
+    font-weight: 750;
+    line-height: 1.05rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .liquid-bottom-nav__item.is-active {
+    color: #0a2540;
+    transform: translateY(-0.18rem);
+  }
+
+  .liquid-bottom-nav__item.is-active .liquid-bottom-nav__bubble {
+    width: 3.2rem;
+    height: 3rem;
+    border-color: rgb(255 255 255 / 0.72);
+    border-radius: 1.4rem 1.35rem 1.55rem 0.88rem;
+    color: #f2f6fb;
+    background:
+      radial-gradient(circle at 30% 18%, rgb(255 255 255 / 0.36), transparent 32%),
+      linear-gradient(145deg, #0d6efd 0%, #0a2540 62%, #1f2937 100%);
+    box-shadow:
+      0 12px 24px rgb(13 110 253 / 0.34),
+      inset 2px 2px 5px rgb(255 255 255 / 0.27),
+      inset -3px -4px 8px rgb(10 37 64 / 0.3);
+  }
+
+  .liquid-bottom-nav__item.is-active .liquid-bottom-nav__icon {
+    transform: scale(1.08);
+    filter: drop-shadow(0 2px 4px rgb(10 37 64 / 0.24));
+  }
+
+  .liquid-bottom-nav__badge {
+    position: absolute;
+    top: -0.28rem;
+    right: -0.38rem;
+    display: flex;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #f2f6fb;
+    border-radius: 999px;
+    background: #ef4444;
+    padding-inline: 0.18rem;
+    color: white;
+    font-size: 0.55rem;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgb(239 68 68 / 0.32);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .liquid-bottom-nav {
+    right: 50%;
+    left: auto;
+    width: min(46rem, calc(100vw - 2rem));
+    transform: translateX(50%);
+  }
+
+  .liquid-bottom-nav__label {
+    font-size: 0.75rem;
+  }
 }
 
 @media (max-width: 640px) {

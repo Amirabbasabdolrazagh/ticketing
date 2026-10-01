@@ -147,6 +147,7 @@ export default function SideBar() {
   ];
 
   return (
+    <>
     <Sidebar side="right" variant="floating" className="liquid-sidebar">
       <div className="pointer-events-none absolute -right-20 top-24 size-56 rounded-full bg-cyan-300/30 blur-3xl" />
       <div className="pointer-events-none absolute -left-16 bottom-32 size-52 rounded-full bg-violet-400/25 blur-3xl" />
@@ -231,5 +232,37 @@ export default function SideBar() {
         <p className="pt-3 text-center text-[10px] text-slate-400">سامانه مدیریت و پشتیبانی تیکت</p>
       </SidebarFooter>
     </Sidebar>
+
+    <nav className="liquid-bottom-nav lg:hidden" aria-label="منوی اصلی موبایل و تبلت">
+      <div className="liquid-bottom-nav__shine" aria-hidden="true" />
+      <div
+        className="liquid-bottom-nav__items"
+        style={{ "--bottom-nav-count": menuItems.length }}
+      >
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch
+              aria-current={item.active ? "page" : undefined}
+              className={`liquid-bottom-nav__item ${item.active ? "is-active" : ""}`}
+            >
+              <span className="liquid-bottom-nav__bubble">
+                <Icon className="liquid-bottom-nav__icon" strokeWidth={item.active ? 2.25 : 1.9} />
+                {item.badge > 0 && (
+                  <span className="liquid-bottom-nav__badge">
+                    {item.badge > 99 ? "+۹۹" : item.badge.toLocaleString("fa-IR")}
+                  </span>
+                )}
+              </span>
+              <span className="liquid-bottom-nav__label">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+    </>
   );
 }
