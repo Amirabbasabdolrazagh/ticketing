@@ -177,14 +177,14 @@ export default function AllTickets() {
                 className="py-5 hover:bg-sky-400 hover:text-white"
               />
               <SheetContent
-                className="ticket-create-modal max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[2rem] border border-white/70 bg-gradient-to-br from-white via-blue-50/95 to-violet-50/95 p-1 shadow-[0_30px_100px_rgba(30,64,175,0.3)] backdrop-blur-2xl data-[side=center]:left-1/2 data-[side=center]:top-1/2 data-[side=center]:w-[calc(100%-2rem)] data-[side=center]:max-w-2xl data-[side=center]:-translate-x-1/2 data-[side=center]:-translate-y-1/2 lg:overflow-hidden"
+                className="ticket-create-modal max-h-[min(36rem,calc(100dvh-2rem))] overflow-y-auto rounded-[1.65rem] border border-white/70 bg-gradient-to-br from-white via-blue-50/95 to-violet-50/95 p-1 shadow-[0_30px_100px_rgba(30,64,175,0.3)] backdrop-blur-2xl data-[side=center]:left-1/2 data-[side=center]:top-1/2 data-[side=center]:w-[calc(100%-2rem)] data-[side=center]:max-w-xl data-[side=center]:-translate-x-1/2 data-[side=center]:-translate-y-1/2"
                 side="center"
                 dir="rtl"
               >
                 <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-blue-400/20 blur-3xl" />
                 <div className="pointer-events-none absolute -bottom-20 -left-16 size-52 rounded-full bg-violet-500/20 blur-3xl" />
-                <SheetHeader className="relative flex flex-col items-center justify-center gap-2 border-b border-white/80 px-6 pb-5 pt-7 text-center">
-                  <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 text-2xl text-white shadow-lg shadow-blue-500/25">
+                <SheetHeader className="relative flex flex-col items-center justify-center gap-1.5 border-b border-white/80 px-5 pb-3 pt-4 text-center">
+                  <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-violet-600 text-xl text-white shadow-lg shadow-blue-500/25">
                     <MdLibraryAdd />
                   </span>
                   <SheetTitle className="text-xl font-black text-slate-900">ثبت درخواست جدید</SheetTitle>
@@ -210,7 +210,7 @@ export default function AllTickets() {
                     value={ticketMessage}
                     onChange={(e) => setTicketMessage(e.target.value)}
                     maxLength={5000}
-                    rows={4}
+                    rows={3}
                     placeholder="مشکل یا درخواست خود را با جزئیات بنویسید؛ این متن اولین پیام گفت‌وگو خواهد بود."
                     className="w-full resize-none rounded-2xl border border-slate-200 bg-white/80 p-3 text-sm leading-6 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   />
@@ -258,7 +258,7 @@ export default function AllTickets() {
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </Field>
-                <SheetFooter className="relative border-t border-white/80 bg-white/40">
+                <SheetFooter className="sticky bottom-0 z-10 border-t border-white/80 bg-white/75 py-2 backdrop-blur-xl">
                   <Button
                     variant="outline"
                     className="h-12 w-full rounded-xl border-0 bg-gradient-to-l from-blue-600 to-violet-600 font-black text-white shadow-lg shadow-blue-500/20 hover:from-blue-700 hover:to-violet-700 hover:text-white"

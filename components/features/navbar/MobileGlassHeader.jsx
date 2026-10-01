@@ -10,7 +10,7 @@ export default function MobileGlassHeader() {
         height={87}
         alt="پشتیبانی آی‌تی رسام"
         priority
-        className="relative h-auto w-44 object-contain sm:w-52"
+        className="mobile-glass-header__logo relative h-auto w-44 object-contain sm:w-52"
       />
     </header>
   );

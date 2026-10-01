@@ -262,7 +262,7 @@
     right: 50%;
     display: flex;
     width: min(32rem, calc(100vw - 1.25rem));
-    min-height: 4.6rem;
+    min-height: 4.35rem;
     transform: translateX(50%);
     align-items: center;
     justify-content: center;
@@ -270,14 +270,14 @@
     border: 1px solid rgb(255 255 255 / 0.78);
     border-radius: 1.75rem;
     background:
-      linear-gradient(110deg, rgb(242 246 251 / 0.72), rgb(255 255 255 / 0.46)),
-      rgb(255 255 255 / 0.28);
+      linear-gradient(110deg, rgb(248 252 255 / 0.94), rgb(242 248 253 / 0.86)),
+      rgb(255 255 255 / 0.84);
     box-shadow:
       0 16px 42px rgb(10 37 64 / 0.16),
       inset 0 1px 0 rgb(255 255 255 / 0.96),
       inset 0 -1px 0 rgb(13 110 253 / 0.08);
-    backdrop-filter: blur(22px) saturate(175%);
-    -webkit-backdrop-filter: blur(22px) saturate(175%);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
   }
 
   .mobile-glass-header::after {
@@ -301,7 +301,13 @@
     filter: blur(25px);
   }
 
+  .mobile-glass-header__logo {
+    opacity: 1;
+    filter: contrast(1.16) saturate(1.18) drop-shadow(0 2px 2px rgb(10 37 64 / 0.08));
+  }
+
   .ticket-create-modal {
+    gap: 0.55rem;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
