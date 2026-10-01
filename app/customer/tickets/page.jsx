@@ -177,16 +177,22 @@ export default function AllTickets() {
                 className="py-5 hover:bg-sky-400 hover:text-white"
               />
               <SheetContent
-                className="overflow-y-auto data-[side=bottom]:max-h-[90vh] data-[side=top]:max-h-[90vh]"
-                side="left"
+                className="overflow-y-auto rounded-[2rem] border border-white/70 bg-gradient-to-br from-white via-blue-50/95 to-violet-50/95 p-1 shadow-[0_30px_100px_rgba(30,64,175,0.3)] backdrop-blur-2xl data-[side=center]:left-1/2 data-[side=center]:top-1/2 data-[side=center]:max-h-[90vh] data-[side=center]:w-[calc(100%-2rem)] data-[side=center]:max-w-2xl data-[side=center]:-translate-x-1/2 data-[side=center]:-translate-y-1/2"
+                side="center"
+                dir="rtl"
               >
-                <SheetHeader className="flex flex-col justify-end items-center">
-                  <SheetTitle>ساخت تیکت جدید</SheetTitle>
-                  <SheetDescription>
-                    یک تیکت جدید بسازید و اولویت آن را مشخص کنید
+                <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-blue-400/20 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-20 -left-16 size-52 rounded-full bg-violet-500/20 blur-3xl" />
+                <SheetHeader className="relative flex flex-col items-center justify-center gap-2 border-b border-white/80 px-6 pb-5 pt-7 text-center">
+                  <span className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 text-2xl text-white shadow-lg shadow-blue-500/25">
+                    <MdLibraryAdd />
+                  </span>
+                  <SheetTitle className="text-xl font-black text-slate-900">ثبت درخواست جدید</SheetTitle>
+                  <SheetDescription className="leading-6">
+                    موضوع و شرح درخواست را وارد کنید تا مستقیماً برای پشتیبان ارسال شود.
                   </SheetDescription>
                 </SheetHeader>
-                <Field>
+                <Field className="relative mt-2">
                   <FieldContent  className="px-5">
                     <FieldLabel>عنوان تیکت</FieldLabel>
                     <Input
@@ -252,10 +258,10 @@ export default function AllTickets() {
                     </ToggleGroupItem>
                   </ToggleGroup>
                 </Field>
-                <SheetFooter>
+                <SheetFooter className="relative border-t border-white/80 bg-white/40">
                   <Button
                     variant="outline"
-                    className={"bg-blue-400 text-white"}
+                    className="h-12 w-full rounded-xl border-0 bg-gradient-to-l from-blue-600 to-violet-600 font-black text-white shadow-lg shadow-blue-500/20 hover:from-blue-700 hover:to-violet-700 hover:text-white"
                     type="button"
                     onClick={createTicket}
                     disabled={isCreating}

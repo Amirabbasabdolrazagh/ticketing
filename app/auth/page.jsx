@@ -214,13 +214,36 @@ export default function AuthPage() {
       setResetLoading(false);
     }
   };
+  const loginMethodSelector = (
+    <div className="grid grid-cols-2 gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-1.5">
+      <button
+        type="button"
+        onClick={() => {
+          setPhoneLoginMethod("otp");
+          setPhonePassword("");
+        }}
+        className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-sm font-bold transition ${phoneLoginMethod === "otp" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-blue-700"}`}
+      >
+        <MessageSquareText className="size-4" />
+        کد یک‌بارمصرف
+      </button>
+      <button
+        type="button"
+        onClick={() => setPhoneLoginMethod("password")}
+        className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-sm font-bold transition ${phoneLoginMethod === "password" ? "bg-white text-violet-700 shadow-sm" : "text-slate-500 hover:text-violet-700"}`}
+      >
+        <LockKeyhole className="size-4" />
+        رمز عبور
+      </button>
+    </div>
+  );
   return (
     <>
       <Toaster />
       <section className="fixed inset-0 flex min-h-svh w-full items-center justify-center overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.2),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,.16),transparent_38%)] p-4">
         {!isSentCode && !signwithEmail && !resetStep && (
           <div className="glass-panel flex w-full max-w-md flex-col gap-4 p-6 sm:p-8">
-            <h1 className="bg-gradient-to-l from-blue-600 to-violet-600 bg-clip-text text-center text-3xl font-black text-transparent">ای تی رسام</h1>
+            <h1 className="bg-gradient-to-l from-blue-600 to-violet-600 bg-clip-text text-center text-3xl font-black text-transparent">پشتیبانی آی تی رسام</h1>
             <p>ورود | ثبت نام</p>
             <p className="text-sm text-gray-400">
               لطفا شماره موبایل خود را وارد کنید
@@ -236,39 +259,20 @@ export default function AuthPage() {
                 autoComplete="off"
                 placeholder="09xxxxxxxxx"
               />
-              <div className="grid grid-cols-2 gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPhoneLoginMethod("otp");
-                    setPhonePassword("");
-                  }}
-                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-sm font-bold transition ${phoneLoginMethod === "otp" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-blue-700"}`}
-                >
-                  <MessageSquareText className="size-4" />
-                  کد یک‌بارمصرف
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPhoneLoginMethod("password")}
-                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-sm font-bold transition ${phoneLoginMethod === "password" ? "bg-white text-violet-700 shadow-sm" : "text-slate-500 hover:text-violet-700"}`}
-                >
-                  <LockKeyhole className="size-4" />
-                  رمز عبور
-                </button>
-              </div>
-
               {phoneLoginMethod === "otp" ? (
-                <form action={formAction}>
-                  <input type="hidden" name="phone" value={phone} />
-                  <button
-                    type="submit"
-                    disabled={!isValidPhone(phone) || isPending}
-                    className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-l from-blue-600 to-violet-600 px-3 py-3 font-bold text-white shadow-lg shadow-blue-500/20 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-400"
-                  >
-                    {isPending ? <PulseLoader color="white" /> : "ارسال کد یک‌بارمصرف"}
-                  </button>
-                </form>
+                <>
+                  {loginMethodSelector}
+                  <form action={formAction}>
+                    <input type="hidden" name="phone" value={phone} />
+                    <button
+                      type="submit"
+                      disabled={!isValidPhone(phone) || isPending}
+                      className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-l from-blue-600 to-violet-600 px-3 py-3 font-bold text-white shadow-lg shadow-blue-500/20 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-400"
+                    >
+                      {isPending ? <PulseLoader color="white" /> : "ارسال کد یک‌بارمصرف"}
+                    </button>
+                  </form>
+                </>
               ) : (
                 <form onSubmit={verifyPhonePassword} className="flex flex-col gap-3">
                   <div className="relative">
@@ -282,6 +286,7 @@ export default function AuthPage() {
                       className="h-12 rounded-xl bg-white/80 pr-11"
                     />
                   </div>
+                  {loginMethodSelector}
                   <button
                     type="submit"
                     disabled={!isValidPhone(phone) || !phonePassword || phonePasswordLoading}
@@ -319,7 +324,7 @@ export default function AuthPage() {
         )}
         {isSentCode && (
           <div className="glass-panel box-border flex w-full max-w-md flex-col gap-4 p-6 sm:p-8">
-            <h1 className="text-2xl text-center">ای تی رسام</h1>
+            <h1 className="text-2xl text-center">پشتیبانی آی تی رسام</h1>
             <div className="flex flex-row-reverse">
               <FaArrowLeft
                 className="border rounded-sm"
@@ -365,7 +370,7 @@ export default function AuthPage() {
         {signwithEmail && !isSentCode && !resetStep && (
           <div className="glass-panel w-full max-w-md rounded-3xl px-6 py-7 sm:px-8">
             <div>
-              <h1 className="text-2xl text-center">ای تی رسام</h1>
+              <h1 className="text-2xl text-center">پشتیبانی آی تی رسام</h1>
               <p>ورورد با ایمیل</p>
             </div>
 
@@ -435,6 +440,7 @@ export default function AuthPage() {
             <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-blue-400/25 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-20 -left-16 size-48 rounded-full bg-violet-500/20 blur-3xl" />
             <div className="relative">
+              <p className="mb-4 text-center text-sm font-black text-blue-700">پشتیبانی آی تی رسام</p>
               <button
                 type="button"
                 onClick={() => setResetStep(resetStep === "confirm" ? "request" : null)}

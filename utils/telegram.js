@@ -30,8 +30,9 @@ export async function sendTelegramMessage(chatId, text) {
         }),
       },
     );
-    if (!response.ok) {
-      console.log("TELEGRAM SEND ERROR:", await response.text());
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok === false) {
+      console.log("TELEGRAM SEND ERROR:", response.status, result.description || result.message);
       return { sent: false, reason: "telegram-error" };
     }
     return { sent: true };
