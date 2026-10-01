@@ -1,3 +1,5 @@
+import { forceRtlLines, htmlToBaleMarkdown } from "@/utils/messageFormatting";
+
 export async function sendBaleMessage(chatId, text) {
   const token = process.env.BALE_BOT_TOKEN;
   if (!token || !chatId) return { sent: false, reason: "not-configured" };
@@ -10,8 +12,8 @@ export async function sendBaleMessage(chatId, text) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
-          text,
-          parse_mode: "HTML",
+          text: forceRtlLines(htmlToBaleMarkdown(text)),
+          parse_mode: "Markdown",
           disable_web_page_preview: true,
         }),
       },

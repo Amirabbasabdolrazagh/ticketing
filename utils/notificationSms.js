@@ -1,3 +1,5 @@
+import { forceRtlLines } from "@/utils/messageFormatting";
+
 const SMS_URL = "https://api.iranpayamak.com/ws/v1/sms/simple";
 
 function toPlainText(html) {
@@ -18,7 +20,9 @@ export async function sendNotificationSms(phone, notificationText) {
   }
 
   try {
-    const text = `${toPlainText(notificationText)}\nسامانه پشتیبانی ای تی رسام`;
+    const text = forceRtlLines(
+      `${toPlainText(notificationText)}\nسامانه پشتیبانی ای تی رسام`,
+    );
     const response = await fetch(SMS_URL, {
       method: "POST",
       headers: {

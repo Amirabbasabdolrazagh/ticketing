@@ -1,3 +1,5 @@
+import { forceRtlLines } from "@/utils/messageFormatting";
+
 function escapeTelegramHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -22,7 +24,7 @@ export async function sendTelegramMessage(chatId, text) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: chatId,
-          text,
+          text: forceRtlLines(text),
           parse_mode: "HTML",
           disable_web_page_preview: true,
         }),
