@@ -10,8 +10,17 @@ import ProjectCounter from "@/models/projectCounter";
 import User from "@/models/users";
 import { classifyService, ensureDefaultServices } from "@/utils/serviceCatalog";
 import { systemMessage } from "@/utils/createSystemMessage";
-import { assignmentTelegramText, customerMessageTelegramText } from "@/utils/telegram";
-import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
+import {
+  assignmentTelegramText,
+  customerMessageTelegramText,
+  ticketCreatedAdminText,
+  ticketCreatedCustomerText,
+} from "@/utils/telegram";
+import {
+  messengerUserSelect,
+  sendBotNotification,
+  sendMessengerNotification,
+} from "@/utils/messenger";
 import TicketMessage from "@/models/ticketMessage";
 
 export const runtime = "nodejs";
@@ -167,6 +176,27 @@ export async function POST(req) {
         serviceName: service.name,
       }),
     );
+    const [customerAccount, admins] = await Promise.all([
+      User.findById(user._id).select(`name phone ${messengerUserSelect}`),
+      User.find({ role: "admin" }).select(`name ${messengerUserSelect}`),
+    ]);
+    await Promise.all([
+      sendBotNotification(
+        customerAccount,
+        ticketCreatedCustomerText({ ticket }),
+      ),
+      ...admins.map((admin) =>
+        sendBotNotification(
+          admin,
+          ticketCreatedAdminText({
+            ticket,
+            customer: customerAccount,
+            serviceName: service.name,
+            message: message.trim(),
+          }),
+        ),
+      ),
+    ]);
 
     return Response.json(
       {

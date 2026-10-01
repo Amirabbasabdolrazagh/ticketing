@@ -53,6 +53,41 @@ export function assignmentTelegramText({ ticket, projectName }) {
   ].join("\n");
 }
 
+export function ticketCreatedCustomerText({ ticket }) {
+  return [
+    "✅ <b>تیکت شما با موفقیت ثبت شد</b>",
+    "",
+    `🎫 شماره تیکت: <b>${escapeTelegramHtml(ticket.ticketNumber || ticket._id)}</b>`,
+    `📌 عنوان: ${escapeTelegramHtml(ticket.title)}`,
+    "⏳ لطفاً منتظر پاسخ پشتیبان باشید.",
+  ].join("\n");
+}
+
+export function ticketCreatedAdminText({ ticket, customer, serviceName, message }) {
+  const priority = { low: "کم", medium: "متوسط", high: "زیاد" }[ticket.priority] || "متوسط";
+  const createdAt = new Intl.DateTimeFormat("fa-IR-u-nu-latn", {
+    timeZone: "Asia/Tehran",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(ticket.createdAt));
+  const normalizedMessage = String(message ?? "").replace(/\s+/g, " ").trim();
+  const preview = normalizedMessage.length > 500
+    ? `${normalizedMessage.slice(0, 500)}…`
+    : normalizedMessage;
+  return [
+    "🆕 <b>تیکت جدیدی ثبت شد</b>",
+    "",
+    `🎫 شماره تیکت: <b>${escapeTelegramHtml(ticket.ticketNumber || ticket._id)}</b>`,
+    `📌 عنوان: ${escapeTelegramHtml(ticket.title)}`,
+    `📁 خدمت: ${escapeTelegramHtml(serviceName || "بدون خدمت")}`,
+    `⚡ اولویت: ${escapeTelegramHtml(priority)}`,
+    `👤 مشتری: ${escapeTelegramHtml(customer?.name || "مشتری")}`,
+    `📱 شماره تماس: ${escapeTelegramHtml(customer?.phone || "ثبت نشده")}`,
+    `🕒 زمان ثبت: ${escapeTelegramHtml(createdAt)}`,
+    `✉️ شرح درخواست: ${escapeTelegramHtml(preview)}`,
+  ].join("\n");
+}
+
 export function customerMessageTelegramText({ ticket, message, customerName, serviceName }) {
   return [
     "💬 <b>پیام جدید از مشتری</b>",
