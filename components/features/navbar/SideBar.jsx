@@ -9,6 +9,7 @@ import {
   BellRing,
   LayoutDashboard,
   LogOut,
+  MessageCircle,
   Settings2,
   Sparkles,
   TicketCheck,
@@ -37,6 +38,7 @@ const roleLabels = {
 export default function SideBar() {
   const [user, setUser] = useState(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -60,6 +62,12 @@ export default function SideBar() {
     const presenceInterval = window.setInterval(heartbeat, 30000);
     return () => window.clearInterval(presenceInterval);
   }, [user?.role]);
+
+  useEffect(() => {
+    const handleLiveChatState = (event) => setIsLiveChatOpen(Boolean(event.detail?.isOpen));
+    window.addEventListener("live-chat-state", handleLiveChatState);
+    return () => window.removeEventListener("live-chat-state", handleLiveChatState);
+  }, []);
 
   useEffect(() => {
     if (!user?.role) return;
@@ -145,6 +153,23 @@ export default function SideBar() {
       active: pathname.startsWith(`/${userRole}/setting`),
     },
   ];
+  const bottomMenuItems = [
+    ...menuItems,
+    ...(["admin", "agent"].includes(userRole)
+      ? [
+          {
+            label: "چت داخلی",
+            icon: MessageCircle,
+            active: isLiveChatOpen,
+            action: "live-chat",
+          },
+        ]
+      : []),
+  ];
+
+  function toggleLiveChat() {
+    window.dispatchEvent(new Event("live-chat-toggle"));
+  }
 
   return (
     <>
@@ -237,18 +262,12 @@ export default function SideBar() {
       <div className="liquid-bottom-nav__shine" aria-hidden="true" />
       <div
         className="liquid-bottom-nav__items"
-        style={{ "--bottom-nav-count": menuItems.length }}
+        style={{ "--bottom-nav-count": bottomMenuItems.length }}
       >
-        {menuItems.map((item) => {
+        {bottomMenuItems.map((item) => {
           const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch
-              aria-current={item.active ? "page" : undefined}
-              className={`liquid-bottom-nav__item ${item.active ? "is-active" : ""}`}
-            >
+          const content = (
+            <>
               <span className="liquid-bottom-nav__bubble">
                 <Icon className="liquid-bottom-nav__icon" strokeWidth={item.active ? 2.25 : 1.9} />
                 {item.badge > 0 && (
@@ -258,6 +277,32 @@ export default function SideBar() {
                 )}
               </span>
               <span className="liquid-bottom-nav__label">{item.label}</span>
+            </>
+          );
+
+          if (item.action === "live-chat") {
+            return (
+              <button
+                key={item.action}
+                type="button"
+                onClick={toggleLiveChat}
+                aria-pressed={item.active}
+                className={`liquid-bottom-nav__item ${item.active ? "is-active" : ""}`}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch
+              aria-current={item.active ? "page" : undefined}
+              className={`liquid-bottom-nav__item ${item.active ? "is-active" : ""}`}
+            >
+              {content}
             </Link>
           );
         })}

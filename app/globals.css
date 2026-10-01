@@ -282,6 +282,10 @@
     justify-content: center;
     gap: 0.2rem;
     color: #1f2937;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
     -webkit-tap-highlight-color: transparent;
     transition: color 220ms ease, transform 260ms cubic-bezier(.22, 1, .36, 1);
   }

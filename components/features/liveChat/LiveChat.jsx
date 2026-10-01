@@ -103,6 +103,16 @@ export default function LiveChat() {
   }, []);
 
   useEffect(() => {
+    const toggleFromNavigation = () => setIsOpen((open) => !open);
+    window.addEventListener("live-chat-toggle", toggleFromNavigation);
+    return () => window.removeEventListener("live-chat-toggle", toggleFromNavigation);
+  }, []);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("live-chat-state", { detail: { isOpen } }));
+  }, [isOpen]);
+
+  useEffect(() => {
     if (isOpen && selectedContact) endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen, selectedContact]);
 
@@ -149,7 +159,7 @@ export default function LiveChat() {
       )}
 
       {isOpen && (
-        <section className="fixed bottom-20 left-5 z-[90] flex h-[32rem] w-[42rem] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border bg-white shadow-2xl">
+        <section className="fixed bottom-28 left-5 z-[90] flex h-[min(32rem,calc(100dvh-8.5rem))] w-[42rem] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border bg-white shadow-2xl lg:bottom-20 lg:h-[32rem]">
           <aside className={`${selectedContact ? "hidden sm:flex" : "flex"} w-full flex-col border-l sm:w-56`}>
             <div className="flex items-center gap-2 border-b bg-gray-50 px-4 py-4">
               <Users className="size-5 text-blue-600" />
@@ -203,7 +213,7 @@ export default function LiveChat() {
         </section>
       )}
 
-      <button type="button" onClick={() => setIsOpen((open) => !open)} className="fixed bottom-5 left-5 z-[90] flex size-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700" aria-label="چت آنلاین">
+      <button type="button" onClick={() => setIsOpen((open) => !open)} className="fixed bottom-5 left-5 z-[90] hidden size-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 lg:flex" aria-label="چت آنلاین">
         {isOpen ? <X className="size-5" /> : <MessageCircle className="size-6" />}
       </button>
     </>
