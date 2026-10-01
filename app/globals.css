@@ -267,27 +267,31 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border: 1px solid rgb(255 255 255 / 0.78);
+    border: 1px solid rgb(255 255 255 / 0.68);
     border-radius: 1.75rem;
     background:
-      linear-gradient(110deg, rgb(248 252 255 / 0.94), rgb(242 248 253 / 0.86)),
-      rgb(255 255 255 / 0.84);
+      radial-gradient(circle at 22% 0%, rgb(255 255 255 / 0.42), transparent 42%),
+      linear-gradient(115deg, rgb(255 255 255 / 0.2), rgb(242 246 251 / 0.08));
     box-shadow:
-      0 16px 42px rgb(10 37 64 / 0.16),
-      inset 0 1px 0 rgb(255 255 255 / 0.96),
-      inset 0 -1px 0 rgb(13 110 253 / 0.08);
-    backdrop-filter: blur(18px) saturate(145%);
-    -webkit-backdrop-filter: blur(18px) saturate(145%);
+      0 18px 48px rgb(10 37 64 / 0.14),
+      0 2px 5px rgb(255 255 255 / 0.3),
+      inset 0 1.5px 0 rgb(255 255 255 / 0.92),
+      inset 0 -1.5px 0 rgb(10 37 64 / 0.1),
+      inset 8px 0 18px rgb(255 255 255 / 0.16),
+      inset -8px 0 18px rgb(13 110 253 / 0.05);
+    backdrop-filter: blur(14px) saturate(175%) contrast(105%);
+    -webkit-backdrop-filter: blur(14px) saturate(175%) contrast(105%);
   }
 
   .mobile-glass-header::after {
     position: absolute;
     right: 8%;
-    bottom: 0.22rem;
+    bottom: 0.18rem;
     left: 8%;
     height: 1px;
     content: "";
-    background: linear-gradient(90deg, transparent, rgb(13 110 253 / 0.28), transparent);
+    background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.9), rgb(13 110 253 / 0.2), transparent);
+    filter: blur(0.2px);
   }
 
   .mobile-glass-header__glow {
@@ -297,7 +301,7 @@
     width: 9rem;
     height: 5rem;
     border-radius: 999px;
-    background: rgb(13 110 253 / 0.16);
+    background: rgb(13 110 253 / 0.1);
     filter: blur(25px);
   }
 
