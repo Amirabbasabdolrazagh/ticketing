@@ -6,34 +6,44 @@ import jwt from "jsonwebtoken";
 import { isProfileComplete } from "@/utils/profileCompletion";
 export async function POST(req) {
   try {
-    const { email, password } = await req.json();
+    const { email, phone, password } = await req.json();
     await ConnectDb();
 
-    if (
-      typeof email !== "string" ||
-      typeof password !== "string" ||
-      !email.trim() ||
-      !password
-    ) {
+    const hasEmail = typeof email === "string" && email.trim();
+    const hasPhone = typeof phone === "string" && phone.trim();
+    if ((!hasEmail && !hasPhone) || typeof password !== "string" || !password) {
       return Response.json(
         {
           success: false,
-          message: "email and password are required",
+          message: "شماره موبایل یا ایمیل و رمز عبور الزامی است",
         },
         { status: 400 },
       );
     }
-    const normalizedEmail = email.trim().toLowerCase();
+    if (hasPhone && !/^09\d{9}$/.test(phone.trim())) {
+      return Response.json(
+        { success: false, message: "شماره موبایل معتبر نیست" },
+        { status: 400 },
+      );
+    }
 
-    const user = await User.findOne({
-      email: normalizedEmail,
-    }).select("+password");
+    const user = await User.findOne(
+      hasPhone
+        ? { phone: phone.trim() }
+        : { email: email.trim().toLowerCase() },
+    ).select("+password");
 
 
     if (!user) {
       return Response.json(
-        { success: false, message: "invalid email or password" },
+        { success: false, message: hasPhone ? "شماره موبایل یا رمز عبور نادرست است" : "ایمیل یا رمز عبور نادرست است" },
         { status: 401 },
+      );
+    }
+    if (!user.password) {
+      return Response.json(
+        { success: false, message: "برای این حساب رمز عبور تعریف نشده است؛ از کد یک‌بارمصرف استفاده کنید" },
+        { status: 400 },
       );
     }
 
@@ -42,7 +52,7 @@ export async function POST(req) {
       return Response.json(
         {
           success: false,
-          message: "invalid email or password",
+          message: hasPhone ? "شماره موبایل یا رمز عبور نادرست است" : "ایمیل یا رمز عبور نادرست است",
         },
         {
           status: 401,
@@ -108,7 +118,7 @@ export async function POST(req) {
     return Response.json(
       {
         success: true,
-        message: "user logged in successfully",
+        message: "ورود با موفقیت انجام شد",
         user: {
           id: user._id.toString(),
           name: user.name,
@@ -122,7 +132,7 @@ export async function POST(req) {
       { status: 200 },
     );
   } catch (error) {
-    console.error("EMAIL LOGIN ERROR:", error);
+    console.error("PASSWORD LOGIN ERROR:", error);
 
     return Response.json(
       {

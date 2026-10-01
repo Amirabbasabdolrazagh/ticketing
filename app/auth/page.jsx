@@ -11,12 +11,15 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, KeyRound, LockKeyhole, Phone, ShieldCheck } from "lucide-react";
+import { ArrowRight, KeyRound, LockKeyhole, MessageSquareText, Phone, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 export default function AuthPage() {
   let initialState = { success: null, message: "" };
   const [phone, setPhone] = useState("");
+  const [phoneLoginMethod, setPhoneLoginMethod] = useState("otp");
+  const [phonePassword, setPhonePassword] = useState("");
+  const [phonePasswordLoading, setPhonePasswordLoading] = useState(false);
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loadingResend, setLoadingResend] = useState(false);
   const [signwithEmail, setSingWithEmail] = useState(false);
@@ -146,6 +149,30 @@ export default function AuthPage() {
       toast.error(error.response?.data?.message || "ورود ناموفق بود");
     }
   };
+  const verifyPhonePassword = async (event) => {
+    event.preventDefault();
+    if (!isValidPhone(phone) || !phonePassword) {
+      toast.error("شماره موبایل و رمز عبور را کامل وارد کنید");
+      return;
+    }
+    try {
+      setPhonePasswordLoading(true);
+      const { data } = await axios.post("/api/auth/login", {
+        phone: phone.trim(),
+        password: phonePassword,
+      });
+      toast.success(data.message);
+      router.replace(
+        data.user.profileComplete
+          ? `/${data.user.role}/dashboard`
+          : `/${data.user.role}/setting`,
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.message || "ورود ناموفق بود");
+    } finally {
+      setPhonePasswordLoading(false);
+    }
+  };
   const requestPasswordReset = async () => {
     try {
       setResetLoading(true);
@@ -196,22 +223,73 @@ export default function AuthPage() {
             <p className="text-sm text-gray-400">
               لطفا شماره موبایل خود را وارد کنید
             </p>
-            <form action={formAction} className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3">
               <input
                 type="text"
                 className="h-12 rounded-xl border border-slate-300 bg-white/80 px-3 py-3 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                 onChange={(e) => setPhone(e.target.value)}
-                name="phone"
+                value={phone}
+                inputMode="numeric"
+                maxLength={11}
                 autoComplete="off"
+                placeholder="09xxxxxxxxx"
               />
-              <button
-                type="submit"
-                disabled={isValidPhone(phone) ? false : true}
-                className="flex h-12 items-center justify-center rounded-xl bg-gradient-to-l from-blue-600 to-violet-600 px-3 py-3 font-bold text-white shadow-lg shadow-blue-500/20 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-400"
-              >
-                {isPending ? <PulseLoader color="white" /> : "ارسال کد"}
-              </button>
-            </form>
+              <div className="grid grid-cols-2 gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhoneLoginMethod("otp");
+                    setPhonePassword("");
+                  }}
+                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-sm font-bold transition ${phoneLoginMethod === "otp" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-blue-700"}`}
+                >
+                  <MessageSquareText className="size-4" />
+                  کد یک‌بارمصرف
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPhoneLoginMethod("password")}
+                  className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-2 text-sm font-bold transition ${phoneLoginMethod === "password" ? "bg-white text-violet-700 shadow-sm" : "text-slate-500 hover:text-violet-700"}`}
+                >
+                  <LockKeyhole className="size-4" />
+                  رمز عبور
+                </button>
+              </div>
+
+              {phoneLoginMethod === "otp" ? (
+                <form action={formAction}>
+                  <input type="hidden" name="phone" value={phone} />
+                  <button
+                    type="submit"
+                    disabled={!isValidPhone(phone) || isPending}
+                    className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-l from-blue-600 to-violet-600 px-3 py-3 font-bold text-white shadow-lg shadow-blue-500/20 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-400"
+                  >
+                    {isPending ? <PulseLoader color="white" /> : "ارسال کد یک‌بارمصرف"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={verifyPhonePassword} className="flex flex-col gap-3">
+                  <div className="relative">
+                    <LockKeyhole className="absolute right-3 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      type="password"
+                      value={phonePassword}
+                      onChange={(event) => setPhonePassword(event.target.value)}
+                      placeholder="رمز عبور حساب"
+                      autoComplete="current-password"
+                      className="h-12 rounded-xl bg-white/80 pr-11"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!isValidPhone(phone) || !phonePassword || phonePasswordLoading}
+                    className="flex h-12 items-center justify-center rounded-xl bg-gradient-to-l from-violet-600 to-blue-600 px-3 py-3 font-bold text-white shadow-lg shadow-violet-500/20 disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-400"
+                  >
+                    {phonePasswordLoading ? <PulseLoader color="white" /> : "ورود با رمز عبور"}
+                  </button>
+                </form>
+              )}
+            </div>
             <Link
               href="/auth?method=email"
               onClick={() => {
