@@ -13,6 +13,7 @@ import {
   Sparkles,
   TicketCheck,
   UsersRound,
+  UserRoundPlus,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import {
@@ -122,6 +123,13 @@ export default function SideBar() {
             href: "/admin/users",
             icon: UsersRound,
             active: pathname.startsWith("/admin/users"),
+          },
+          {
+            label: "بازاریابی و فروش",
+            description: "سرنخ‌ها و پیگیری مشتریان",
+            href: "/admin/leads",
+            icon: UserRoundPlus,
+            active: pathname.startsWith("/admin/leads"),
           },
         ]
       : []),
