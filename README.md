@@ -12,6 +12,26 @@ curl -X POST "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
 
 Each support agent must open Settings and select **اتصال حساب تلگرام** once. Telegram bots cannot initiate a conversation from a phone number alone; starting and linking the bot is required by Telegram.
 
+## Public website customer-lead intake
+
+The corporate website can register prospective customers through:
+
+```text
+POST /api/public/leads
+```
+
+Set the production origin explicitly (the safe default is already the corporate site):
+
+```bash
+PUBLIC_INTAKE_ORIGIN=https://itrasam.com
+```
+
+The endpoint accepts `name`, `phone`, and `message`, validates Iranian mobile
+numbers, limits repeated submissions per mobile number, and stores a new lead
+with `source: "website"`. Leads are kept separate from support tickets and are
+available to administrators at `/admin/leads`, where their follow-up status can
+be managed.
+
 ## Getting Started
 
 First, run the development server:
