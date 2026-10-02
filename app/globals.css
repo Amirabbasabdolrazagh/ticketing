@@ -334,6 +334,15 @@
     height: 0;
   }
 
+  @media (max-width: 1023px) {
+    body:has(.ticket-create-modal) .liquid-bottom-nav {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(1rem);
+    }
+  }
+
   .liquid-bottom-nav__shine {
     position: absolute;
     inset: 0 8% auto;

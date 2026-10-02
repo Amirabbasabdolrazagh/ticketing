@@ -183,9 +183,9 @@ export default function AdminSetting() {
       <Toaster />
       <ProfileCompletionNotice required={user.profileComplete === false} />
       {/* Header */}
-      <div  className="glass-panel text-right relative mx-auto mt-5 w-full max-w-[96rem] overflow-hidden p-5 text-end sm:p-7">
+      <div dir="rtl" className="glass-panel relative mx-auto mt-5 w-full max-w-[96rem] overflow-hidden p-5 text-right sm:p-7">
         <div className="pointer-events-none absolute -left-16 -top-20 size-52 rounded-full bg-blue-400/20 blur-3xl" />
-        <div className="relative">
+        <div className="relative flex flex-col items-start">
           <span className="mb-2 inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">مرکز حساب کاربری</span>
           <h1 className="page-heading">تنظیمات</h1>
           <p className="mt-2 text-sm text-slate-500 sm:text-base">اطلاعات شخصی، امنیت حساب و کانال‌های اطلاع‌رسانی خود را مدیریت کنید.</p>
