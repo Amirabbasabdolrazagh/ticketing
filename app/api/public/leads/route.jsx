@@ -1,5 +1,7 @@
 import Lead from "@/models/leads";
+import User from "@/models/users";
 import ConnectDb from "@/utils/connectDB";
+import { sendBaleMessage } from "@/utils/bale";
 
 export const runtime = "nodejs";
 const ALLOWED_ORIGIN = process.env.PUBLIC_INTAKE_ORIGIN || "https://itrasam.com";
@@ -13,6 +15,31 @@ const normalizePhone = (value = "") => {
   return latin;
 };
 const clean = (value = "") => String(value).replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+
+async function notifyBaleAdmins(lead) {
+  const admins = await User.find({ role: "admin", baleChatId: { $exists: true, $nin: [null, ""] } })
+    .select("+baleChatId")
+    .lean();
+  if (!admins.length) return;
+
+  const createdAt = new Intl.DateTimeFormat("fa-IR-u-nu-latn", {
+    timeZone: "Asia/Tehran",
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(lead.createdAt));
+  const text = [
+    "🆕 سرنخ جدید بازاریابی و فروش",
+    "",
+    `👤 نام: ${lead.name}`,
+    `📱 موبایل: ${lead.phone}`,
+    `📝 درخواست: ${lead.message}`,
+    `🕒 زمان ثبت: ${createdAt}`,
+    `📌 وضعیت: جدید`,
+    `🔗 شناسه: ${lead._id}`,
+  ].join("\n");
+
+  await Promise.allSettled(admins.map((admin) => sendBaleMessage(admin.baleChatId, text)));
+}
 
 export async function OPTIONS(req) {
   const origin = req.headers.get("origin");
@@ -32,6 +59,8 @@ export async function POST(req) {
     const recent = await Lead.countDocuments({ phone, createdAt: { $gte: new Date(Date.now() - 60 * 60 * 1000) } });
     if (recent >= 3) return json({ success: false, message: "تعداد درخواست‌های شما بیش از حد مجاز است؛ لطفاً کمی بعد تلاش کنید" }, 429);
     const lead = await Lead.create({ name, phone, message, source: "website" });
+    // اطلاع‌رسانی بله نباید ثبت سرنخ را در صورت قطعی موقت بله متوقف کند.
+    notifyBaleAdmins(lead).catch((error) => console.error("LEAD BALE NOTIFICATION ERROR:", error.message));
     return json({ success: true, message: "اطلاعات شما با موفقیت ثبت شد", leadId: lead._id.toString() }, 201);
   } catch (error) {
     console.error("PUBLIC LEAD ERROR:", error.message);
