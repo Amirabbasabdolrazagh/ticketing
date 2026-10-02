@@ -6,11 +6,6 @@ export const metadata = {
     template: "%s | ای‌تی رسام",
   },
   description: "سامانه مدیریت تیکت و پشتیبانی ای‌تی رسام",
-  icons: {
-    icon: [{ url: "/images/logo.png?v=2", type: "image/png" }],
-    shortcut: "/images/logo.png?v=2",
-    apple: "/images/logo.png?v=2",
-  },
 };
 const vazir = Vazirmatn({
   subsets: ["arabic"],
