@@ -21,6 +21,16 @@ const ticketSchema = new Schema(
       ref: "User",
       required: true,
     },
+    source: {
+      type: String,
+      enum: ["portal", "website"],
+      default: "portal",
+      index: true,
+    },
+    guestContact: {
+      name: { type: String, trim: true, maxlength: 70 },
+      phone: { type: String, trim: true, maxlength: 11 },
+    },
     ticketNumber: {
       type: String,
       unique: true,
