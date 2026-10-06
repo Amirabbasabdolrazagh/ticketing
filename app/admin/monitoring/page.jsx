@@ -712,7 +712,7 @@ export default function AdminMonitoringPage() {
                       <div className="flex items-center gap-3">
                         <Eye className="size-5 text-emerald-600" />
                         <span className="text-xs font-bold text-slate-600">
-                          اولین مشاهده
+                          ثبت تا مشاهده
                         </span>
                       </div>
 
@@ -725,7 +725,7 @@ export default function AdminMonitoringPage() {
                       <div className="flex items-center gap-3">
                         <MessageSquareReply className="size-5 text-blue-600" />
                         <span className="text-xs font-bold text-slate-600">
-                          اولین پاسخ
+                          مشاهده تا پاسخ
                         </span>
                       </div>
 
@@ -888,13 +888,15 @@ export default function AdminMonitoringPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[1180px] text-right text-sm">
+          <table className="w-full min-w-[1480px] text-right text-sm">
             <thead>
               <tr className="border-y border-slate-100 bg-slate-50/80 text-xs text-slate-500">
                 <th className="px-4 py-3 font-bold">تیکت</th>
                 <th className="px-4 py-3 font-bold">تخصیص</th>
+                <th className="px-4 py-3 font-bold">مهلت رسیدگی</th>
                 <th className="px-4 py-3 font-bold">اولین مشاهده</th>
                 <th className="px-4 py-3 font-bold">اولین پاسخ</th>
+                <th className="px-4 py-3 font-bold">آخرین پاسخ</th>
                 <th className="px-4 py-3 font-bold">وضعیت</th>
                 <th className="px-4 py-3 font-bold">اولویت</th>
                 <th className="px-4 py-3 font-bold">تأیید مشتری</th>
@@ -934,7 +936,12 @@ export default function AdminMonitoringPage() {
                       <td className="px-4 py-4 text-xs">
                         <DateTime value={ticket.assignedAt} />
                       </td>
-
+                      <td className="px-4 py-4 text-xs">
+                        <DateTime
+                          value={ticket.deadlineAt}
+                          empty="تعیین نشده"
+                        />
+                      </td>
                       <td className="px-4 py-4">
                         {ticket.agentViewedAt ? (
                           <div>
@@ -985,7 +992,12 @@ export default function AdminMonitoringPage() {
                           </span>
                         )}
                       </td>
-
+                      <td className="px-4 py-4 text-xs">
+                        <DateTime
+                          value={ticket.lastAgentReplyAt}
+                          empty="بدون پاسخ"
+                        />
+                      </td>
                       <td className="px-4 py-4">
                         <span
                           className={`rounded-full px-2.5 py-1 text-xs font-black ${statusClass(

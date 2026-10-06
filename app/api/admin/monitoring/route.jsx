@@ -1,5 +1,6 @@
 import Ticket from "@/models/tickets";
 import TicketResolution from "@/models/ticketResolution";
+import TicketMessage from "@/models/ticketMessage";
 import User from "@/models/users";
 import ConnectDb from "@/utils/connectDB";
 import getCurrentUser from "@/utils/auth";
@@ -87,9 +88,39 @@ export async function GET() {
       .populate("project", "name code")
       .sort({ assignedAt: -1, createdAt: -1 })
       .lean();
-
     const ticketIds = tickets.map((ticket) => ticket._id);
 
+    const agentIds = agents.map((agent) => agent._id);
+
+    const latestAgentMessages = ticketIds.length
+      ? await TicketMessage.aggregate([
+          {
+            $match: {
+              ticket: { $in: ticketIds },
+              sender: { $in: agentIds },
+              type: "text",
+            },
+          },
+          {
+            $sort: {
+              createdAt: -1,
+            },
+          },
+          {
+            $group: {
+              _id: "$ticket",
+              createdAt: { $first: "$createdAt" },
+            },
+          },
+        ])
+      : [];
+
+    const latestAgentReplyMap = new Map(
+      latestAgentMessages.map((message) => [
+        message._id.toString(),
+        message.createdAt,
+      ]),
+    );
     const resolutions = ticketIds.length
       ? await TicketResolution.find({
           ticket: {
@@ -121,6 +152,8 @@ export async function GET() {
       }
 
       const resolution = resolutionMap.get(ticket._id.toString());
+      const lastAgentReplyAt =
+        latestAgentReplyMap.get(ticket._id.toString()) || null;
 
       const legacyRating =
         resolution?.agentRating && resolution?.processRating
@@ -158,13 +191,14 @@ export async function GET() {
 
         agentFirstReplyAt: ticket.agentFirstReplyAt || null,
 
+        lastAgentReplyAt,
+
         firstViewDurationMs: diffMs(ticket.assignedAt, ticket.agentViewedAt),
 
         firstReplyDurationMs: diffMs(
-          ticket.assignedAt,
+          ticket.agentViewedAt,
           ticket.agentFirstReplyAt,
         ),
-
         deadline: ticket.deadline || null,
         deadlineAt: ticket.deadlineAt || null,
 

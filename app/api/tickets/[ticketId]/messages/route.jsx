@@ -179,11 +179,11 @@ export async function POST(req, { params }) {
             agentFirstReplyAt: ticketInfo.agentFirstReplyAt.toISOString(),
 
             firstReplyDurationMs:
-              ticketInfo.assignedAt && ticketInfo.agentFirstReplyAt
+              ticketInfo.agentViewedAt && ticketInfo.agentFirstReplyAt
                 ? Math.max(
                     0,
                     ticketInfo.agentFirstReplyAt.getTime() -
-                      ticketInfo.assignedAt.getTime(),
+                      ticketInfo.agentViewedAt.getTime(),
                   )
                 : null,
 
@@ -191,6 +191,31 @@ export async function POST(req, { params }) {
             priority: ticketInfo.priority,
           });
         }
+        emitMonitoringEvent("ticket:agent-replied", {
+          ticketId: ticketInfo._id.toString(),
+          ticketNumber: ticketInfo.ticketNumber || "",
+          title: ticketInfo.title || "",
+
+          agentId: user._id.toString(),
+          agentName: user.name || "پشتیبان",
+
+          messageId: messages._id.toString(),
+          lastAgentReplyAt: messages.createdAt
+            ? messages.createdAt.toISOString()
+            : new Date().toISOString(),
+
+          agentFirstReplyAt: ticketInfo.agentFirstReplyAt
+            ? ticketInfo.agentFirstReplyAt.toISOString()
+            : null,
+
+          agentViewedAt: ticketInfo.agentViewedAt
+            ? ticketInfo.agentViewedAt.toISOString()
+            : null,
+
+          status: ticketInfo.status,
+          priority: ticketInfo.priority,
+        });
+
         await messages.populate("sender", "name role");
         const customer = await User.findById(ticketInfo.creator).select(
           `${messengerUserSelect} siteLastSeenAt`,
