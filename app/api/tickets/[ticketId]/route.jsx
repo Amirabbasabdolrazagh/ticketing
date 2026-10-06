@@ -8,10 +8,13 @@ import { systemMessage } from "@/utils/createSystemMessage";
 import { isValidObjectId } from "mongoose";
 import ProjectCounter from "@/models/projectCounter";
 import TicketResolution from "@/models/ticketResolution";
+import { assignmentTelegramText } from "@/utils/telegram";
 import {
-  assignmentTelegramText,
-} from "@/utils/telegram";
-import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
+  messengerUserSelect,
+  sendMessengerNotification,
+} from "@/utils/messenger";
+
+import { emitMonitoringEvent } from "@/lib/monitoringEvents";
 export async function GET(req, { params }) {
   const { ticketId } = await params;
   try {
@@ -39,30 +42,39 @@ export async function GET(req, { params }) {
         { status: 404 },
       );
     }
-    const existingResolution = await TicketResolution.findOne({ ticket: ticket._id }).lean();
+    const existingResolution = await TicketResolution.findOne({
+      ticket: ticket._id,
+    }).lean();
 
     const needsConfirmation =
       ticket.status === "resolved" &&
       user.role === "customer" &&
       (!existingResolution || ticket.updatedAt > existingResolution.updatedAt);
 
-    const legacyRating = existingResolution?.agentRating && existingResolution?.processRating
-      ? Math.round((existingResolution.agentRating + existingResolution.processRating) / 2)
-      : existingResolution?.agentRating || existingResolution?.processRating;
+    const legacyRating =
+      existingResolution?.agentRating && existingResolution?.processRating
+        ? Math.round(
+            (existingResolution.agentRating +
+              existingResolution.processRating) /
+              2,
+          )
+        : existingResolution?.agentRating || existingResolution?.processRating;
     const rating = existingResolution?.rating || legacyRating;
 
     const response = Response.json({
       success: true,
       ticket,
       needsConfirmation,
-      resolution: existingResolution ? {
-        isResolved: existingResolution.isResolved,
-        rating,
-        ...(user.role === "admin" && rating <= 3
-          ? { feedback: existingResolution.feedback || "" }
-          : {}),
-        createdAt: existingResolution.createdAt,
-      } : null,
+      resolution: existingResolution
+        ? {
+            isResolved: existingResolution.isResolved,
+            rating,
+            ...(user.role === "admin" && rating <= 3
+              ? { feedback: existingResolution.feedback || "" }
+              : {}),
+            createdAt: existingResolution.createdAt,
+          }
+        : null,
     });
     if (user.role === "admin") {
       return response;
@@ -84,7 +96,7 @@ export async function GET(req, { params }) {
       );
     }
   } catch (error) {
-      console.log("GET TICKET ERROR:", error);
+    console.log("GET TICKET ERROR:", error);
     return Response.json(
       { success: false, message: "server error" },
       { status: 500 },
@@ -293,9 +305,16 @@ export async function PATCH(req, { params }) {
       }
       if (deadline !== undefined) {
         const deadlineDays = Number(deadline);
-        if (!Number.isInteger(deadlineDays) || deadlineDays < 1 || deadlineDays > 365) {
+        if (
+          !Number.isInteger(deadlineDays) ||
+          deadlineDays < 1 ||
+          deadlineDays > 365
+        ) {
           return Response.json(
-            { success: false, message: "مهلت رسیدگی باید بین ۱ تا ۳۶۵ روز باشد" },
+            {
+              success: false,
+              message: "مهلت رسیدگی باید بین ۱ تا ۳۶۵ روز باشد",
+            },
             { status: 400 },
           );
         }
@@ -314,7 +333,72 @@ export async function PATCH(req, { params }) {
       }
 
       await ticket.save();
+      const assignmentChanged =
+        oldAssignedTo?.toString() !== ticket.assignedTo?.toString();
 
+      const statusChanged = oldStatus !== ticket.status;
+
+      if (assignmentChanged) {
+        emitMonitoringEvent("ticket:assigned", {
+          ticketId: ticket._id.toString(),
+          ticketNumber: ticket.ticketNumber || "",
+          title: ticket.title || "",
+
+          previousAgentId: oldAssignedTo?.toString() || null,
+
+          agentId: ticket.assignedTo?.toString() || null,
+
+          assignedAt: ticket.assignedAt
+            ? ticket.assignedAt.toISOString()
+            : null,
+
+          agentViewedAt: ticket.agentViewedAt
+            ? ticket.agentViewedAt.toISOString()
+            : null,
+
+          agentFirstReplyAt: ticket.agentFirstReplyAt
+            ? ticket.agentFirstReplyAt.toISOString()
+            : null,
+
+          status: ticket.status,
+          priority: ticket.priority,
+
+          updatedAt: ticket.updatedAt
+            ? ticket.updatedAt.toISOString()
+            : new Date().toISOString(),
+        });
+      }
+
+      if (statusChanged) {
+        emitMonitoringEvent("ticket:status-changed", {
+          ticketId: ticket._id.toString(),
+          ticketNumber: ticket.ticketNumber || "",
+          title: ticket.title || "",
+
+          agentId: ticket.assignedTo?.toString() || null,
+
+          previousStatus: oldStatus,
+          status: ticket.status,
+
+          priority: ticket.priority,
+
+          assignedAt: ticket.assignedAt
+            ? ticket.assignedAt.toISOString()
+            : null,
+
+          agentViewedAt: ticket.agentViewedAt
+            ? ticket.agentViewedAt.toISOString()
+            : null,
+
+          agentFirstReplyAt: ticket.agentFirstReplyAt
+            ? ticket.agentFirstReplyAt.toISOString()
+            : null,
+
+          updatedAt: ticket.updatedAt
+            ? ticket.updatedAt.toISOString()
+            : new Date().toISOString(),
+        });
+      }
       // =========================
       // SYSTEM MESSAGES
       // =========================
@@ -361,8 +445,11 @@ export async function PATCH(req, { params }) {
           user._id,
           `تیکت به پشتیبان «${agent.name || "انتخاب‌شده"}» اختصاص داده شد`,
         );
-        const assignedProject = projects ||
-          (ticket.project ? await Project.findById(ticket.project).select("name") : null);
+        const assignedProject =
+          projects ||
+          (ticket.project
+            ? await Project.findById(ticket.project).select("name")
+            : null);
         await sendMessengerNotification(
           agent,
           assignmentTelegramText({
@@ -429,6 +516,35 @@ export async function PATCH(req, { params }) {
         ticket.status = status;
 
         await ticket.save();
+
+        emitMonitoringEvent("ticket:status-changed", {
+          ticketId: ticket._id.toString(),
+          ticketNumber: ticket.ticketNumber || "",
+          title: ticket.title || "",
+
+          agentId: user._id.toString(),
+
+          previousStatus: oldStatus,
+          status: ticket.status,
+
+          priority: ticket.priority,
+
+          assignedAt: ticket.assignedAt
+            ? ticket.assignedAt.toISOString()
+            : null,
+
+          agentViewedAt: ticket.agentViewedAt
+            ? ticket.agentViewedAt.toISOString()
+            : null,
+
+          agentFirstReplyAt: ticket.agentFirstReplyAt
+            ? ticket.agentFirstReplyAt.toISOString()
+            : null,
+
+          updatedAt: ticket.updatedAt
+            ? ticket.updatedAt.toISOString()
+            : new Date().toISOString(),
+        });
 
         if (oldStatus !== status) {
           await systemMessage(

@@ -3,7 +3,11 @@ import Ticket from "@/models/tickets";
 import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
 import User from "@/models/users";
-import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
+import {
+  messengerUserSelect,
+  sendMessengerNotification,
+} from "@/utils/messenger";
+import { emitMonitoringEvent } from "@/lib/monitoringEvents";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -36,6 +40,30 @@ export async function POST(_req, { params }) {
       { new: true },
     );
     if (ticket?.agentViewedAt) {
+      emitMonitoringEvent("ticket:first-viewed", {
+        ticketId: ticket._id.toString(),
+        ticketNumber: ticket.ticketNumber || "",
+        title: ticket.title || "",
+
+        agentId: user._id.toString(),
+        agentName: user.name || "پشتیبان",
+
+        assignedAt: ticket.assignedAt ? ticket.assignedAt.toISOString() : null,
+
+        agentViewedAt: ticket.agentViewedAt.toISOString(),
+
+        firstViewDurationMs:
+          ticket.assignedAt && ticket.agentViewedAt
+            ? Math.max(
+                0,
+                ticket.agentViewedAt.getTime() - ticket.assignedAt.getTime(),
+              )
+            : null,
+
+        status: ticket.status,
+        priority: ticket.priority,
+      });
+
       const admins = await User.find({ role: "admin" }).select(
         `name ${messengerUserSelect}`,
       );
@@ -48,10 +76,15 @@ export async function POST(_req, { params }) {
         `🗓 تاریخ و ساعت مشاهده: <b>${escapeHtml(formatTehranDate(ticket.agentViewedAt))}</b>`,
       ].join("\n");
       await Promise.all(
-        admins.map((admin) => sendMessengerNotification(admin, notificationText)),
+        admins.map((admin) =>
+          sendMessengerNotification(admin, notificationText),
+        ),
       );
     }
-    return Response.json({ success: true, viewedAt: ticket?.agentViewedAt || null });
+    return Response.json({
+      success: true,
+      viewedAt: ticket?.agentViewedAt || null,
+    });
   } catch (error) {
     console.error("MARK TICKET SEEN ERROR:", error);
     return Response.json({ success: false }, { status: 500 });

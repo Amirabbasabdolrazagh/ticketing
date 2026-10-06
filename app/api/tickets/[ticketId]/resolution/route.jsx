@@ -4,6 +4,7 @@ import getCurrentUser from "@/utils/auth";
 import authorization from "@/utils/authorization";
 import ConnectDb from "@/utils/connectDB";
 import { isValidObjectId } from "mongoose";
+import { emitMonitoringEvent } from "@/lib/monitoringEvents";
 
 export async function POST(req, { params }) {
   try {
@@ -71,7 +72,8 @@ export async function POST(req, { params }) {
         { status: 400 },
       );
     }
-    const normalizedFeedback = typeof feedback === "string" ? feedback.trim() : "";
+    const normalizedFeedback =
+      typeof feedback === "string" ? feedback.trim() : "";
     if (rating <= 3 && !normalizedFeedback) {
       return Response.json(
         { success: false, message: "لطفاً علت امتیاز پایین را بنویسید" },
@@ -80,7 +82,10 @@ export async function POST(req, { params }) {
     }
     if (normalizedFeedback.length > 1000) {
       return Response.json(
-        { success: false, message: "متن نظرسنجی نباید بیشتر از ۱۰۰۰ نویسه باشد" },
+        {
+          success: false,
+          message: "متن نظرسنجی نباید بیشتر از ۱۰۰۰ نویسه باشد",
+        },
         { status: 400 },
       );
     }
@@ -104,6 +109,39 @@ export async function POST(req, { params }) {
         feedback: rating <= 3 ? normalizedFeedback : "",
       });
     }
+
+    emitMonitoringEvent("ticket:customer-resolution", {
+      ticketId: ticket._id.toString(),
+      ticketNumber: ticket.ticketNumber || "",
+      title: ticket.title || "",
+
+      agentId: ticket.assignedTo?.toString() || null,
+
+      status: ticket.status,
+      priority: ticket.priority,
+
+      isResolved: ticketResolution.isResolved,
+      rating: ticketResolution.rating,
+      feedback: ticketResolution.feedback || "",
+
+      assignedAt: ticket.assignedAt ? ticket.assignedAt.toISOString() : null,
+
+      agentViewedAt: ticket.agentViewedAt
+        ? ticket.agentViewedAt.toISOString()
+        : null,
+
+      agentFirstReplyAt: ticket.agentFirstReplyAt
+        ? ticket.agentFirstReplyAt.toISOString()
+        : null,
+
+      resolutionCreatedAt: ticketResolution.createdAt
+        ? ticketResolution.createdAt.toISOString()
+        : null,
+
+      resolutionUpdatedAt: ticketResolution.updatedAt
+        ? ticketResolution.updatedAt.toISOString()
+        : null,
+    });
 
     return Response.json(
       {

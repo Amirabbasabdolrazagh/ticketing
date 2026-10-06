@@ -22,7 +22,7 @@ import {
   sendMessengerNotification,
 } from "@/utils/messenger";
 import TicketMessage from "@/models/ticketMessage";
-
+import { emitMonitoringEvent } from "@/lib/monitoringEvents";
 export const runtime = "nodejs";
 
 const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
@@ -104,7 +104,10 @@ export async function POST(req) {
       );
       await mkdir(uploadDirectory, { recursive: true });
       savedFilePath = path.join(uploadDirectory, storedName);
-      await writeFile(savedFilePath, Buffer.from(await attachment.arrayBuffer()));
+      await writeFile(
+        savedFilePath,
+        Buffer.from(await attachment.arrayBuffer()),
+      );
       attachmentData = {
         originalName: path.basename(attachment.name).slice(0, 255),
         storedName,
@@ -117,7 +120,10 @@ export async function POST(req) {
     if (!catalogOwner) {
       if (savedFilePath) await unlink(savedFilePath).catch(() => {});
       return Response.json(
-        { success: false, message: "برای راه‌اندازی خدمات، وجود مدیر سیستم الزامی است" },
+        {
+          success: false,
+          message: "برای راه‌اندازی خدمات، وجود مدیر سیستم الزامی است",
+        },
         { status: 503 },
       );
     }
@@ -126,7 +132,10 @@ export async function POST(req) {
     if (!service?.defaultAgent) {
       if (savedFilePath) await unlink(savedFilePath).catch(() => {});
       return Response.json(
-        { success: false, message: "برای این خدمت هنوز پشتیبان پیش‌فرض تعیین نشده است" },
+        {
+          success: false,
+          message: "برای این خدمت هنوز پشتیبان پیش‌فرض تعیین نشده است",
+        },
         { status: 503 },
       );
     }
@@ -198,6 +207,22 @@ export async function POST(req) {
         ),
       ),
     ]);
+
+    emitMonitoringEvent("ticket:created", {
+      ticketId: ticket._id.toString(),
+      ticketNumber: ticket.ticketNumber,
+      title: ticket.title,
+      status: ticket.status,
+      priority: ticket.priority,
+      agentId: service.defaultAgent.toString(),
+      agentName: assignedAgent?.name || null,
+      customerId: user._id.toString(),
+      customerName: user.name || null,
+      projectId: service._id.toString(),
+      projectName: service.name,
+      assignedAt: ticket.assignedAt?.toISOString?.() || null,
+      createdAt: ticket.createdAt?.toISOString?.() || null,
+    });
 
     return Response.json(
       {

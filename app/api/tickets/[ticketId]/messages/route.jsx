@@ -8,7 +8,11 @@ import {
   customerMessageTelegramText,
   ticketReplyTelegramText,
 } from "@/utils/telegram";
-import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
+import {
+  messengerUserSelect,
+  sendMessengerNotification,
+} from "@/utils/messenger";
+import { emitMonitoringEvent } from "@/lib/monitoringEvents";
 
 export async function POST(req, { params }) {
   try {
@@ -29,7 +33,10 @@ export async function POST(req, { params }) {
       );
     }
     await ConnectDb();
-    const ticketInfo = await Ticket.findById(ticketId).populate("project", "name");
+    const ticketInfo = await Ticket.findById(ticketId).populate(
+      "project",
+      "name",
+    );
     if (!ticketInfo) {
       return Response.json(
         { success: false, message: "ticket not found" },
@@ -56,13 +63,22 @@ export async function POST(req, { params }) {
         type: "text",
       });
       await messages.populate("sender", "name role");
-      const customer = await User.findById(ticketInfo.creator).select(`${messengerUserSelect} siteLastSeenAt`);
+      const customer = await User.findById(ticketInfo.creator).select(
+        `${messengerUserSelect} siteLastSeenAt`,
+      );
       await sendMessengerNotification(
         customer,
-        ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "مدیر", serviceName: ticketInfo.project?.name, hideSender: true }),
+        ticketReplyTelegramText({
+          ticket: ticketInfo,
+          message,
+          senderName: user.name,
+          senderRole: "مدیر",
+          serviceName: ticketInfo.project?.name,
+          hideSender: true,
+        }),
       );
       return Response.json(
-        { success: true, message: "message create successfully",messages },
+        { success: true, message: "message create successfully", messages },
         { status: 201 },
       );
     } else if (user.role == "customer") {
@@ -81,13 +97,22 @@ export async function POST(req, { params }) {
         });
         await messages.populate("sender", "name role");
         if (ticketInfo.assignedTo) {
-          const assignedAgent = await User.findById(ticketInfo.assignedTo).select(`${messengerUserSelect} siteLastSeenAt`);
+          const assignedAgent = await User.findById(
+            ticketInfo.assignedTo,
+          ).select(`${messengerUserSelect} siteLastSeenAt`);
           await sendMessengerNotification(
             assignedAgent,
-            customerMessageTelegramText({ ticket: ticketInfo, message, customerName: user.name, serviceName: ticketInfo.project?.name }),
+            customerMessageTelegramText({
+              ticket: ticketInfo,
+              message,
+              customerName: user.name,
+              serviceName: ticketInfo.project?.name,
+            }),
           );
         }
-        const admins = await User.find({ role: "admin" }).select(`${messengerUserSelect} siteLastSeenAt`);
+        const admins = await User.find({ role: "admin" }).select(
+          `${messengerUserSelect} siteLastSeenAt`,
+        );
         await Promise.all(
           admins.map((admin) =>
             sendMessengerNotification(
@@ -102,7 +127,7 @@ export async function POST(req, { params }) {
           ),
         );
         return Response.json(
-          { success: true, message: "message create successfully" , messages },
+          { success: true, message: "message create successfully", messages },
           { status: 201 },
         );
       } else {
@@ -134,15 +159,55 @@ export async function POST(req, { params }) {
         if (!ticketInfo.agentFirstReplyAt) {
           ticketInfo.agentFirstReplyAt = new Date();
           await ticketInfo.save();
+
+          emitMonitoringEvent("ticket:first-replied", {
+            ticketId: ticketInfo._id.toString(),
+            ticketNumber: ticketInfo.ticketNumber || "",
+            title: ticketInfo.title || "",
+
+            agentId: user._id.toString(),
+            agentName: user.name || "پشتیبان",
+
+            assignedAt: ticketInfo.assignedAt
+              ? ticketInfo.assignedAt.toISOString()
+              : null,
+
+            agentViewedAt: ticketInfo.agentViewedAt
+              ? ticketInfo.agentViewedAt.toISOString()
+              : null,
+
+            agentFirstReplyAt: ticketInfo.agentFirstReplyAt.toISOString(),
+
+            firstReplyDurationMs:
+              ticketInfo.assignedAt && ticketInfo.agentFirstReplyAt
+                ? Math.max(
+                    0,
+                    ticketInfo.agentFirstReplyAt.getTime() -
+                      ticketInfo.assignedAt.getTime(),
+                  )
+                : null,
+
+            status: ticketInfo.status,
+            priority: ticketInfo.priority,
+          });
         }
         await messages.populate("sender", "name role");
-        const customer = await User.findById(ticketInfo.creator).select(`${messengerUserSelect} siteLastSeenAt`);
+        const customer = await User.findById(ticketInfo.creator).select(
+          `${messengerUserSelect} siteLastSeenAt`,
+        );
         await sendMessengerNotification(
           customer,
-          ticketReplyTelegramText({ ticket: ticketInfo, message, senderName: user.name, senderRole: "پشتیبان", serviceName: ticketInfo.project?.name, hideSender: true }),
+          ticketReplyTelegramText({
+            ticket: ticketInfo,
+            message,
+            senderName: user.name,
+            senderRole: "پشتیبان",
+            serviceName: ticketInfo.project?.name,
+            hideSender: true,
+          }),
         );
         return Response.json(
-          { success: true, message: "message create successfully" ,messages },
+          { success: true, message: "message create successfully", messages },
           { status: 201 },
         );
       } else {
