@@ -119,6 +119,10 @@ export default function SideBar() {
       icon: TicketCheck,
       active: pathname.startsWith(`/${userRole}/tickets`),
     }] : []),
+    ...(["passive_agent", "active_agent"].includes(userRole) ? [
+      { label: "فرم ارزیابی", description: "ثبت اطلاعات اولیه پروژه", href: `/${userRole}/assessments`, icon: FolderKanban, active: pathname.startsWith(`/${userRole}/assessments`) },
+      { label: "صورتجلسه تحویل", description: "ثبت تحویل و پایان اجرا", href: `/${userRole}/handovers`, icon: TicketCheck, active: pathname.startsWith(`/${userRole}/handovers`) },
+    ] : []),
     ...(userRole === "admin"
       ? [
           {
@@ -158,7 +162,7 @@ export default function SideBar() {
           },
         ]
       : []),
-    ...(["admin", "agent", "customer"].includes(userRole)
+    ...(["admin", "agent", "passive_agent", "active_agent", "customer"].includes(userRole)
       ? [
           {
             label: "پیام‌ها",
@@ -196,6 +200,16 @@ export default function SideBar() {
               "/agent/notifications",
             ].includes(item.href),
           )
+        : ["passive_agent", "active_agent"].includes(userRole)
+          ? menuItems.filter((item) =>
+              [
+                `/${userRole}`,
+                `/${userRole}/assessments`,
+                `/${userRole}/handovers`,
+                `/${userRole}/notifications`,
+                `/${userRole}/setting`,
+              ].includes(item.href),
+            )
         : userRole === "customer"
           ? menuItems.filter((item) =>
               [

@@ -17,6 +17,8 @@ export const priorityLabels = {
 export const roleLabels = {
   admin: "مدیر",
   agent: "پشتیبان",
+  passive_agent: "پشتیبان پسیو",
+  active_agent: "پشتیبان اکتیو",
   customer: "مشتری",
 };
 

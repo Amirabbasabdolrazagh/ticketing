@@ -1,1 +1,2 @@
-export default function PassiveAgentSettings() { return <section dir="rtl" className="app-page"><div className="glass-panel p-8"><h1 className="page-heading">تنظیمات پشتیبان پسیو</h1><p className="mt-3 text-sm text-slate-600">اطلاعات حساب و روش‌های ارتباطی شما در این بخش قرار می‌گیرد.</p></div></section>; }
+import AgentSetting from "@/app/agent/setting/page";
+export default function PassiveAgentSettings() { return <AgentSetting />; }

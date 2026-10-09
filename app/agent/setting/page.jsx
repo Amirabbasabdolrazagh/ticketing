@@ -133,7 +133,7 @@ export default function AdminSetting() {
         toast.success(data.message);
         setIsChange((prev) => !prev);
         if (!user.profileComplete && data.profileComplete) {
-          router.replace(`/${user.role}/dashboard`);
+          router.replace(["passive_agent", "active_agent"].includes(user.role) ? `/${user.role}` : `/${user.role}/dashboard`);
         }
       }
     } catch (error) {

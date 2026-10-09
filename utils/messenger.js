@@ -24,7 +24,7 @@ export async function sendMessengerNotification(user, text) {
 
   const [messenger, sms] = await Promise.all([
     sendBotNotification(user, text),
-    ["admin", "agent", "customer"].includes(user.role)
+    ["admin", "agent", "passive_agent", "active_agent", "customer"].includes(user.role)
       ? sendNotificationSms(user.phone, text)
       : Promise.resolve({ sent: false, reason: "role-not-enabled" }),
   ]);

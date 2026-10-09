@@ -1,5 +1,6 @@
 import Ticket from "@/models/tickets";
 import TicketMessage from "@/models/ticketMessage";
+import ProjectAssessment from "@/models/projectAssessments";
 import "@/models/users";
 import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
@@ -69,7 +70,9 @@ export async function GET() {
       ? { assignedTo: user._id }
       : user.role === "customer"
         ? { creator: user._id }
-        : {};
+        : ["passive_agent", "active_agent"].includes(user.role)
+          ? { _id: null }
+          : {};
     const tickets = await Ticket.find(ticketFilter)
       .populate("assignedTo", "name")
       .select("title ticketNumber assignedTo creator status deadline deadlineAt updatedAt unseenReminder2hSentAt unseenAlarm3hSentAt unseenEscalation4hSentAt agentViewedAt agentFirstReplyAt")
@@ -200,7 +203,16 @@ export async function GET() {
       }
     }
 
-    const notifications = [...messageEvents, ...deadlineEvents, ...attentionEvents, ...anniversaryEvents]
+    const projectEvents = ["passive_agent", "active_agent"].includes(user.role)
+      ? (await ProjectAssessment.find({ assignee: user._id }).populate("project", "name code").sort({ createdAt: -1 }).lean()).map((item) => ({
+        _id: `project-assignment:${item._id}`,
+        type: "project-assignment",
+        message: `پروژه «${item.project?.name || "بدون عنوان"}» با کد ${item.project?.code || "—"} به شما ارجاع شده است. فرم ارزیابی را تکمیل کنید.`,
+        createdAt: item.createdAt,
+        ticket: null,
+      }))
+      : [];
+    const notifications = [...messageEvents, ...deadlineEvents, ...attentionEvents, ...anniversaryEvents, ...projectEvents]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 100);
     return Response.json({ success: true, notifications });
