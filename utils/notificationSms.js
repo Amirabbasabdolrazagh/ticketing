@@ -1,6 +1,6 @@
 import { forceRtlLines } from "@/utils/messageFormatting";
 
-const SMS_URL = "https://api.iranpayamak.com/ws/v1/sms/simple";
+const SMS_URL = process.env.SMS_NOTIFICATION_URL || "https://api.iranpayamak.com/ws/v1/sms/simple";
 
 function toPlainText(html) {
   const text = String(html ?? "")
@@ -15,7 +15,10 @@ function toPlainText(html) {
 }
 
 export async function sendNotificationSms(phone, notificationText) {
-  if (!phone || !process.env.OTP_API_KEY) {
+  const apiKey = process.env.SMS_API_KEY || process.env.OTP_API_KEY;
+  const lineNumber = process.env.SMS_LINE_NUMBER || process.env.OTP_LINE_NUMBER || "90008361";
+  const recipient = String(phone || "").trim();
+  if (!/^09\d{9}$/.test(recipient) || !apiKey) {
     return { sent: false, reason: "not-configured" };
   }
 
@@ -27,13 +30,13 @@ export async function sendNotificationSms(phone, notificationText) {
       method: "POST",
       headers: {
         Accept: "application/json",
-        "Api-Key": process.env.OTP_API_KEY,
+        "Api-Key": apiKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         text,
-        line_number: process.env.SMS_LINE_NUMBER || "90008361",
-        recipients: [phone],
+        line_number: lineNumber,
+        recipients: [recipient],
         number_format: "english",
       }),
     });

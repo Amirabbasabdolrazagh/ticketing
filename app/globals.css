@@ -475,3 +475,104 @@
     width: min(90vw, 22rem);
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    min-height: auto;
+    background: #fff !important;
+    color: #0f172a !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  [data-sidebar="sidebar"],
+  [data-slot="sidebar-trigger"],
+  .mobile-glass-header,
+  .liquid-bottom-nav,
+  .print-hidden,
+  .print\:hidden,
+  button,
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  main {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .app-page,
+  .print-document {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .print-document .glass-panel {
+    overflow: visible !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .print-document .print-header {
+    border: 0 !important;
+    border-radius: 0 !important;
+    padding: 0 0 5mm !important;
+  }
+
+  .print-document input:not([type="checkbox"]):not([type="radio"]),
+  .print-document textarea,
+  .print-document select {
+    min-height: 1.5rem !important;
+    border: 0 !important;
+    border-bottom: 1px solid #94a3b8 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+  }
+
+  .print-document textarea {
+    min-height: 3.5rem !important;
+    resize: none !important;
+  }
+
+  .print-document input[type="checkbox"],
+  .print-document input[type="radio"] {
+    appearance: auto !important;
+    accent-color: #0d6efd;
+  }
+
+  .print-document table {
+    min-width: 0 !important;
+    font-size: 8.5pt;
+  }
+
+  .print-document th,
+  .print-document td {
+    border-color: #cbd5e1 !important;
+    padding: 6px !important;
+  }
+
+  .print-document thead {
+    display: table-header-group;
+  }
+
+  .print-document tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

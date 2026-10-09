@@ -7,7 +7,7 @@ export default async function sendSmsCode(phone, code) {
       code: process.env.OTP_PATTERN,
       attributes: { code },
       recipient: phone,
-      line_number: "90008361",
+      line_number: process.env.SMS_LINE_NUMBER || process.env.OTP_LINE_NUMBER || "90008361",
       number_format: "english",
     },
     {

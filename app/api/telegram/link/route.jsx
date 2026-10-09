@@ -7,8 +7,8 @@ export async function POST() {
   if (!user) {
     return Response.json({ success: false, message: "user unauthorized" }, { status: 401 });
   }
-  if (!["admin", "agent", "customer"].includes(user.role)) {
-    return Response.json({ success: false, message: "Forbidden" }, { status: 403 });
+  if (!["admin", "agent", "passive_agent", "active_agent", "customer"].includes(user.role)) {
+    return Response.json({ success: false, message: "دسترسی اتصال پیام‌رسان برای این حساب مجاز نیست" }, { status: 403 });
   }
 
   const botUsername = process.env.TELEGRAM_BOT_USERNAME

@@ -18,7 +18,6 @@ import {
 } from "@/utils/telegram";
 import {
   messengerUserSelect,
-  sendBotNotification,
   sendMessengerNotification,
 } from "@/utils/messenger";
 import TicketMessage from "@/models/ticketMessage";
@@ -196,7 +195,7 @@ export async function POST(req) {
         ticketCreatedCustomerText({ ticket }),
       ),
       ...admins.map((admin) =>
-        sendBotNotification(
+        sendMessengerNotification(
           admin,
           ticketCreatedAdminText({
             ticket,

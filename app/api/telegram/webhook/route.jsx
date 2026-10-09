@@ -38,7 +38,7 @@ export async function POST(req) {
       {
         telegramLinkToken: match[1],
         telegramLinkExpiresAt: { $gt: new Date() },
-        role: { $in: ["admin", "agent", "customer"] },
+        role: { $in: ["admin", "agent", "passive_agent", "active_agent", "customer"] },
       },
       {
         $set: {

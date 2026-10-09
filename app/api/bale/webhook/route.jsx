@@ -37,7 +37,7 @@ export async function POST(req) {
       {
         baleLinkToken: match[1],
         baleLinkExpiresAt: { $gt: new Date() },
-        role: { $in: ["admin", "agent", "customer"] },
+        role: { $in: ["admin", "agent", "passive_agent", "active_agent", "customer"] },
       },
       {
         $set: {
