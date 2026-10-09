@@ -122,11 +122,18 @@ export default function SideBar() {
     ...(userRole === "admin"
       ? [
           {
-            label: "پروژه‌ها",
-            description: "مدیریت پروژه‌ها و تیم اجرایی",
+            label: "خدمات",
+            description: "دسته‌بندی و تخصیص خدمات تیکت‌ها",
             href: "/admin/projects",
             icon: FolderKanban,
             active: pathname.startsWith("/admin/projects"),
+          },
+          {
+            label: "پروژه‌های اجرا",
+            description: "نصب و راه‌اندازی شبکه",
+            href: "/admin/installation-projects",
+            icon: FolderKanban,
+            active: pathname.startsWith("/admin/installation-projects"),
           },
           {
             label: "کاربران",
@@ -205,6 +212,7 @@ export default function SideBar() {
       ? menuItems.filter((item) =>
           [
             "/admin/projects",
+            "/admin/installation-projects",
             "/admin/users",
             "/admin/leads",
             "/admin/setting",

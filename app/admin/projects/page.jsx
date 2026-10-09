@@ -36,10 +36,6 @@ export default function ProjectsInfo() {
   const [projectLabel, setProjectLabel] = useState("");
   const [agents, setAgents] = useState([]);
   const [defaultAgent, setDefaultAgent] = useState("");
-  const [passiveAgent, setPassiveAgent] = useState("");
-  const [activeAgent, setActiveAgent] = useState("");
-  const [passiveAgents, setPassiveAgents] = useState([]);
-  const [activeAgents, setActiveAgents] = useState([]);
   const [subcategories, setSubcategories] = useState("");
   const [keywords, setKeywords] = useState("");
   const handlePriority = (value) => {
@@ -65,15 +61,6 @@ export default function ProjectsInfo() {
       }
     });
   }, []);
-  useEffect(() => {
-    Promise.all([
-      axios.get("/api/users?role=passive_agent"),
-      axios.get("/api/users?role=active_agent"),
-    ]).then(([passive, active]) => {
-      setPassiveAgents(passive.data.safeInfo || []);
-      setActiveAgents(active.data.safeInfo || []);
-    });
-  }, []);
 
   const createProject = async () => {
     let payload = {};
@@ -90,16 +77,12 @@ export default function ProjectsInfo() {
       payload.code = projectLabel;
     }
     if (defaultAgent) payload.defaultAgent = defaultAgent;
-    if (passiveAgent) payload.passiveAgent = passiveAgent;
-    if (activeAgent) payload.activeAgent = activeAgent;
     payload.subcategories = subcategories.split(/[،,]/).map((item) => item.trim()).filter(Boolean);
     payload.keywords = keywords.split(/[،,]/).map((item) => item.trim()).filter(Boolean);
     try {
       const res = await axios.post("/api/projects", payload);
       const data = res.data;
       if (data.success) {
-        if (passiveAgent) await axios.post(`/api/projects/${data.project._id}/assessments`, { assignee: passiveAgent, assigneeRole: "passive_agent" });
-        if (activeAgent) await axios.post(`/api/projects/${data.project._id}/assessments`, { assignee: activeAgent, assigneeRole: "active_agent" });
         toast.success(data.message);
         setOpenSheet(false);
         setIsChangeInfo((prev) => !prev);
@@ -126,17 +109,17 @@ export default function ProjectsInfo() {
           <div className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-blue-400/15 blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-2">
-            <h1 className="page-heading">پروژه‌ها</h1>
+              <h1 className="page-heading">خدمات</h1>
               <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                {allProjects.length.toLocaleString("fa-IR")} پروژه
+                {allProjects.length.toLocaleString("fa-IR")} خدمت
               </span>
             </div>
-            <p className="mt-2 text-sm text-slate-500">تعریف پروژه‌های نصب و راه‌اندازی و تعیین تیم اجرایی</p>
+            <p className="mt-2 text-sm text-slate-500">دسته‌بندی هوشمند تیکت‌ها و تعیین پشتیبان پیش‌فرض هر خدمت</p>
           </div>
           <Sheet open={openSheet} onOpenChange={setOpenSheet}>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-700">
-                پروژه‌های نصب و راه‌اندازی
+                سه خدمت پایه فعال
               </span>
               <SheetTrigger
                 render={
@@ -145,7 +128,7 @@ export default function ProjectsInfo() {
                     className="h-11 rounded-2xl bg-gradient-to-l from-blue-600 to-cyan-500 px-5 font-bold text-white shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:shadow-xl"
                   >
                     <MdLibraryAdd className="size-5" />
-                    افزودن پروژه جدید
+                    افزودن خدمت جدید
                   </Button>
                 }
               />
@@ -155,23 +138,23 @@ export default function ProjectsInfo() {
               side="left"
             >
               <SheetHeader className="flex flex-col justify-end items-center">
-                <SheetTitle>ساخت پروژه جدید</SheetTitle>
+                <SheetTitle>ساخت خدمت جدید</SheetTitle>
                 <SheetDescription>
-                  پروژه و پشتیبان‌های اجرایی آن را مشخص کنید.
+                  خدمت جدید و پشتیبان پیش‌فرض آن را مشخص کنید.
                 </SheetDescription>
               </SheetHeader>
               <Field dir="ltr" className="px-5">
-                <FieldLabel>نام پروژه</FieldLabel>
+                <FieldLabel>نام خدمت</FieldLabel>
                 <Input
-                  placeholder="نام پروژه را وارد کنید"
+                  placeholder="نام خدمت را وارد کنید"
                   onChange={(e) => setProjectName(e.target.value)}
                 />
               </Field>
               <Separator />
               <Field dir="ltr" className="px-5">
-                <FieldLabel>توضیحات پروژه</FieldLabel>
+                <FieldLabel>توضیحات خدمت</FieldLabel>
                 <Input
-                  placeholder="توضیحات پروژه را وارد کنید"
+                  placeholder="توضیحات خدمت را وارد کنید"
                   onChange={(e) => setProjectDescription(e.target.value)}
                 />
               </Field>
@@ -221,23 +204,7 @@ export default function ProjectsInfo() {
               </Field>
               <Separator />
               <Field className="px-5">
-                <FieldLabel>پشتیبان پسیو پروژه</FieldLabel>
-                <select value={passiveAgent} onChange={(event) => setPassiveAgent(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500">
-                  <option value="">انتخاب پشتیبان پسیو</option>
-                  {passiveAgents.map((agent) => <option key={agent.userId} value={agent.userId}>{agent.name}</option>)}
-                </select>
-              </Field>
-              <Separator />
-              <Field className="px-5">
-                <FieldLabel>پشتیبان اکتیو پروژه</FieldLabel>
-                <select value={activeAgent} onChange={(event) => setActiveAgent(event.target.value)} className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-blue-500">
-                  <option value="">انتخاب پشتیبان اکتیو</option>
-                  {activeAgents.map((agent) => <option key={agent.userId} value={agent.userId}>{agent.name}</option>)}
-                </select>
-              </Field>
-              <Separator />
-              <Field className="px-5">
-                <FieldLabel>زیرمجموعه‌های پروژه</FieldLabel>
+                <FieldLabel>زیرخدمت‌ها</FieldLabel>
                 <Input
                   value={subcategories}
                   onChange={(event) => setSubcategories(event.target.value)}
@@ -255,10 +222,10 @@ export default function ProjectsInfo() {
               </Field>
               <Separator />
               <FieldLabel className={" w-full flex justify-end px-5"}>
-                کد پروژه
+                کد خدمت
               </FieldLabel>
               <Input
-                  placeholder="کد انگلیسی پروژه را وارد کنید"
+                placeholder="کد انگلیسی خدمت را وارد کنید"
                 className={"placeholder:text-center"}
                 onChange={(e) => setProjectLabel(e.target.value)}
               />
@@ -285,9 +252,8 @@ export default function ProjectsInfo() {
                     <TableHead className="text-right">عنوان</TableHead>
                     <TableHead className="text-right">توضیحات</TableHead>
                     <TableHead className="text-right">پشتیبان پیش‌فرض</TableHead>
-                    <TableHead className="text-right">زیرمجموعه‌های پروژه</TableHead>
+                    <TableHead className="text-right">زیرخدمت‌ها</TableHead>
                     <TableHead className="text-right">اولویت</TableHead>
-                    <TableHead className="text-right">وضعیت پروژه</TableHead>
                   </TableRow>
                 </TableHeader>
                 {allProjects.map((project) => (

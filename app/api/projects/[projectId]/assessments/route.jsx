@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Project from "@/models/projects";
+import Project from "@/models/installationProjects";
 import ProjectAssessment from "@/models/projectAssessments";
 import User from "@/models/users";
 import ConnectDb from "@/utils/connectDB";

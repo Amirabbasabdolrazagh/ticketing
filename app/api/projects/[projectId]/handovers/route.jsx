@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import Project from "@/models/projects";
+import Project from "@/models/installationProjects";
 import ProjectHandover from "@/models/projectHandovers";
 import ConnectDb from "@/utils/connectDB";
 import getCurrentUser from "@/utils/auth";

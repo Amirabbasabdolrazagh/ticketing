@@ -23,16 +23,6 @@ const projectSchema = new Schema(
       ref: "User",
       default: null,
     },
-    passiveAgent: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
-    activeAgent: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
-    },
     subcategories: [{ type: String, trim: true, maxlength: 80 }],
     keywords: [{ type: String, trim: true, maxlength: 60 }],
     code: {

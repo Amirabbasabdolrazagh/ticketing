@@ -1,7 +1,7 @@
 import mongoose, { model, models, Schema } from "mongoose";
 
 const projectAssessmentSchema = new Schema({
-  project: { type: mongoose.Schema.Types.ObjectId, ref: "Project", required: true, index: true },
+  project: { type: mongoose.Schema.Types.ObjectId, ref: "InstallationProject", required: true, index: true },
   assignee: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   assigneeRole: { type: String, enum: ["passive_agent", "active_agent"], required: true },
   status: { type: String, enum: ["assigned", "in_progress", "submitted", "reviewed"], default: "assigned" },

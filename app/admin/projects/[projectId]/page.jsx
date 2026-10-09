@@ -13,8 +13,6 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Table, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 import GetAllTickets from "@/components/features/tickets/getAllTickets/getAllTickets";
-import ProjectJobBriefAdmin from "@/components/features/projects/ProjectJobBriefAdmin";
-import ProjectHandoversAdmin from "@/components/features/projects/ProjectHandoversAdmin";
 export default function SingleProjectInfo() {
   const [project, setProject] = useState({});
   const [allTickets, setAllTickets] = useState([]);
@@ -110,7 +108,7 @@ export default function SingleProjectInfo() {
           <div className="relative">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <span className="mb-2 inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">پروژه سازمانی</span>
+                <span className="mb-2 inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">خدمت سازمانی</span>
                 <h1 className="page-heading">{project.name}</h1>
                 <p className="mt-2 text-sm leading-7 text-slate-600">{project.description}</p>
               </div>
@@ -126,9 +124,6 @@ export default function SingleProjectInfo() {
             </div>
           </div>
         </div>
-
-        <ProjectJobBriefAdmin projectId={projectId} />
-        <ProjectHandoversAdmin projectId={projectId} />
 
         {/* searsh section */}
         <div className="flex flex-col justify-center">
@@ -213,7 +208,7 @@ export default function SingleProjectInfo() {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-right">عنوان</TableHead>
-                <TableHead className="text-right">نوع پروژه</TableHead>
+                <TableHead className="text-right">نوع خدمت</TableHead>
                 <TableHead className="text-right">پشتیبان</TableHead>
                 <TableHead className="text-right">مشتری</TableHead>
                 <TableHead className="text-right">وضعیت</TableHead>
