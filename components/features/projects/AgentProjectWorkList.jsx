@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import ProjectAssessmentForm from "@/components/features/projects/ProjectAssessmentForm";
 import ProjectHandoverForm from "@/components/features/projects/ProjectHandoverForm";
@@ -7,13 +7,15 @@ import ProjectHandoverForm from "@/components/features/projects/ProjectHandoverF
 export default function AgentProjectWorkList({ type }) {
   const [items, setItems] = useState([]); const [selected, setSelected] = useState(null);
   const isAssessment = type === "assessment";
-  const load = async () => { const { data } = await axios.get(isAssessment ? "/api/assessments" : "/api/handovers"); setItems(isAssessment ? data.assessments || [] : data.handovers || []); };
-  useEffect(() => { 
+  const load = useCallback(async () => { const { data } = await axios.get(isAssessment ? "/api/assessments" : "/api/handovers", { headers: { "Cache-Control": "no-cache" }, params: { _fresh: Date.now() } }); setItems(isAssessment ? data.assessments || [] : data.handovers || []); }, [isAssessment]);
+  useEffect(() => {
+    // This initializes the remote form list; later refreshes happen on window focus.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    load().catch(() => {}); 
-    // The list is intentionally loaded once when its dedicated page opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    load().catch(() => {});
+    const refresh = () => load().catch(() => {});
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [load]);
   if (selected) return isAssessment ? <ProjectAssessmentForm assessment={selected} /> : <ProjectHandoverForm handover={selected} onDone={load} />;
   const title = isAssessment ? "فرم‌های ارزیابی پروژه" : "صورتجلسه‌های تحویل پروژه";
   const description = isAssessment ? "اطلاعات اولیه پروژه‌های ارجاع‌شده را تکمیل و برای مدیر ارسال کنید." : "پس از پایان اجرا، صورتجلسه تحویل را تکمیل و ارسال کنید.";
