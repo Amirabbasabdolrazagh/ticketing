@@ -86,7 +86,7 @@ export default function UsersInfo() {
         )}
       </section>
       {isOpen ? (
-        <div className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/80 bg-white/95 p-5 text-slate-900 shadow-2xl backdrop-blur-2xl sm:p-7">
+        <div className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/80 bg-white/95 px-5 py-5 text-slate-900 shadow-2xl backdrop-blur-2xl sm:px-8 sm:py-7">
           <EditUser
             selectedUserId={selectedUserId}
             setIsOpen={setIsOpen}
@@ -98,7 +98,7 @@ export default function UsersInfo() {
         ""
       )}
       {showCreateModal ? (
-        <div className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/80 bg-white/95 p-5 text-slate-900 shadow-2xl backdrop-blur-2xl sm:p-7">
+        <div className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/80 bg-white/95 px-5 py-5 text-slate-900 shadow-2xl backdrop-blur-2xl sm:px-8 sm:py-7">
           <CreatUser
             showCreateModal={showCreateModal}
             setShowCreateModal={setShowCreateModal}
