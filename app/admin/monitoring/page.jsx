@@ -213,7 +213,9 @@ export default function AdminMonitoringPage() {
     }
   }, []);
 
+  // Initial data hydration is intentionally started when the page mounts.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadMonitoring();
   }, [loadMonitoring]);
 

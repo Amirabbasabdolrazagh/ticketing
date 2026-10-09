@@ -105,14 +105,14 @@ export default function SideBar() {
 
   const userRole = user?.role;
   const menuItems = [
-    ...(["agent", "passive_agent", "active_agent"].includes(userRole) ? [{
+    ...(["admin", "agent", "customer", "passive_agent", "active_agent"].includes(userRole) ? [{
       label: "داشبورد",
       description: "نمای کلی فعالیت‌ها",
-      href: userRole === "agent" ? `/${userRole}/dashboard` : `/${userRole}`,
+      href: ["passive_agent", "active_agent"].includes(userRole) ? `/${userRole}` : `/${userRole}/dashboard`,
       icon: LayoutDashboard,
-      active: userRole === "agent" ? pathname === `/${userRole}/dashboard` : pathname === `/${userRole}`,
+      active: ["passive_agent", "active_agent"].includes(userRole) ? pathname === `/${userRole}` : pathname === `/${userRole}/dashboard`,
     }] : []),
-    ...(userRole === "agent" || userRole === "customer" ? [{
+    ...(["admin", "agent", "customer"].includes(userRole) ? [{
       label: "تیکت‌ها",
       description: "پیگیری درخواست‌ها",
       href: `/${userRole}/tickets`,
@@ -122,8 +122,8 @@ export default function SideBar() {
     ...(userRole === "admin"
       ? [
           {
-            label: "خدمات",
-            description: "دسته‌بندی و تخصیص خدمات",
+            label: "پروژه‌ها",
+            description: "مدیریت پروژه‌ها و تیم اجرایی",
             href: "/admin/projects",
             icon: FolderKanban,
             active: pathname.startsWith("/admin/projects"),

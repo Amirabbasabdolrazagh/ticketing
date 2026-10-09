@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import ConnectDb from "./connectDB";
 import User from "@/models/users";
 import { isProfileComplete } from "@/utils/profileCompletion";
-export default async function (refreshToken) {
+export default async function refreshAccessToken(refreshToken) {
   try {
     await ConnectDb();
     const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
