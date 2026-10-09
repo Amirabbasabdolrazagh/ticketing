@@ -37,7 +37,12 @@ export default function AuthPage() {
   );
   const router = useRouter();
   const [isSentCode, setIsSentCode] = useState(false);
-  const [reSendOtpTime, setReSendotpTime] = useState(90);
+  const [reSendOtpTime, setReSendotpTime] = useState(0);
+  const getPostLoginPath = (user) => (
+    user.profileComplete
+      ? (["passive_agent", "active_agent"].includes(user.role) ? `/${user.role}` : `/${user.role}/dashboard`)
+      : `/${user.role}/setting`
+  );
 
   useEffect(() => {
     const method = new URLSearchParams(window.location.search).get("method");
@@ -47,6 +52,7 @@ export default function AuthPage() {
   }, []);
 
   const handleReSendOtp = async () => {
+    if (reSendOtpTime > 0 || loadingResend) return;
     setLoadingResend(true);
     const res = await reSendOtpHandler(phone);
     if (res.success) {
@@ -61,15 +67,9 @@ export default function AuthPage() {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (reSendOtpTime > 0) {
-        setReSendotpTime((time) => time - 1);
-      } else {
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
+    if (!isSentCode || reSendOtpTime <= 0) return undefined;
+    const timer = window.setTimeout(() => setReSendotpTime((time) => Math.max(0, time - 1)), 1000);
+    return () => window.clearTimeout(timer);
   }, [reSendOtpTime, isSentCode]);
 
   useEffect(() => {
@@ -78,6 +78,7 @@ export default function AuthPage() {
       if (state.success) {
         toast.success(state.message);
         setIsSentCode(true);
+        setReSendotpTime(90);
       } else {
         toast.error(state.message);
         setIsSentCode(false);
@@ -88,7 +89,7 @@ export default function AuthPage() {
   const verifyHandler = async () => {
     const verifyCode = code.join("");
     try {
-      const res = await axios.post("api/auth/sms/verify", {
+      const res = await axios.post("/api/auth/sms/verify", {
         phone,
         code: verifyCode,
       });
@@ -98,20 +99,7 @@ export default function AuthPage() {
       if (data.success) {
         toast.success(data.message);
 
-        if (!data.user.profileComplete) {
-          router.replace(`/${data.user.role}/setting`);
-          return;
-        }
-
-        if (data.user.role === "admin") {
-          // redirect
-          router.replace("/admin");
-        } else if (data.user.role === "customer") {
-          // redirct
-          router.replace("/customer");
-        } else if (["agent", "passive_agent", "active_agent"].includes(data.user.role)) {
-          router.replace(`/${data.user.role}`);
-        }
+        router.replace(getPostLoginPath(data.user));
       } else {
         toast.error(data.message);
       }
@@ -139,11 +127,7 @@ export default function AuthPage() {
 
       if (data.success) {
         toast.success(data.message);
-        router.push(
-          data.user.profileComplete
-            ? `/${data.user.role}/dashboard`
-            : `/${data.user.role}/setting`,
-        );
+        router.replace(getPostLoginPath(data.user));
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "ورود ناموفق بود");
@@ -162,11 +146,7 @@ export default function AuthPage() {
         password: phonePassword,
       });
       toast.success(data.message);
-      router.replace(
-        data.user.profileComplete
-          ? `/${data.user.role}/dashboard`
-          : `/${data.user.role}/setting`,
-      );
+      router.replace(getPostLoginPath(data.user));
     } catch (error) {
       toast.error(error.response?.data?.message || "ورود ناموفق بود");
     } finally {
@@ -342,28 +322,14 @@ export default function AuthPage() {
             <div className="flex flex-col gap-3 box-border">
               <OtpInput setCode={setCode} code={code} />
               <button
-                disabled={isOtpComplete(code) ? true : false}
+                disabled={isOtpComplete(code)}
                 onClick={verifyHandler}
                 type="button"
                 className="flex h-12 items-center justify-center rounded-xl bg-gradient-to-l from-blue-600 to-violet-600 px-3 py-3 font-bold text-white disabled:cursor-not-allowed disabled:bg-none disabled:bg-gray-400"
               >
                 تایید و ورود
               </button>
-              <h3 className="text-xs ">
-                ارسال مجدد کد بعد از {getlocalTime(reSendOtpTime)}
-              </h3>
-              <p
-                className="text-sm text-center cursor-pointer"
-                onClick={handleReSendOtp}
-              >
-                {reSendOtpTime > 0 ? (
-                  ""
-                ) : loadingResend ? (
-                  <PulseLoader color="red" />
-                ) : (
-                  "ارسال مجدد کد"
-                )}
-              </p>
+              {reSendOtpTime > 0 ? <p className="text-center text-xs text-slate-500">ارسال مجدد کد تا {getlocalTime(reSendOtpTime)} دیگر فعال می‌شود</p> : <button type="button" onClick={handleReSendOtp} disabled={loadingResend} className="mx-auto text-sm font-bold text-blue-700 disabled:text-slate-400">{loadingResend ? <PulseLoader size={6} color="currentColor" /> : "ارسال مجدد کد"}</button>}
             </div>
           </div>
         )}

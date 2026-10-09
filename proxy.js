@@ -107,6 +107,18 @@ export async function proxy(req) {
     return response;
   }
 
+  if (pathname.startsWith("/passive_agent") && role !== "passive_agent") {
+    const response = NextResponse.redirect(new URL(`/${role}`, req.url));
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: 15 * 60, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    return response;
+  }
+
+  if (pathname.startsWith("/active_agent") && role !== "active_agent") {
+    const response = NextResponse.redirect(new URL(`/${role}`, req.url));
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: 15 * 60, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    return response;
+  }
+
   // 4) Continue request
   const response = NextResponse.next();
 
@@ -125,5 +137,5 @@ export async function proxy(req) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/agent/:path*", "/customer/:path*"],
+  matcher: ["/admin/:path*", "/agent/:path*", "/customer/:path*", "/passive_agent/:path*", "/active_agent/:path*"],
 };
