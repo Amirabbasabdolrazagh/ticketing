@@ -1,98 +1,11 @@
 "use client";
 import axios from "axios";
-import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { CgCloseR } from "react-icons/cg";
-
-export default function CreatUser({
-  setShowCreateModal,
-  showCreateModal,
-  setIsChangeInfo,
-  isChangInfo,
-}) {
-  const [userInfo, setUserInfo] = useState({ role: "customer" });
-  const [getUser, SetGetUser] = useState({});
-
-  const inputsHandler = (e) => {
-    setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
-  };
-  const CancelHandler = () => {
-    setShowCreateModal(!showCreateModal);
-  };
-  const changeUserSubmit = async () => {
-    try {
-      const res = await axios.post("/api/users", userInfo);
-      const data = await res.data;
-
-      if (data.success) {
-        toast.success(data.message);
-        setIsChangeInfo(true);
-        setShowCreateModal(false);
-      } else {
-        toast.error(data.message);
-        setIsChangeInfo(false);
-        setShowCreateModal(false);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message||"خطایی رخ داد");
-      setIsChangeInfo(false);
-      setShowCreateModal(false);
-    }
-  };
-  return (
-    <>
-      <div className="">
-        <div className="flex justify-between flex-row-reverse w-full">
-          <h1 className="text-xl">ساخت کاربر</h1>
-          <CgCloseR size={25} onClick={CancelHandler} />
-        </div>
-        <div className="flex flex-col " dir="ltr">
-          <label>نام</label>
-          <input
-            type="text"
-            name="name"
-            placeholder="نام را وارد کنید"
-            className="border px-4 py-2 rounded bg-white text-black placeholder:text-center"
-            onChange={inputsHandler}
-          />
-          <label>شماره تماس</label>
-          <input
-            type="text"
-            name="phone"
-            placeholder="شماره موبایل را وارد کنید"
-            className="border px-4 py-2 rounded  bg-white text-black placeholder:text-center"
-            onChange={inputsHandler}
-          />
-          <br />
-          <label>نقش</label>
-          <select
-            name="role"
-            className=" w-1/3 border rounded "
-            onChange={inputsHandler}
-            defaultValue="customer"
-          >
-            <option value="agent">پشتیبان</option>
-            <option value="admin">مدیر</option>
-            <option value="customer">مشتری</option>
-          </select>
-
-          <div className="pt-4 flex gap-6" dir="rtl">
-            <button
-              className="bg-blue-400 hover:bg-blue-500 px-4 py-2 rounded-xl text-white"
-              onClick={changeUserSubmit}
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              className="hover:bg-gray-600 px-4 py-2 rounded-xl"
-              onClick={CancelHandler}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+import { useState } from "react";
+const roles = [["customer", "مشتری"], ["agent", "پشتیبان عمومی"], ["passive_agent", "پشتیبان پسیو"], ["active_agent", "پشتیبان اکتیو"], ["admin", "مدیر"]];
+export default function CreatUser({ setShowCreateModal, showCreateModal, setIsChangeInfo }) {
+ const [info,setInfo]=useState({role:"customer"}); const [saving,setSaving]=useState(false);
+ const submit=async()=>{setSaving(true);try{const {data}=await axios.post("/api/users",info);if(data.success){toast.success("کاربر با موفقیت ساخته شد");setIsChangeInfo(v=>!v);setShowCreateModal(false)}}catch(e){toast.error(e.response?.data?.message||"ساخت کاربر ناموفق بود")}finally{setSaving(false)}};
+ return <div dir="rtl" className="w-[min(94vw,34rem)] max-w-xl"><div className="mb-6 flex items-start justify-between"><div><h1 className="text-2xl font-black text-slate-900">افزودن کاربر جدید</h1><p className="mt-1 text-sm text-slate-500">حساب کاربری و سطح دسترسی را تعیین کنید</p></div><CgCloseR className="cursor-pointer text-slate-500" size={24} onClick={()=>setShowCreateModal(!showCreateModal)}/></div><div className="space-y-4"><label className="block text-sm font-bold text-slate-700">نام و نام خانوادگی<input onChange={e=>setInfo({...info,name:e.target.value})} placeholder="مثلاً امیرعباس عبدالرزاق" className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"/></label><label className="block text-sm font-bold text-slate-700">شماره تماس<input dir="ltr" onChange={e=>setInfo({...info,phone:e.target.value})} placeholder="09123456789" className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 outline-none focus:border-blue-500"/></label><label className="block text-sm font-bold text-slate-700">نقش کاربر<select value={info.role} onChange={e=>setInfo({...info,role:e.target.value})} className="mt-2 h-12 w-full rounded-2xl border border-slate-200 bg-white px-4">{roles.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label></div><div className="mt-6 flex gap-3 border-t border-slate-100 pt-5"><button disabled={saving} onClick={submit} className="flex-1 rounded-2xl bg-gradient-to-l from-blue-600 to-cyan-500 px-5 py-3 font-bold text-white shadow-lg">{saving?"در حال ساخت...":"ساخت حساب کاربری"}</button><button onClick={()=>setShowCreateModal(false)} className="rounded-2xl border border-slate-200 px-5 py-3 font-bold">انصراف</button></div></div>;
 }

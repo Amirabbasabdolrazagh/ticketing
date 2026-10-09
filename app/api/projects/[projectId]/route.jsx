@@ -31,7 +31,10 @@ export async function GET(req, { params }) {
     }
     await ConnectDb();
 
-    const projectInfo = await Project.findById(projectId).populate("defaultAgent", "name phone");
+    const projectInfo = await Project.findById(projectId)
+      .populate("defaultAgent", "name phone")
+      .populate("passiveAgent", "name phone role")
+      .populate("activeAgent", "name phone role");
     if (!projectInfo) {
       return Response.json(
         { success: false, message: "project not found" },

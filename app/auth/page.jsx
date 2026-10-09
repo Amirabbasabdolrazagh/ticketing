@@ -109,8 +109,8 @@ export default function AuthPage() {
         } else if (data.user.role === "customer") {
           // redirct
           router.replace("/customer");
-        } else if (data.user.role === "agent") {
-          router.replace("/agent");
+        } else if (["agent", "passive_agent", "active_agent"].includes(data.user.role)) {
+          router.replace(`/${data.user.role}`);
         }
       } else {
         toast.error(data.message);

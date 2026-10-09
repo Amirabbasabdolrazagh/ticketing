@@ -40,7 +40,7 @@ export default function EditProject({
       }
     }
     project();
-  }, []);
+  }, [selectedProjectId]);
 
   const inputsHandler = (e) => {
     setProjectinfo({ ...projectInfo, [e.target.name]: e.target.value });
@@ -70,11 +70,11 @@ export default function EditProject({
   return (
     <>
       <div className="flex justify-between flex-row-reverse w-full">
-        <h1 className="text-xl">مدیریت پشتیبان خدمت</h1>
+        <h1 className="text-xl">مدیریت پشتیبان پروژه</h1>
         <CgCloseR size={25} onClick={CancelHandler} />
       </div>
       <div className="flex flex-col gap-2 " dir="ltr">
-        <label>نام خدمت</label>
+        <label>نام پروژه</label>
         <input
           type="text"
           name="name"
@@ -110,7 +110,7 @@ export default function EditProject({
             <option key={agent.userId} value={agent.userId}>{agent.name}</option>
           ))}
         </select>
-        <label>زیرخدمت‌ها (با ویرگول فارسی جدا کنید)</label>
+        <label>زیرمجموعه‌های پروژه (با ویرگول فارسی جدا کنید)</label>
         <input
           type="text"
           name="subcategories"

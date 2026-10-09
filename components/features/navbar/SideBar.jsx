@@ -34,6 +34,8 @@ import { getSeenNotificationIds } from "@/utils/notificationSeen";
 const roleLabels = {
   admin: "مدیر سیستم",
   agent: "پشتیبان",
+  passive_agent: "پشتیبان پسیو",
+  active_agent: "پشتیبان اکتیو",
   customer: "مشتری",
 };
 
@@ -103,20 +105,20 @@ export default function SideBar() {
 
   const userRole = user?.role;
   const menuItems = [
-    {
+    ...(["agent", "passive_agent", "active_agent"].includes(userRole) ? [{
       label: "داشبورد",
       description: "نمای کلی فعالیت‌ها",
-      href: `/${userRole}/dashboard`,
+      href: userRole === "agent" ? `/${userRole}/dashboard` : `/${userRole}`,
       icon: LayoutDashboard,
-      active: pathname === `/${userRole}/dashboard`,
-    },
-    {
+      active: userRole === "agent" ? pathname === `/${userRole}/dashboard` : pathname === `/${userRole}`,
+    }] : []),
+    ...(userRole === "agent" || userRole === "customer" ? [{
       label: "تیکت‌ها",
       description: "پیگیری درخواست‌ها",
       href: `/${userRole}/tickets`,
       icon: TicketCheck,
       active: pathname.startsWith(`/${userRole}/tickets`),
-    },
+    }] : []),
     ...(userRole === "admin"
       ? [
           {

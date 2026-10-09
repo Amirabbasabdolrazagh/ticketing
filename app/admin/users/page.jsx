@@ -7,12 +7,15 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { IoMdPersonAdd } from "react-icons/io";
+import { FiSearch, FiUsers } from "react-icons/fi";
 export default function UsersInfo() {
   const [allUser, serAllUser] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [isChangInfo, setIsChangeInfo] = useState(false);
+  const [search, setSearch] = useState("");
+  const filteredUsers = allUser.filter((user) => `${user.name} ${user.phone}`.toLowerCase().includes(search.toLowerCase()));
   useEffect(() => {
     async function users() {
       const res = await axios.get("/api/users");
@@ -40,20 +43,21 @@ export default function UsersInfo() {
             : "app-page flex min-h-svh flex-col gap-5"
         }
       >
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="glass-panel flex flex-wrap items-center justify-between gap-4 p-5 sm:p-7">
           <div className="flex flex-col gap-2">
-            <h1 className="page-heading">کاربران</h1>
-            <h1 className="text-sm text-blue-700">({allUser.length} کاربر )</h1>
+            <div className="flex items-center gap-3"><FiUsers className="size-7 text-blue-600" /><h1 className="page-heading">مدیریت کاربران</h1><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">{allUser.length.toLocaleString("fa-IR")} کاربر</span></div>
+            <p className="mt-2 text-sm text-slate-500">ساخت و مدیریت ادمین، پشتیبان عمومی، پشتیبان پسیو، پشتیبان اکتیو و مشتری</p>
           </div>
           <button
             className="flex gap-2 hover:text-blue-600 "
             onClick={creatUser}
           >
             <IoMdPersonAdd size={20} />
-            ساخت کاربر
+            افزودن کاربر جدید
           </button>
         </div>
 
+        <div className="glass-panel flex items-center gap-3 p-4"><FiSearch className="text-slate-400" /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="جست‌وجوی نام یا شماره تماس..." className="h-11 flex-1 bg-transparent outline-none" /></div>
         {allUser ? (
           <div className="glass-panel w-full overflow-x-auto p-2 sm:p-4">
           <table className="w-full min-w-[640px] border-collapse text-sm">
@@ -66,7 +70,7 @@ export default function UsersInfo() {
               </tr>
             </thead>
 
-            {allUser.map((user) => (
+            {filteredUsers.map((user) => (
               <GetAllUser
                 {...user}
                 key={user.userId}

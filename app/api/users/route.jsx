@@ -31,6 +31,8 @@ export async function GET(req) {
         AllUser = await User.find({ role: "customer" });
       } else if (role == "agent") {
         AllUser = await User.find({ role: "agent" });
+      } else if (["passive_agent", "active_agent"].includes(role)) {
+        AllUser = await User.find({ role });
       } else {
         AllUser = await User.find();
       }
@@ -88,7 +90,7 @@ export async function POST(req) {
         { status: 400 },
       );
     }
-    const alloewRoles = ["admin", "agent", "customer"];
+    const alloewRoles = ["admin", "agent", "passive_agent", "active_agent", "customer"];
     if (!alloewRoles.includes(role)) {
       return Response.json(
         { success: false, message: "invalid role" },

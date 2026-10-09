@@ -33,7 +33,7 @@ export default function TicketMessageEditor({
         <Button
           className="bg-sky-500 hover:bg-green-500"
           type="button"
-          onClick={sendNewMessageHandler}
+          onClick={() => sendNewMessageHandler()}
         >
           ارسال پیام
         </Button>

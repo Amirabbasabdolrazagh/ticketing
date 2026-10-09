@@ -35,7 +35,7 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "agent", "customer"],
+      enum: ["admin", "agent", "passive_agent", "active_agent", "customer"],
       default: "customer",
     },
     isVerify: {

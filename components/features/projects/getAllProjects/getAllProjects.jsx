@@ -18,6 +18,7 @@ export default function GetAllProjects({
   _id,
   defaultAgent,
   subcategories = [],
+  status,
 }) {
   const priorityStyle = (priority) => {
     if (priority === "low") {
@@ -43,6 +44,7 @@ export default function GetAllProjects({
               {defaultAgent?.name || "تعیین نشده"}
             </span>
           </TableCell>
+          <TableCell><span className={`rounded-full px-3 py-1 text-xs font-bold ${status === "archived" ? "bg-slate-200 text-slate-700" : "bg-emerald-100 text-emerald-700"}`}>{status === "archived" ? "آرشیو شده" : "در حال اجرا"}</span></TableCell>
           <TableCell className="max-w-64">
             <div className="flex flex-wrap gap-1">
               {subcategories.slice(0, 3).map((item) => (

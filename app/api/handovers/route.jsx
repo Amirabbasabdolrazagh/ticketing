@@ -1,0 +1,2 @@
+import ProjectHandover from "@/models/projectHandovers"; import ConnectDb from "@/utils/connectDB"; import getCurrentUser from "@/utils/auth";
+export async function GET() { await ConnectDb(); const user = await getCurrentUser(); if (!user) return Response.json({ success: false }, { status: 401 }); const handovers = await ProjectHandover.find({ assignee: user._id }).populate("project", "name code status").sort({ createdAt: -1 }).lean(); return Response.json({ success: true, handovers }); }

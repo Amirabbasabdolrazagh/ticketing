@@ -64,10 +64,15 @@ export default function TicketDetails() {
     };
   }, [ticketId]);
 
-  const sendNewMessageHandler = async () => {
+  const sendNewMessageHandler = async (messageOverride) => {
+    const message = typeof messageOverride === "string" ? messageOverride : newMessage;
+    if (!message.trim()) {
+      toast.error("متن پیام را وارد کنید");
+      return false;
+    }
     try {
       const res = await axios.post(`/api/tickets/${ticketId}/messages`, {
-        message: newMessage,
+        message,
       });
       const data = await res.data;
 
@@ -77,9 +82,11 @@ export default function TicketDetails() {
           : [...prev, data.messages]);
         setNewMessage("");
         toast.success(data.message);
+        return true;
       }
     } catch (error) {
       toast.error(error.response?.data?.message);
+      return false;
     }
   };
 
