@@ -509,12 +509,15 @@
     }
 
     @bottom-center {
-      content: "۰۲۱ ۸۶۱۹ ۱۲۰۵  |  info@itrasam.com  |  www.itrasam.com  |  تهران، بلوار کشاورز";
+      content: "تهران، بلوار کشاورزی، خیابان نادری، پلاک ۲، واحد ۲۰۴\A 021 8619 1205  |  info@itrasam.com  |  www.itrasam.com";
+      white-space: pre;
+      direction: ltr;
       color: #334155;
       font-size: 7.5pt;
       border-top: 1px solid #94a3b8;
       vertical-align: top;
     }
+
   }
 
   html,
@@ -739,6 +742,16 @@
     color: #0f2746;
     font-size: 9.5pt;
     line-height: 1.9;
+  }
+
+  .print-contract.print-exclude {
+    display: none !important;
+  }
+
+  .print-contract__phone {
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: right;
   }
 
   .print-contract__cover {

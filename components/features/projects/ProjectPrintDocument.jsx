@@ -18,13 +18,12 @@ function recordRows(value) {
 }
 
 function DataTable({ table }) {
-  const rows = recordRows(table.rows).filter((row) => row && typeof row === "object");
-  if (!rows.length) return null;
+  const rows = recordRows(table.rows).filter((row) => row && typeof row === "object" && Object.values(row).some((value) => value !== null && value !== undefined && value !== ""));
 
   return (
     <section className="print-contract__section">
       <h2>{table.title}</h2>
-      <table className="print-contract__table">
+      {rows.length ? <table className="print-contract__table">
         <thead>
           <tr>
             <th>ردیف</th>
@@ -39,13 +38,13 @@ function DataTable({ table }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </table> : <p className="print-contract__note">موردی ثبت نشده است.</p>}
     </section>
   );
 }
 
 /** A print-only, read-only document. It intentionally contains no inputs or screen UI. */
-export default function ProjectPrintDocument({ title, code, projectName, details = [], sections = [], tables = [], parties = [], printable = true }) {
+export default function ProjectPrintDocument({ title, code, projectName, detailTitle = "مشخصات و اطلاعات ثبت‌شده", details = [], sections = [], tables = [], parties = [], printable = true }) {
   return (
     <>
       <article dir="rtl" className={`print-document print-contract hidden print:block ${printable ? "" : "print-exclude"}`}>
@@ -61,19 +60,19 @@ export default function ProjectPrintDocument({ title, code, projectName, details
 
       {details.length > 0 && (
         <section className="print-contract__section">
-          <h2>مشخصات و اطلاعات ثبت‌شده</h2>
+          <h2>{detailTitle}</h2>
           <dl className="print-contract__fields">
-            {details.map((field) => <div key={field.label}><dt>{field.label}</dt><dd>{printableValue(field.value)}</dd></div>)}
+            {details.map((field) => <div key={field.label}><dt>{field.label}</dt><dd dir={field.direction || (field.label.includes("تماس") ? "ltr" : undefined)} className={field.label.includes("تماس") ? "print-contract__phone" : undefined}>{printableValue(field.value)}</dd></div>)}
           </dl>
         </section>
       )}
 
-      {sections.map((section) => (
+      {sections.map((section) => section.table ? <DataTable key={section.table.title} table={section.table} /> : (
         <section key={section.title} className="print-contract__section">
           <h2>{section.title}</h2>
           {section.note ? <p className="print-contract__note">{section.note}</p> : null}
           <dl className="print-contract__fields">
-            {section.fields.map((field) => <div key={field.label}><dt>{field.label}</dt><dd>{printableValue(field.value)}</dd></div>)}
+            {section.fields.map((field) => <div key={field.label}><dt>{field.label}</dt><dd dir={field.direction || (field.label.includes("تماس") ? "ltr" : undefined)} className={field.label.includes("تماس") ? "print-contract__phone" : undefined}>{printableValue(field.value)}</dd></div>)}
           </dl>
         </section>
       ))}
