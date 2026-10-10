@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { flushSync } from "react-dom";
 import ProjectHandoverPrintDocument from "./ProjectHandoverPrintDocument";
 
 const passiveServices = ["کابل‌کشی شبکه", "نصب پریز و Keystone", "نصب Patch Panel", "نصب و تجهیز رک", "نصب Cable Management", "نصب Patch Cord", "لیبل‌گذاری کابل‌ها", "لیبل‌گذاری Patch Panel", "لیبل‌گذاری پریزها و نودها", "مرتب‌سازی کابل‌های داخل رک", "اتصال و ساماندهی تجهیزات داخل رک", "سایر خدمات Passive"];
@@ -31,6 +32,7 @@ function DataTable({ title, columns, rows, data, setData }) {
 export default function ProjectHandoverForm({ handover, onDone }) {
   const [data, setData] = useState(handover.data || {});
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [savedAt, setSavedAt] = useState(handover.updatedAt || null);
   const [printAudience, setPrintAudience] = useState(null);
   useEffect(() => {
@@ -38,18 +40,42 @@ export default function ProjectHandoverForm({ handover, onDone }) {
     window.addEventListener("afterprint", clear);
     return () => window.removeEventListener("afterprint", clear);
   }, []);
-  const print = (audience) => { setPrintAudience(audience); window.setTimeout(() => window.print(), 150); };
-  const update = (key, value) => setData((old) => ({ ...old, [key]: value }));
+  const print = (audience) => {
+    flushSync(() => setPrintAudience(audience));
+    window.requestAnimationFrame(() => window.print());
+  };
+  const update = (key, value) => { setSaveError(""); setData((old) => ({ ...old, [key]: value })); };
   const updateList = (key, index, value) => update(key, { ...(data[key] || {}), [index]: value });
   const save = async (status = "assigned") => {
     setSaving(true);
+    setSaveError("");
     try {
-      const { data: response } = await axios.patch(`/api/projects/${handover.project._id}/handovers`, { handoverId: handover._id, data, status });
+      const projectId = typeof handover.project === "string" ? handover.project : handover.project?._id;
+      if (!projectId) throw new Error("شناسه پروژه در صورتجلسه پیدا نشد؛ فرم را دوباره باز کنید.");
+      const url = `/api/projects/${projectId}/handovers`;
+      const payload = { handoverId: handover._id, data, status };
+      let result;
+      try {
+        result = await axios.patch(url, payload);
+      } catch (error) {
+        if (error.response?.status !== 401) throw error;
+        try {
+          await axios.post("/api/auth/refreshToken");
+        } catch {
+          throw new Error("نشست شما منقضی شده است. دوباره وارد شوید؛ تا زمانی که صفحه باز است اطلاعات فرم پاک نمی‌شود.");
+        }
+        result = await axios.patch(url, payload);
+      }
+      const response = result.data;
+      if (!response?.success || !response.handover) throw new Error(response?.message || "تأیید ذخیره از سرور دریافت نشد.");
       setSavedAt(response.handover?.updatedAt || new Date().toISOString());
       toast.success(status === "submitted" ? "صورتجلسه برای ادمین ارسال شد" : "صورتجلسه در دیتابیس ذخیره شد");
-      onDone?.()?.catch?.(() => {});
+      const refreshed = onDone?.();
+      if (refreshed?.catch) refreshed.catch(() => {});
     } catch (error) {
-      toast.error(error.response?.data?.message || "ذخیره صورتجلسه ناموفق بود");
+      const message = error.response?.data?.message || error.message || "ذخیره صورتجلسه ناموفق بود";
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -74,6 +100,7 @@ export default function ProjectHandoverForm({ handover, onDone }) {
     <DataTable title="موارد باقی‌مانده / Punch List" rows={Array.from({ length: 4 }, () => "")} data={data.punchList} setData={(i, v) => updateList("punchList", i, v)} columns={[{ key: "issue", label: "شرح مورد" }, { key: "owner", label: "مسئول انجام" }, { key: "deadline", label: "مهلت انجام (شمسی)", type: "persianDate" }, { key: "status", label: "وضعیت", type: "select", options: ["باز", "انجام شد"] }]} />
     <section className="glass-panel p-5"><h2 className="text-lg font-black">شرح فعالیت و تأییدها</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><TextInput label="شرح فعالیت‌های انجام‌شده" value={data.activities} onChange={(v) => update("activities", v)} multiline /><TextInput label="تجهیزات / اقلام نصب و راه‌اندازی‌شده" value={data.installedItems} onChange={(v) => update("installedItems", v)} multiline /><TextInput label="تنظیمات انجام‌شده" value={data.configurations} onChange={(v) => update("configurations", v)} multiline /><TextInput label="مشکلات یا موانع حین اجرا" value={data.obstacles} onChange={(v) => update("obstacles", v)} multiline /><TextInput label="اقدامات اصلاحی انجام‌شده" value={data.correctiveActions} onChange={(v) => update("correctiveActions", v)} multiline /><TextInput label="توضیحات نماینده کارفرما" value={data.customerNotes} onChange={(v) => update("customerNotes", v)} multiline /></div><div className="mt-5 grid gap-3 md:grid-cols-2">{customerConfirmations.map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm"><input type="checkbox" checked={Boolean(data.customerConfirmations?.[item])} onChange={(e) => update("customerConfirmations", { ...(data.customerConfirmations || {}), [item]: e.target.checked })} />{item}</label>)}</div><div className="mt-5 grid gap-4 md:grid-cols-3"><TextInput label="نام و نام‌خانوادگی نماینده کارفرما" value={data.customerConfirmationName} onChange={(v) => update("customerConfirmationName", v)} /><label className="text-sm font-bold">تاریخ تأیید کارفرما (شمسی)<div className="mt-2"><PersianDateInput value={data.customerConfirmationDate} onChange={(v) => update("customerConfirmationDate", v)} /></div></label><TextInput label="نام کارشناس اجرا" value={data.executorConfirmationName} onChange={(v) => update("executorConfirmationName", v)} /><label className="text-sm font-bold">تاریخ تأیید کارشناس (شمسی)<div className="mt-2"><PersianDateInput value={data.executorConfirmationDate} onChange={(v) => update("executorConfirmationDate", v)} /></div></label><TextInput label="نام مسئول پروژه ای‌تی رسام" value={data.managerConfirmationName} onChange={(v) => update("managerConfirmationName", v)} /><label className="text-sm font-bold">تاریخ تأیید مسئول پروژه (شمسی)<div className="mt-2"><PersianDateInput value={data.managerConfirmationDate} onChange={(v) => update("managerConfirmationDate", v)} /></div></label></div><div className="mt-5 grid gap-3 md:grid-cols-2">{["عملیات Passive بررسی شد", "عملیات Active بررسی شد", "تجهیزات تحویل شد", "تست‌های لازم انجام شد", "مستندات تحویل شد", "دسترسی‌ها تحویل شد", "موارد باقی‌مانده ثبت شد", "تأیید کارفرما اخذ شد", "تأیید کارشناس اجرا اخذ شد", "تأیید مسئول پروژه اخذ شد"].map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm"><input type="checkbox" checked={Boolean(data.finalChecks?.[item])} onChange={(e) => update("finalChecks", { ...(data.finalChecks || {}), [item]: e.target.checked })} />{item}</label>)}</div><label className="mt-5 block text-sm font-bold">وضعیت نهایی تحویل<select value={data.finalDeliveryStatus || ""} onChange={(e) => update("finalDeliveryStatus", e.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3"><option value="">انتخاب وضعیت</option><option>تحویل کامل و مورد تأیید کارفرما</option><option>تحویل با موارد جزئی باقی‌مانده</option><option>تحویل موقت تا زمان رفع موارد</option><option>تحویل مورد تأیید نمی‌باشد</option></select></label></section>
     <section className="glass-panel p-5"><h2 className="text-lg font-black">پیوست‌های صورتجلسه</h2><p className="mt-1 text-sm text-slate-500">هر موردی که همراه این صورتجلسه تحویل شده را انتخاب و تعداد آن را ثبت کنید.</p><div className="mt-4 grid gap-3 md:grid-cols-2">{attachments.map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm"><input type="checkbox" checked={Boolean(data.attachments?.[item])} onChange={(e) => update("attachments", { ...(data.attachments || {}), [item]: e.target.checked })} />{item}</label>)}</div><div className="mt-5 grid gap-4 md:grid-cols-2"><TextInput label="تعداد برگه‌های پیوست" value={data.attachmentPages} onChange={(v) => update("attachmentPages", v)} /><TextInput label="توضیحات پیوست‌ها" value={data.attachmentNotes} onChange={(v) => update("attachmentNotes", v)} multiline /></div></section>
-    <div className="project-form-actions glass-panel sticky bottom-4 flex flex-wrap justify-end gap-3 p-4 print:hidden"><button type="button" onClick={() => print("company")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای شرکت</button><button type="button" onClick={() => print("customer")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای مشتری</button><button disabled={saving} onClick={() => save()} className="rounded-xl border px-5 py-3 font-bold">ذخیره موقت</button><button disabled={saving} onClick={() => save("submitted")} className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">ثبت و ارسال برای ادمین</button></div>
-  </section><ProjectHandoverPrintDocument item={handover} data={data} audience="company" printable={printAudience === "company"} /><ProjectHandoverPrintDocument item={handover} data={data} audience="customer" printable={printAudience === "customer"} /></>;
+    {saveError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{saveError}</p>}
+    <div className="project-form-actions glass-panel sticky bottom-4 flex flex-wrap justify-end gap-3 p-4 print:hidden"><button type="button" onClick={() => print("company")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای شرکت</button><button type="button" onClick={() => print("customer")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای مشتری</button><button type="button" disabled={saving} onClick={() => save()} className="rounded-xl border px-5 py-3 font-bold">{saving ? "در حال ذخیره..." : "ذخیره موقت"}</button><button type="button" disabled={saving} onClick={() => save("submitted")} className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">{saving ? "در حال ارسال..." : "ثبت و ارسال برای ادمین"}</button></div>
+  </section>{printAudience && <ProjectHandoverPrintDocument item={handover} data={data} audience={printAudience} />}</>;
 }

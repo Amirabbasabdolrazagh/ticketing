@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import ProjectAssessmentForm from "@/components/features/projects/ProjectAssessmentForm";
 import ProjectHandoverForm from "@/components/features/projects/ProjectHandoverForm";
 
@@ -38,8 +38,8 @@ export default function AgentProjectWorkList({ type }) {
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
   }, [load]);
-  if (selected) return <><div dir="rtl" className="app-page mb-3"><button type="button" onClick={() => { setSelected(null); load().catch(() => toast.error("دریافت فرم‌ها ناموفق بود")); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700">بازگشت به فهرست فرم‌ها</button></div>{isAssessment ? <ProjectAssessmentForm assessment={selected} /> : <ProjectHandoverForm handover={selected} onDone={load} />}</>;
+  if (selected) return <><Toaster position="top-center" /><div dir="rtl" className="app-page mb-3"><button type="button" onClick={() => { setSelected(null); load().catch(() => toast.error("دریافت فرم‌ها ناموفق بود")); }} className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700">بازگشت به فهرست فرم‌ها</button></div>{isAssessment ? <ProjectAssessmentForm assessment={selected} /> : <ProjectHandoverForm handover={selected} onDone={load} />}</>;
   const title = isAssessment ? "فرم‌های ارزیابی پروژه" : "صورتجلسه‌های تحویل پروژه";
   const description = isAssessment ? "اطلاعات اولیه پروژه‌های ارجاع‌شده را تکمیل و برای مدیر ارسال کنید." : "پس از پایان اجرا، صورتجلسه تحویل را تکمیل و ارسال کنید.";
-  return <section dir="rtl" className="app-page space-y-5"><div className="glass-panel p-6"><h1 className="page-heading">{title}</h1><p className="mt-2 text-sm text-slate-500">{description}</p></div><div className="space-y-3">{items.length === 0 ? <div className="glass-panel p-8 text-center text-slate-500">فرمی برای شما ثبت نشده است.</div> : items.map((item) => <button key={item._id} type="button" disabled={Boolean(openingId)} onClick={() => open(item)} className="glass-panel block w-full p-5 text-right transition hover:-translate-y-0.5 disabled:opacity-60"><div className="flex items-center justify-between gap-3"><strong>{item.project?.name || "پروژه"}</strong><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{openingId === item._id ? "در حال دریافت..." : item.status}</span></div><p className="mt-2 text-sm text-slate-500">کد پروژه: {item.project?.code || "—"}</p></button>)}</div></section>;
+  return <section dir="rtl" className="app-page space-y-5"><Toaster position="top-center" /><div className="glass-panel p-6"><h1 className="page-heading">{title}</h1><p className="mt-2 text-sm text-slate-500">{description}</p></div><div className="space-y-3">{items.length === 0 ? <div className="glass-panel p-8 text-center text-slate-500">فرمی برای شما ثبت نشده است.</div> : items.map((item) => <button key={item._id} type="button" disabled={Boolean(openingId)} onClick={() => open(item)} className="glass-panel block w-full p-5 text-right transition hover:-translate-y-0.5 disabled:opacity-60"><div className="flex items-center justify-between gap-3"><strong>{item.project?.name || "پروژه"}</strong><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{openingId === item._id ? "در حال دریافت..." : item.status}</span></div><p className="mt-2 text-sm text-slate-500">کد پروژه: {item.project?.code || "—"}</p></button>)}</div></section>;
 }

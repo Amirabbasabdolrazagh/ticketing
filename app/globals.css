@@ -827,8 +827,8 @@
     background: rgb(255 255 255 / 98%);
     padding: 6mm;
     margin-top: 5mm;
-    break-inside: avoid-page;
-    page-break-inside: avoid;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
   .print-contract__section h2 {
@@ -837,6 +837,8 @@
     padding-bottom: 3mm;
     color: #0a2540;
     font-size: 14pt;
+    break-after: avoid-page;
+    page-break-after: avoid;
   }
 
   .print-contract__note {
@@ -853,6 +855,8 @@
   .print-contract__fields div {
     min-height: 19mm;
     padding: 3mm 4mm;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
 
   .print-contract__table {
