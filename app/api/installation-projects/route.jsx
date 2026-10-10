@@ -7,6 +7,12 @@ import getCurrentUser from "@/utils/auth";
 import authorization from "@/utils/authorization";
 import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
 
+function createProjectCode() {
+  const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+  const suffix = crypto.randomUUID().replaceAll("-", "").slice(0, 5).toUpperCase();
+  return `ITR-NET-${date}-${suffix}`;
+}
+
 export async function GET() {
   await ConnectDb();
   const user = await getCurrentUser();
@@ -19,11 +25,18 @@ export async function POST(req) {
   await ConnectDb();
   const user = await getCurrentUser();
   if (!user || !authorization(user, ["admin"])) return Response.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
-  const { name, customerName, location, description, code, passiveAgent, activeAgent } = await req.json();
-  if (!name || !code || (!passiveAgent && !activeAgent)) return Response.json({ success: false, message: "نام، کد پروژه و حداقل یک کارشناس الزامی است" }, { status: 400 });
-  const normalizedCode = String(code).trim().toUpperCase();
-  if (!/^[A-Z0-9-]+$/.test(normalizedCode)) return Response.json({ success: false, message: "کد پروژه فقط شامل حروف انگلیسی، عدد و خط تیره است" }, { status: 400 });
-  if (await InstallationProject.exists({ code: normalizedCode })) return Response.json({ success: false, message: "این کد پروژه قبلاً ثبت شده است" }, { status: 409 });
+  const { name, customerName, location, description, passiveAgent, activeAgent } = await req.json();
+  if (!name || (!passiveAgent && !activeAgent)) return Response.json({ success: false, message: "نام پروژه و انتخاب حداقل یک پشتیبان الزامی است" }, { status: 400 });
+  let normalizedCode;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const candidate = createProjectCode();
+    // A random suffix makes collisions extremely unlikely; this query makes it deterministic too.
+    if (!(await InstallationProject.exists({ code: candidate }))) {
+      normalizedCode = candidate;
+      break;
+    }
+  }
+  if (!normalizedCode) return Response.json({ success: false, message: "ساخت کد یکتای پروژه ناموفق بود؛ دوباره تلاش کنید" }, { status: 503 });
   const eligibleRoles = ["passive_agent", "active_agent"];
   const [passive, active] = await Promise.all([passiveAgent ? User.findOne({ _id: passiveAgent, role: { $in: eligibleRoles } }).select(`name ${messengerUserSelect}`) : null, activeAgent ? User.findOne({ _id: activeAgent, role: { $in: eligibleRoles } }).select(`name ${messengerUserSelect}`) : null]);
   if ((passiveAgent && !passive) || (activeAgent && !active)) return Response.json({ success: false, message: "کارشناس انتخاب‌شده معتبر نیست" }, { status: 400 });

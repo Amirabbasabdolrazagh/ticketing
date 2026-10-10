@@ -528,6 +528,10 @@
     padding: 42mm 17mm 30mm !important;
   }
 
+  .project-form-editor {
+    display: none !important;
+  }
+
   .print-letterhead {
     position: fixed;
     inset: 0;
@@ -701,5 +705,133 @@
     color: #475569;
     font-size: 8pt;
     text-align: center;
+  }
+
+  .print-contract {
+    display: block !important;
+    color: #0f2746;
+    font-size: 9.5pt;
+    line-height: 1.9;
+  }
+
+  .print-contract__cover {
+    min-height: 192mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 1.5px solid #0f4f9a;
+    border-radius: 9px;
+    background: rgb(255 255 255 / 88%);
+    padding: 15mm;
+    text-align: center;
+  }
+
+  .print-contract__eyebrow {
+    color: #0d6efd;
+    font-size: 10pt;
+    font-weight: 700;
+  }
+
+  .print-contract__cover h1 {
+    margin: 10mm 0 3mm;
+    color: #0a2540;
+    font-size: 24pt;
+    line-height: 1.5;
+  }
+
+  .print-contract__project {
+    font-size: 13pt;
+    font-weight: 700;
+  }
+
+  .print-contract__identity {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4mm;
+    margin-top: 16mm;
+    text-align: right;
+  }
+
+  .print-contract__identity div,
+  .print-contract__fields div {
+    border: 1px solid #cbd5e1;
+    background: rgb(255 255 255 / 80%);
+  }
+
+  .print-contract__identity div {
+    padding: 4mm;
+  }
+
+  .print-contract__identity dt,
+  .print-contract__fields dt {
+    color: #475569;
+    font-size: 8pt;
+    font-weight: 700;
+  }
+
+  .print-contract__identity dd,
+  .print-contract__fields dd {
+    margin: 1.5mm 0 0;
+    font-weight: 700;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .print-contract__section {
+    break-before: page;
+    page-break-before: always;
+    min-height: 80mm;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    background: rgb(255 255 255 / 88%);
+    padding: 6mm;
+  }
+
+  .print-contract__section + .print-contract__section {
+    margin-top: 6mm;
+  }
+
+  .print-contract__section h2 {
+    margin: 0 0 5mm;
+    border-bottom: 1px solid #93c5fd;
+    padding-bottom: 3mm;
+    color: #0a2540;
+    font-size: 14pt;
+  }
+
+  .print-contract__note {
+    margin-bottom: 4mm;
+    color: #334155;
+  }
+
+  .print-contract__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 3mm;
+  }
+
+  .print-contract__fields div {
+    min-height: 19mm;
+    padding: 3mm 4mm;
+  }
+
+  .print-contract__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+  }
+
+  .print-contract__table th,
+  .print-contract__table td {
+    border: 1px solid #94a3b8 !important;
+    padding: 2.5mm !important;
+    text-align: right;
+    vertical-align: top;
+    white-space: pre-wrap;
+  }
+
+  .print-contract__table th {
+    background: rgb(219 234 254 / 88%) !important;
+    color: #0a2540;
   }
 }
