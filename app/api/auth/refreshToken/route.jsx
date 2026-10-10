@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { ACCESS_TOKEN_LIFETIME, ACCESS_TOKEN_MAX_AGE } from "@/lib/accessTokenLifetime";
 import jwt from "jsonwebtoken";
 import ConnectDb from "@/utils/connectDB";
 import User from "@/models/users";
@@ -55,13 +56,13 @@ export async function POST() {
       },
       process.env.ACCESS_TOKEN_SECRET,
       {
-        expiresIn: "15m",
+        expiresIn: ACCESS_TOKEN_LIFETIME,
       },
     );
     cookieStore.set("accessToken", newAccessToken, {
       httpOnly: true,
       path: "/",
-      maxAge: 15 * 60,
+      maxAge: ACCESS_TOKEN_MAX_AGE,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
     });

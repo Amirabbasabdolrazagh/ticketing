@@ -1,6 +1,7 @@
 import User from "@/models/users";
 import ConnectDb from "@/utils/connectDB";
 import { cookies } from "next/headers";
+import { ACCESS_TOKEN_LIFETIME, ACCESS_TOKEN_MAX_AGE } from "@/lib/accessTokenLifetime";
 import jwt from "jsonwebtoken";
 import { isProfileComplete } from "@/utils/profileCompletion";
 export async function POST(req) {
@@ -40,7 +41,7 @@ export async function POST(req) {
       accessPayload,
       process.env.ACCESS_TOKEN_SECRET,
       {
-        expiresIn: "15m",
+        expiresIn: ACCESS_TOKEN_LIFETIME,
       },
     );
     const refreshToken = jwt.sign(
@@ -60,7 +61,7 @@ export async function POST(req) {
     cookieStore.set("accessToken", accessToken, {
       httpOnly: true,
       path: "/",
-      maxAge: 15 * 60,
+      maxAge: ACCESS_TOKEN_MAX_AGE,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
     });

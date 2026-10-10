@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import refreshAccessToken from "./utils/refreshAccessToken";
+import { ACCESS_TOKEN_MAX_AGE } from "./lib/accessTokenLifetime";
 
 export async function proxy(req) {
   const accessToken = req.cookies.get("accessToken")?.value;
@@ -50,7 +51,7 @@ export async function proxy(req) {
       response.cookies.set("accessToken", newAccessToken, {
         httpOnly: true,
         path: "/",
-        maxAge: 15 * 60,
+        maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
       });
@@ -66,7 +67,7 @@ export async function proxy(req) {
       response.cookies.set("accessToken", newAccessToken, {
         httpOnly: true,
         path: "/",
-        maxAge: 15 * 60,
+        maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
       });
@@ -82,7 +83,7 @@ export async function proxy(req) {
       response.cookies.set("accessToken", newAccessToken, {
         httpOnly: true,
         path: "/",
-        maxAge: 15 * 60,
+        maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
       });
@@ -98,7 +99,7 @@ export async function proxy(req) {
       response.cookies.set("accessToken", newAccessToken, {
         httpOnly: true,
         path: "/",
-        maxAge: 15 * 60,
+        maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
       });
@@ -109,13 +110,13 @@ export async function proxy(req) {
 
   if (pathname.startsWith("/passive_agent") && role !== "passive_agent") {
     const response = NextResponse.redirect(new URL(`/${role}`, req.url));
-    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: 15 * 60, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
     return response;
   }
 
   if (pathname.startsWith("/active_agent") && role !== "active_agent") {
     const response = NextResponse.redirect(new URL(`/${role}`, req.url));
-    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: 15 * 60, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
     return response;
   }
 
@@ -127,7 +128,7 @@ export async function proxy(req) {
     response.cookies.set("accessToken", newAccessToken, {
       httpOnly: true,
       path: "/",
-      maxAge: 15 * 60,
+      maxAge: ACCESS_TOKEN_MAX_AGE,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
     });

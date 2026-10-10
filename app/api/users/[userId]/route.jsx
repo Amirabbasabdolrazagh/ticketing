@@ -4,6 +4,7 @@ import authorization from "@/utils/authorization";
 import ConnectDb from "@/utils/connectDB";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import { ACCESS_TOKEN_LIFETIME, ACCESS_TOKEN_MAX_AGE } from "@/lib/accessTokenLifetime";
 import {
   isProfileComplete,
   normalizeFullName,
@@ -18,7 +19,7 @@ async function refreshUserSession(userInfo) {
     profileComplete,
   };
   const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
-    expiresIn: "15m",
+    expiresIn: ACCESS_TOKEN_LIFETIME,
   });
   const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
     expiresIn: "7d",
@@ -30,7 +31,7 @@ async function refreshUserSession(userInfo) {
   cookieStore.set("accessToken", accessToken, {
     httpOnly: true,
     path: "/",
-    maxAge: 15 * 60,
+    maxAge: ACCESS_TOKEN_MAX_AGE,
     sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
   });

@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import ConnectDb from "./connectDB";
 import User from "@/models/users";
 import { isProfileComplete } from "@/utils/profileCompletion";
+import { ACCESS_TOKEN_LIFETIME } from "@/lib/accessTokenLifetime";
 export default async function refreshAccessToken(refreshToken) {
   try {
     await ConnectDb();
@@ -21,7 +22,7 @@ export default async function refreshAccessToken(refreshToken) {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-          expiresIn: "15m",
+          expiresIn: ACCESS_TOKEN_LIFETIME,
         },
       );
 
