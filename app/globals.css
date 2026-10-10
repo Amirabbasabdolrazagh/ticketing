@@ -487,12 +487,39 @@
 @media print {
   @page {
     size: A4;
-    margin: 0;
+    margin: 30mm 17mm 22mm;
+
+    @top-left {
+      content: "تاریخ: ........................  شماره: ........................  پیوست: ........";
+      color: #334155;
+      font-size: 7.5pt;
+      border-bottom: 1px solid #cbd5e1;
+      vertical-align: bottom;
+    }
+
+    @top-right {
+      content: "";
+      width: 48mm;
+      height: 16mm;
+      background-image: url("/images/logo.png");
+      background-repeat: no-repeat;
+      background-position: right center;
+      background-size: contain;
+      vertical-align: middle;
+    }
+
+    @bottom-center {
+      content: "۰۲۱ ۸۶۱۹ ۱۲۰۵  |  info@itrasam.com  |  www.itrasam.com  |  تهران، بلوار کشاورز";
+      color: #334155;
+      font-size: 7.5pt;
+      border-top: 1px solid #94a3b8;
+      vertical-align: top;
+    }
   }
 
   html,
   body {
-    width: 210mm;
+    width: auto;
     min-height: auto;
     background: #fff !important;
     color: #0f172a !important;
@@ -519,13 +546,13 @@
 
   .app-page,
   .print-document {
-    position: relative;
-    isolation: isolate;
-    width: 210mm !important;
+    position: static;
+    isolation: auto;
+    width: auto !important;
     max-width: none !important;
-    min-height: 297mm;
+    min-height: 0;
     margin: 0 !important;
-    padding: 42mm 17mm 30mm !important;
+    padding: 0 !important;
   }
 
   .project-form-editor {
@@ -533,13 +560,7 @@
   }
 
   .print-letterhead {
-    position: fixed;
-    inset: 0;
-    display: block !important;
-    width: 210mm;
-    height: 297mm;
-    z-index: 0;
-    pointer-events: none;
+    display: none !important;
   }
 
   .print-document > :not(.print-letterhead) {
@@ -624,7 +645,8 @@
 
   .print-signature-page {
     display: block !important;
-    min-height: 225mm;
+    box-sizing: border-box;
+    min-height: 215mm;
     break-before: page;
     page-break-before: always;
     padding-top: 8mm;
@@ -661,12 +683,13 @@
   .print-signature-page__grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 5mm;
-    margin-top: 16mm;
+    gap: 3mm;
+    margin-top: 10mm;
   }
 
   .print-signature-page__box {
-    min-height: 100mm;
+    box-sizing: border-box;
+    min-height: 66mm;
     border: 1px solid #94a3b8;
     border-radius: 6px;
     background: rgb(255 255 255 / 88%);
@@ -688,7 +711,7 @@
 
   .print-signature-page__space {
     display: flex;
-    min-height: 43mm;
+    min-height: 38mm;
     align-items: flex-end;
     justify-content: center;
     margin-top: 8mm;
@@ -709,21 +732,27 @@
 
   .print-contract {
     display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
     color: #0f2746;
     font-size: 9.5pt;
     line-height: 1.9;
   }
 
   .print-contract__cover {
-    min-height: 192mm;
+    box-sizing: border-box;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     border: 1.5px solid #0f4f9a;
     border-radius: 9px;
-    background: rgb(255 255 255 / 88%);
-    padding: 15mm;
-    text-align: center;
+    background: rgb(255 255 255 / 98%);
+    padding: 6mm 8mm;
+    margin-bottom: 5mm;
+    text-align: right;
   }
 
   .print-contract__eyebrow {
@@ -733,9 +762,9 @@
   }
 
   .print-contract__cover h1 {
-    margin: 10mm 0 3mm;
+    margin: 2mm 0;
     color: #0a2540;
-    font-size: 24pt;
+    font-size: 17pt;
     line-height: 1.5;
   }
 
@@ -748,14 +777,14 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4mm;
-    margin-top: 16mm;
+    margin-top: 3mm;
     text-align: right;
   }
 
   .print-contract__identity div,
   .print-contract__fields div {
     border: 1px solid #cbd5e1;
-    background: rgb(255 255 255 / 80%);
+    background: rgb(255 255 255 / 98%);
   }
 
   .print-contract__identity div {
@@ -778,17 +807,15 @@
   }
 
   .print-contract__section {
-    break-before: page;
-    page-break-before: always;
-    min-height: 80mm;
+    break-before: auto;
+    page-break-before: auto;
     border: 1px solid #bfdbfe;
     border-radius: 8px;
-    background: rgb(255 255 255 / 88%);
+    background: rgb(255 255 255 / 98%);
     padding: 6mm;
-  }
-
-  .print-contract__section + .print-contract__section {
-    margin-top: 6mm;
+    margin-top: 5mm;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
 
   .print-contract__section h2 {
@@ -819,6 +846,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 8pt;
+    table-layout: fixed;
   }
 
   .print-contract__table th,
@@ -828,10 +856,18 @@
     text-align: right;
     vertical-align: top;
     white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .print-contract__table th {
     background: rgb(219 234 254 / 88%) !important;
     color: #0a2540;
+  }
+
+  .print-contract__table tr,
+  .print-contract__table td,
+  .print-contract__table th {
+    break-inside: avoid-page;
+    page-break-inside: avoid;
   }
 }

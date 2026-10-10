@@ -1,4 +1,4 @@
-import { PrintLetterhead, PrintSignaturePage } from "./PrintLetterhead";
+import { PrintSignaturePage } from "./PrintLetterhead";
 
 function printableValue(value) {
   if (value === null || value === undefined || value === "") return "—";
@@ -45,19 +45,19 @@ function DataTable({ table }) {
 }
 
 /** A print-only, read-only document. It intentionally contains no inputs or screen UI. */
-export default function ProjectPrintDocument({ title, code, projectName, details = [], sections = [], tables = [], parties = [] }) {
+export default function ProjectPrintDocument({ title, code, projectName, details = [], sections = [], tables = [], parties = [], printable = true }) {
   return (
-    <article dir="rtl" className="print-document print-contract hidden print:block">
-      <PrintLetterhead />
-      <section className="print-contract__cover">
-        <p className="print-contract__eyebrow">سند رسمی پروژه | شرکت ای‌تی رسام</p>
-        <h1>{title}</h1>
-        <p className="print-contract__project">{projectName || "پروژه نصب و راه‌اندازی"}</p>
-        <dl className="print-contract__identity">
-          <div><dt>کد سند</dt><dd>{code}</dd></div>
-          <div><dt>عنوان پروژه</dt><dd>{projectName || "—"}</dd></div>
-        </dl>
-      </section>
+    <>
+      <article dir="rtl" className={`print-document print-contract hidden print:block ${printable ? "" : "print-exclude"}`}>
+        <section className="print-contract__cover">
+          <p className="print-contract__eyebrow">سند رسمی پروژه | شرکت ای‌تی رسام</p>
+          <h1>{title}</h1>
+          <p className="print-contract__project">{projectName || "پروژه نصب و راه‌اندازی"}</p>
+          <dl className="print-contract__identity">
+            <div><dt>کد سند</dt><dd>{code}</dd></div>
+            <div><dt>عنوان پروژه</dt><dd>{projectName || "—"}</dd></div>
+          </dl>
+        </section>
 
       {details.length > 0 && (
         <section className="print-contract__section">
@@ -80,7 +80,8 @@ export default function ProjectPrintDocument({ title, code, projectName, details
 
       {tables.map((table) => <DataTable key={table.title} table={table} />)}
 
-      <PrintSignaturePage documentTitle={title} projectName={projectName} parties={parties} />
-    </article>
+        <PrintSignaturePage documentTitle={title} projectName={projectName} parties={parties} />
+      </article>
+    </>
   );
 }
