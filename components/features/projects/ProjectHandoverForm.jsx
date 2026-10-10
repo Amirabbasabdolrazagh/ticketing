@@ -31,6 +31,7 @@ function DataTable({ title, columns, rows, data, setData }) {
 export default function ProjectHandoverForm({ handover, onDone }) {
   const [data, setData] = useState(handover.data || {});
   const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState(handover.updatedAt || null);
   const [printAudience, setPrintAudience] = useState(null);
   useEffect(() => {
     const clear = () => setPrintAudience(null);
@@ -40,9 +41,21 @@ export default function ProjectHandoverForm({ handover, onDone }) {
   const print = (audience) => { setPrintAudience(audience); window.setTimeout(() => window.print(), 150); };
   const update = (key, value) => setData((old) => ({ ...old, [key]: value }));
   const updateList = (key, index, value) => update(key, { ...(data[key] || {}), [index]: value });
-  const save = async (status = "assigned") => { setSaving(true); try { await axios.patch(`/api/projects/${handover.project._id}/handovers`, { handoverId: handover._id, data, status }); toast.success(status === "submitted" ? "صورتجلسه برای ادمین ارسال شد" : "صورتجلسه ذخیره شد"); onDone?.(); } catch (error) { toast.error(error.response?.data?.message || "ذخیره صورتجلسه ناموفق بود"); } finally { setSaving(false); } };
+  const save = async (status = "assigned") => {
+    setSaving(true);
+    try {
+      const { data: response } = await axios.patch(`/api/projects/${handover.project._id}/handovers`, { handoverId: handover._id, data, status });
+      setSavedAt(response.handover?.updatedAt || new Date().toISOString());
+      toast.success(status === "submitted" ? "صورتجلسه برای ادمین ارسال شد" : "صورتجلسه در دیتابیس ذخیره شد");
+      onDone?.()?.catch?.(() => {});
+    } catch (error) {
+      toast.error(error.response?.data?.message || "ذخیره صورتجلسه ناموفق بود");
+    } finally {
+      setSaving(false);
+    }
+  };
   return <><section dir="rtl" className="app-page project-form-editor space-y-5">
-    <div className="glass-panel print-header p-6"><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">IT-RASAM-NET-FRM-001</span><h1 className="mt-3 page-heading">صورتجلسه تحویل و تأیید پروژه</h1><p className="mt-2 text-sm text-slate-500">{handover.project?.name} — کارشناس {handover.assigneeRole === "passive_agent" ? "پسیو" : "اکتیو"}</p></div>
+    <div className="glass-panel print-header p-6"><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">IT-RASAM-NET-FRM-001</span><h1 className="mt-3 page-heading">صورتجلسه تحویل و تأیید پروژه</h1><p className="mt-2 text-sm text-slate-500">{handover.project?.name} — کارشناس {handover.assigneeRole === "passive_agent" ? "پسیو" : "اکتیو"}</p>{savedAt && <p className="mt-2 text-xs font-semibold text-emerald-700">آخرین ذخیره: {new Date(savedAt).toLocaleString("fa-IR")}</p>}</div>
     <section className="glass-panel p-5"><h2 className="text-lg font-black">مشخصات سند و پروژه</h2><div className="mt-4 grid gap-4 md:grid-cols-3"><TextInput label="شماره صورتجلسه" value={data.meetingNumber} onChange={(v) => update("meetingNumber", v)} /><TextInput label="شماره پروژه / قرارداد" value={data.contractNumber || handover.project?.code} onChange={(v) => update("contractNumber", v)} /><label className="text-sm font-bold">تاریخ صدور (شمسی)<div className="mt-2"><PersianDateInput value={data.issueDate} onChange={(v) => update("issueDate", v)} /></div></label><label className="text-sm font-bold">وضعیت سند<select value={data.documentStatus || "نهایی"} onChange={(e) => update("documentStatus", e.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3"><option>اولیه</option><option>اصلاحیه</option><option>نهایی</option></select></label></div></section>
     <section className="glass-panel p-5"><h2 className="text-lg font-black">مشخصات پروژه و طرفین</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><TextInput label="نام کارفرما / مشتری" value={data.customerName} onChange={(v) => update("customerName", v)} /><TextInput label="محل اجرای پروژه" value={data.location} onChange={(v) => update("location", v)} /><TextInput label="نام نماینده کارفرما" value={data.customerRepresentative} onChange={(v) => update("customerRepresentative", v)} /><TextInput label="سمت نماینده کارفرما" value={data.customerRepresentativeRole} onChange={(v) => update("customerRepresentativeRole", v)} /><TextInput label="شماره تماس نماینده" value={data.customerPhone} onChange={(v) => update("customerPhone", v)} /><TextInput label="کارشناس / مجری پروژه" value={data.executorName} onChange={(v) => update("executorName", v)} /><TextInput label="مدیر / مسئول پروژه ای‌تی رسام" value={data.projectManager} onChange={(v) => update("projectManager", v)} /><label className="text-sm font-bold">تاریخ شروع عملیات (شمسی)<div className="mt-2"><PersianDateInput value={data.startDate} onChange={(v) => update("startDate", v)} /></div></label><label className="text-sm font-bold">تاریخ پایان عملیات (شمسی)<div className="mt-2"><PersianDateInput value={data.endDate} onChange={(v) => update("endDate", v)} /></div></label><label className="text-sm font-bold">تاریخ تحویل (شمسی)<div className="mt-2"><PersianDateInput value={data.handoverDate} onChange={(v) => update("handoverDate", v)} /></div></label></div></section>
     <Checklist title="شرح خدمات پسیو انجام‌شده" items={passiveServices} data={data.passiveServices} setData={(i, v) => updateList("passiveServices", i, v)} />
