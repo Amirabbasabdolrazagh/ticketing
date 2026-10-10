@@ -476,10 +476,18 @@
   }
 }
 
+/* Keep project-form actions above the liquid mobile navigation. */
+@media (max-width: 1023px) {
+  .project-form-actions {
+    bottom: calc(6.75rem + env(safe-area-inset-bottom)) !important;
+    margin-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+  }
+}
+
 @media print {
   @page {
     size: A4;
-    margin: 10mm;
+    margin: 0;
   }
 
   html,
@@ -511,16 +519,35 @@
 
   .app-page,
   .print-document {
-    width: 100% !important;
+    position: relative;
+    isolation: isolate;
+    width: 210mm !important;
     max-width: none !important;
-    padding: 0 !important;
+    min-height: 297mm;
+    margin: 0 !important;
+    padding: 42mm 17mm 30mm !important;
+  }
+
+  .print-letterhead {
+    position: fixed;
+    inset: 0;
+    display: block !important;
+    width: 210mm;
+    height: 297mm;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .print-document > :not(.print-letterhead) {
+    position: relative;
+    z-index: 1;
   }
 
   .print-document .glass-panel {
     overflow: visible !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 8px !important;
-    background: #fff !important;
+    background: rgb(255 255 255 / 92%) !important;
     box-shadow: none !important;
     backdrop-filter: none !important;
     break-inside: avoid-page;
@@ -528,9 +555,20 @@
   }
 
   .print-document .print-header {
-    border: 0 !important;
-    border-radius: 0 !important;
-    padding: 0 0 5mm !important;
+    border: 1px solid #0f3d79 !important;
+    border-radius: 7px !important;
+    padding: 4mm 5mm !important;
+  }
+
+  .print-document .print-document-meta {
+    color: #0a2540;
+    font-size: 9pt;
+  }
+
+  .print-document .print-document-meta p {
+    margin-top: 2px;
+    font-size: 8pt;
+    font-weight: 400;
   }
 
   .print-document input:not([type="checkbox"]):not([type="radio"]),
@@ -574,5 +612,94 @@
   .print-document tr {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  .print-exclude {
+    display: none !important;
+  }
+
+  .print-signature-page {
+    display: block !important;
+    min-height: 225mm;
+    break-before: page;
+    page-break-before: always;
+    padding-top: 8mm;
+  }
+
+  .print-signature-page__title {
+    border-right: 4px solid #0d6efd;
+    padding: 0 4mm 4mm;
+    color: #0a2540;
+  }
+
+  .print-signature-page__title p,
+  .print-signature-page__title span,
+  .print-signature-page__title strong {
+    display: block;
+    font-size: 9pt;
+  }
+
+  .print-signature-page__title h2 {
+    margin: 2mm 0;
+    font-size: 18pt;
+  }
+
+  .print-signature-page__notice {
+    margin-top: 9mm;
+    border: 1px solid #bfdbfe;
+    border-radius: 5px;
+    background: rgb(239 246 255 / 75%);
+    padding: 4mm;
+    font-size: 9pt;
+    line-height: 1.9;
+  }
+
+  .print-signature-page__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5mm;
+    margin-top: 16mm;
+  }
+
+  .print-signature-page__box {
+    min-height: 100mm;
+    border: 1px solid #94a3b8;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 88%);
+    padding: 5mm;
+  }
+
+  .print-signature-page__box h3 {
+    border-bottom: 1px solid #cbd5e1;
+    margin-bottom: 5mm;
+    padding-bottom: 3mm;
+    color: #0a2540;
+    font-size: 10pt;
+  }
+
+  .print-signature-page__box p {
+    margin: 3mm 0;
+    font-size: 8.5pt;
+  }
+
+  .print-signature-page__space {
+    display: flex;
+    min-height: 43mm;
+    align-items: flex-end;
+    justify-content: center;
+    margin-top: 8mm;
+    border-top: 1px dashed #94a3b8;
+    padding-top: 3mm;
+    color: #64748b;
+    font-size: 8pt;
+  }
+
+  .print-signature-page__footer {
+    margin-top: 14mm;
+    border-top: 1px solid #94a3b8;
+    padding-top: 3mm;
+    color: #475569;
+    font-size: 8pt;
+    text-align: center;
   }
 }
