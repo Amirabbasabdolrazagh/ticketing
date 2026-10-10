@@ -485,6 +485,15 @@
 }
 
 @media print {
+  body:has(> .project-print-portal) > :not(.project-print-portal) {
+    display: none !important;
+  }
+
+  .project-print-portal {
+    display: block !important;
+    width: 100% !important;
+  }
+
   @page {
     size: A4;
     margin: 30mm 17mm 22mm;
@@ -886,5 +895,29 @@
   .print-contract__table th {
     break-inside: avoid-page;
     page-break-inside: avoid;
+  }
+
+  .print-contract--compact .print-contract__section {
+    margin-top: 3mm;
+    padding: 4mm;
+  }
+
+  .print-contract--compact .print-contract__section h2 {
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
+    font-size: 12pt;
+  }
+
+  .print-contract--compact .print-contract__fields {
+    gap: 2mm;
+  }
+
+  .print-contract--compact .print-contract__fields div {
+    min-height: 12mm;
+    padding: 2mm 3mm;
+  }
+
+  .print-contract--compact .print-contract__fields dd {
+    margin-top: 0.5mm;
   }
 }

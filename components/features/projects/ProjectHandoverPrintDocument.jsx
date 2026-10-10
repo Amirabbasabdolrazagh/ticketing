@@ -7,7 +7,7 @@ const documentation = ["لیست تجهیزات", "لیست Serial Number تجه
 const training = ["نحوه ورود به تجهیزات", "مشاهده وضعیت تجهیزات", "مشاهده وضعیت پورت‌ها", "مدیریت Access Point", "مدیریت Switch و Router", "مشاهده و استفاده از مستندات", "سایر موارد"];
 
 const fields = (data, pairs) => pairs.map(([label, key]) => ({ label, value: data[key] }));
-const checklistFields = (data, names) => Object.entries(data || {}).filter(([, entry]) => entry?.status || entry?.note).map(([index, entry]) => ({
+const checklistFields = (data, names, completedOnly = false) => Object.entries(data || {}).filter(([, entry]) => entry?.status || entry?.note).filter(([, entry]) => !completedOnly || entry?.status === "انجام شد").map(([index, entry]) => ({
   label: names[Number(index)] || index,
   value: [entry.status, entry.note].filter(Boolean).join(" — "),
 }));
@@ -38,11 +38,11 @@ export default function ProjectHandoverPrintDocument({ item, data = item.data ||
       ...fields(data, [["نام کارفرما / مشتری", "customerName"], ["محل اجرای پروژه", "location"], ["نماینده کارفرما", "customerRepresentative"], ["سمت نماینده", "customerRepresentativeRole"], ["شماره تماس نماینده", "customerPhone"], ["مجری پروژه", "executorName"], ["مسئول پروژه ای‌تی رسام", "projectManager"], ["تاریخ شروع عملیات", "startDate"], ["تاریخ پایان عملیات", "endDate"], ["تاریخ تحویل", "handoverDate"]]),
     ] },
     { title: "شرح خدمات پسیو انجام‌شده", fields: [
-      ...checklistFields(data.passiveServices, passiveServices),
+      ...checklistFields(data.passiveServices, passiveServices, customer),
       { label: "توضیحات عملیات پسیو", value: data.passiveDescription },
       { label: "تعداد نودهای تحویل‌شده", value: data.totalNodes },
     ] },
-    ...(active ? [{ title: "شرح خدمات اکتیو انجام‌شده", fields: checklistFields(data.activeServices, activeServices) }] : []),
+    ...(active ? [{ title: "شرح خدمات اکتیو انجام‌شده", fields: checklistFields(data.activeServices, activeServices, customer) }] : []),
     { title: "تست و بررسی عملکرد شبکه", fields: checklistFields(data.networkTests, networkTests) },
     { title: "نتیجه تست نهایی", fields: [{ label: "نتیجه", value: data.finalTestResult }] },
     { table: punchList },
@@ -71,6 +71,7 @@ export default function ProjectHandoverPrintDocument({ item, data = item.data ||
 
   return <ProjectPrintDocument
     printable={printable}
+    compact={customer}
     title={`صورتجلسه تحویل و تأیید پروژه${customer ? " | نسخه مشتری" : " | نسخه شرکت"}`}
     code="IT-RASAM-NET-FRM-001"
     projectName={project.name}

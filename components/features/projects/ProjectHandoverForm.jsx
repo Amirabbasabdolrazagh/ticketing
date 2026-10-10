@@ -42,7 +42,7 @@ export default function ProjectHandoverForm({ handover, onDone }) {
   }, []);
   const print = (audience) => {
     flushSync(() => setPrintAudience(audience));
-    window.requestAnimationFrame(() => window.print());
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()));
   };
   const update = (key, value) => { setSaveError(""); setData((old) => ({ ...old, [key]: value })); };
   const updateList = (key, index, value) => update(key, { ...(data[key] || {}), [index]: value });
