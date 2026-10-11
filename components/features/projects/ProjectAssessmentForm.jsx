@@ -12,17 +12,30 @@ const infrastructureTypes = ["شبکه", "سرور", "مجازی‌سازی", "�
 const scopeItems = ["نصب و راه‌اندازی", "عیب‌یابی", "پشتیبانی", "اصلاح زیرساخت", "طراحی شبکه", "سرور", "مجازی‌سازی", "Backup", "امنیت", "Active Directory", "VoIP", "تجهیزات شبکه", "مانیتورینگ"];
 const prerequisites = ["دسترسی به محل", "دسترسی Remote", "دسترسی Administrator", "اطلاعات شبکه", "اطلاعات سرورها", "Backup موجود", "هماهنگی با مدیر مجموعه", "تهیه تجهیزات", "تأمین نیروی متخصص", "مجوز انجام تغییرات"];
 const priorities = ["عادی", "مهم", "فوری", "بحرانی"];
+const mandatoryAssessmentLabels = new Set([
+  "عنوان پروژه پیشنهادی", "نام مشتری / شرکت", "محل اجرای پروژه",
+  "نام شرکت / مجموعه", "نام مدیر / مسئول", "سمت", "شماره تماس", "آدرس", "تاریخ ثبت درخواست (شمسی)",
+  "تعداد کاربران", "تعداد سیستم‌های کامپیوتری", "تعداد سرورها", "تعداد شعب",
+  "شرح مشکل / درخواست اعلام‌شده توسط مشتری", "مشکل از چه زمانی ایجاد شده است؟", "میزان اهمیت مشکل", "آیا فعالیت مجموعه در اثر این مشکل متوقف شده است؟",
+  "نیازهای اعلام‌شده مشتری", "نیازهای شناسایی‌شده توسط کارشناس / مسئول بررسی", "مواردی که نیاز به بررسی حضوری دارند",
+  "وضعیت شبکه", "توضیحات شبکه", "نوع / سیستم‌عامل سرورها", "وضعیت کلی سرورها", "تجهیزات شبکه", "نوع سرویس اینترنت", "تعداد خطوط اینترنت", "وضعیت اینترنت", "وضعیت Backup", "وضعیت امنیت",
+  "نظر اولیه کارشناس", "آیا برای تشخیص دقیق نیاز به بازدید حضوری وجود دارد؟", "علت نیاز به بازدید", "آیا نیاز به دسترسی Remote وجود دارد؟", "نوع دسترسی موردنیاز",
+  "شرح اولیه محدوده کار", "زمان تقریبی موردنیاز (ساعت / روز)", "تعداد نفر موردنیاز", "سطح تخصص موردنیاز", "نیاز به حضور در محل",
+  "زمان موردنظر مشتری برای شروع", "Deadline اعلام‌شده توسط مشتری", "اولویت پروژه", "محدودیت زمانی / عملیاتی",
+  "آیا ریسک مهمی قبل از شروع کار وجود دارد؟", "توضیحات", "وضعیت پروژه", "توضیحات مسئول بررسی",
+]);
 
 function PersianDateInput({ value, onChange }) {
   return <input value={value || ""} onChange={(event) => onChange(event.target.value)} inputMode="numeric" placeholder="۱۴۰۵/۰۷/۱۸" className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-500" />;
 }
 
 function Field({ label, value, onChange, multiline = false, date = false, children }) {
-  return <label className={`block text-sm font-bold text-slate-700 ${multiline ? "md:col-span-2" : ""}`}><span>{label}</span>{children || (date ? <PersianDateInput value={value} onChange={onChange} /> : multiline ? <textarea value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-28 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:border-blue-500" /> : <input value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-500" />)}</label>;
+  const required = mandatoryAssessmentLabels.has(label);
+  return <label className={`block text-sm font-bold text-slate-700 ${multiline ? "md:col-span-2" : ""}`}><span>{label}{required && " (الزامی)"}</span>{children || (date ? <PersianDateInput value={value} onChange={onChange} /> : multiline ? <textarea value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-28 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:border-blue-500" /> : <input value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-500" />)}</label>;
 }
 
 function ChoiceList({ items, value = {}, onChange, other = false }) {
-  return <div className="mt-3 grid gap-2 sm:grid-cols-2">{items.map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"><input type="checkbox" checked={Boolean(value[item])} onChange={(event) => onChange({ ...value, [item]: event.target.checked })} />{item}</label>)}{other && <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm sm:col-span-2"><input type="checkbox" checked={Boolean(value.otherEnabled)} onChange={(event) => onChange({ ...value, otherEnabled: event.target.checked })} />سایر:<input value={value.other || ""} onChange={(event) => onChange({ ...value, other: event.target.value })} className="h-7 min-w-0 flex-1 border-b border-slate-200 px-2 outline-none" /></label>}</div>;
+  return <><p className="mt-3 text-xs font-bold text-slate-600">حداقل یک گزینه را انتخاب کنید (الزامی)</p><div className="mt-2 grid gap-2 sm:grid-cols-2">{items.map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm"><input type="checkbox" checked={Boolean(value[item])} onChange={(event) => onChange({ ...value, [item]: event.target.checked })} />{item}</label>)}{other && <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm sm:col-span-2"><input type="checkbox" checked={Boolean(value.otherEnabled)} onChange={(event) => onChange({ ...value, otherEnabled: event.target.checked })} />سایر:<input value={value.other || ""} onChange={(event) => onChange({ ...value, other: event.target.value })} className="h-7 min-w-0 flex-1 border-b border-slate-200 px-2 outline-none" /></label>}</div></>;
 }
 
 function OptionSelect({ value, onChange, options, placeholder = "انتخاب کنید" }) {
