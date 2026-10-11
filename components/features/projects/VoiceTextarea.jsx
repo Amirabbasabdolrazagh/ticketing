@@ -14,6 +14,7 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
   const [recording, setRecording] = useState(false);
   const [message, setMessage] = useState("");
   const [permissionHelp, setPermissionHelp] = useState(false);
+  const [serviceHelp, setServiceHelp] = useState(false);
   const supported = Boolean(speechApi());
 
   useEffect(() => {
@@ -38,8 +39,8 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
   const start = async () => {
     const Recognition = speechApi();
     if (!Recognition) {
-      setMessage("نسخهٔ این مرورگر تبدیل گفتار فارسی را پشتیبانی نمی‌کند.");
-      setPermissionHelp(true);
+      setMessage("موتور تبدیل گفتار فارسی در این مرورگر در دسترس نیست.");
+      setServiceHelp(true);
       return;
     }
     if (!await requestMicrophone()) return;
@@ -61,7 +62,8 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
     recognition.onerror = (event) => {
       const errors = { "not-allowed": "اجازهٔ استفاده از میکروفن داده نشده است.", "service-not-allowed": "سرویس تبدیل گفتار توسط مرورگر مسدود شده است.", "no-speech": "صدایی دریافت نشد؛ دوباره تلاش کنید.", "network": "اتصال سرویس تبدیل گفتار برقرار نشد." };
       setMessage(errors[event.error] || "تبدیل گفتار ناموفق بود؛ دوباره تلاش کنید.");
-      if (["not-allowed", "service-not-allowed"].includes(event.error)) setPermissionHelp(true);
+      if (event.error === "not-allowed") setPermissionHelp(true);
+      if (event.error === "service-not-allowed") setServiceHelp(true);
     };
     recognition.onend = () => {
       setRecording(false);
@@ -79,5 +81,6 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
     </button>
     {message && <p className={`mt-1 text-xs ${recording ? "text-red-600" : "text-slate-500"}`} aria-live="polite">{message}</p>}
     {permissionHelp && <div role="alert" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-right text-xs leading-6 text-amber-950"><div className="flex items-start justify-between gap-3"><strong>راهنمای فعال‌سازی میکروفن</strong><button type="button" onClick={() => setPermissionHelp(false)} className="text-amber-800" aria-label="بستن راهنما">×</button></div><p className="mt-2"><strong>Chrome در اندروید:</strong> کنار نوار آدرس، روی نماد قفل یا تنظیمات بزنید ← «مجوزها» ← «میکروفن» ← «اجازه دادن». سپس صفحه را یک‌بار تازه‌سازی کنید.</p><p className="mt-2"><strong>Chrome در آیفون / آیپد:</strong> وارد Settings گوشی شوید ← Chrome ← Microphone ← آن را فعال کنید.</p><p className="mt-2"><strong>Safari در آیفون / آیپد:</strong> در Safari، دکمهٔ aA کنار آدرس سایت ← Website Settings ← Microphone ← Allow. اگر گزینه نبود: Settings ← Privacy & Security ← Microphone ← Safari Websites را فعال کنید.</p><p className="mt-2 text-amber-800">تبدیل گفتار فقط روی نسخهٔ HTTPS سایت کار می‌کند. پس از فعال‌سازی، دوباره «تبدیل گفتار» را بزنید.</p></div>}
+    {serviceHelp && <div role="alert" className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-right text-xs leading-6 text-blue-950"><div className="flex items-start justify-between gap-3"><strong>راهنمای سرویس تبدیل گفتار</strong><button type="button" onClick={() => setServiceHelp(false)} className="text-blue-800" aria-label="بستن راهنما">×</button></div><p className="mt-2">HTTPS سایت فعال است؛ این خطا مربوط به موتور تشخیص گفتارِ مرورگر است، نه گواهی سایت یا مجوز میکروفن.</p><p className="mt-2"><strong>در آیفون:</strong> سایت را مستقیماً در Safari باز کنید، نه از مرورگر داخلی تلگرام/بله و نه نسخهٔ نصب‌شدهٔ وب‌اپ. سپس Settings ← General ← Keyboard ← Enable Dictation را نیز فعال کنید.</p><p className="mt-2"><strong>در Android:</strong> سایت را در Chrome اصلی باز کنید و Chrome را به آخرین نسخه به‌روزرسانی کنید.</p><p className="mt-2 text-blue-800">اگر این خطا در Safari اصلی هم باقی ماند، تبدیل گفتار مرورگر برای فارسی در آن دستگاه در دسترس نیست؛ برای پشتیبانی تضمینی Safari باید تبدیل صدا در سرور انجام شود.</p></div>}
   </div>;
 }
