@@ -1,6 +1,7 @@
 import Ticket from "@/models/tickets";
 import TicketMessage from "@/models/ticketMessage";
 import ProjectAssessment from "@/models/projectAssessments";
+import "@/models/installationProjects";
 import "@/models/users";
 import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
