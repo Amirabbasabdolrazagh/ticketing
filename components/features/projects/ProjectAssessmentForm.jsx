@@ -5,6 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { flushSync } from "react-dom";
 import ProjectPrintDocument from "./ProjectPrintDocument";
+import VoiceTextarea from "./VoiceTextarea";
 import { validateAssessment } from "@/lib/projectFormValidation";
 
 const requestMethods = ["تماس تلفنی", "واتساپ", "وب‌سایت", "معرفی", "مشتری قبلی"];
@@ -31,7 +32,7 @@ function PersianDateInput({ value, onChange }) {
 
 function Field({ label, value, onChange, multiline = false, date = false, children }) {
   const required = mandatoryAssessmentLabels.has(label);
-  return <label className={`block text-sm font-bold text-slate-700 ${multiline ? "md:col-span-2" : ""}`}><span>{label}{required && " (الزامی)"}</span>{children || (date ? <PersianDateInput value={value} onChange={onChange} /> : multiline ? <textarea value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-2 min-h-28 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:border-blue-500" /> : <input value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-500" />)}</label>;
+  return <label className={`block text-sm font-bold text-slate-700 ${multiline ? "md:col-span-2" : ""}`}><span>{label}{required && " (الزامی)"}</span>{children || (date ? <PersianDateInput value={value} onChange={onChange} /> : multiline ? <VoiceTextarea value={value} onChange={onChange} className="min-h-28 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:border-blue-500" /> : <input value={value || ""} onChange={(event) => onChange(event.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-500" />)}</label>;
 }
 
 function ChoiceList({ items, value = {}, onChange, other = false }) {

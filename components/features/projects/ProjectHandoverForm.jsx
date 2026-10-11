@@ -4,6 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { flushSync } from "react-dom";
 import ProjectHandoverPrintDocument from "./ProjectHandoverPrintDocument";
+import VoiceTextarea from "./VoiceTextarea";
 import { handoverNumber, validateHandover } from "@/lib/projectFormValidation";
 
 const passiveServices = ["کابل‌کشی شبکه", "نصب پریز و Keystone", "نصب Patch Panel", "نصب و تجهیز رک", "نصب Cable Management", "نصب Patch Cord", "لیبل‌گذاری کابل‌ها", "لیبل‌گذاری Patch Panel", "لیبل‌گذاری پریزها و نودها", "مرتب‌سازی کابل‌های داخل رک", "اتصال و ساماندهی تجهیزات داخل رک", "سایر خدمات Passive"];
@@ -24,7 +25,7 @@ function PersianDateInput({ value, onChange }) {
 }
 function TextInput({ label, value, onChange, multiline = false, readOnly = false }) {
   const required = mandatoryHandoverLabels.has(label);
-  return <label className="block text-sm font-bold text-slate-700">{label}{required && " (الزامی)"}{multiline ? <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} readOnly={readOnly} className="mt-2 min-h-24 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:border-blue-500" /> : <input value={value || ""} onChange={(e) => onChange(e.target.value)} readOnly={readOnly} dir={label.includes("تماس") ? "ltr" : undefined} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-500 read-only:bg-slate-100" />}</label>;
+  return <label className="block text-sm font-bold text-slate-700">{label}{required && " (الزامی)"}{multiline ? <VoiceTextarea value={value} onChange={onChange} readOnly={readOnly} className="min-h-24 w-full rounded-xl border border-slate-200 bg-white p-3 outline-none focus:border-blue-500 read-only:bg-slate-100" /> : <input value={value || ""} onChange={(e) => onChange(e.target.value)} readOnly={readOnly} dir={label.includes("تماس") ? "ltr" : undefined} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 outline-none focus:border-blue-500 read-only:bg-slate-100" />}</label>;
 }
 function Checklist({ title, items, data, setData, options = ["انجام شد", "انجام نشد", "مشمول پروژه نیست"], detailConfig = {}, optionsByItem = {}, notePlaceholders = {}, statusLabels = {} }) {
   const required = mandatoryChecklistTitles.has(title);
