@@ -1,11 +1,12 @@
 import os
 import tempfile
+import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from faster_whisper import WhisperModel
 
-MODEL_NAME = os.getenv("VOICE_MODEL", "small")
+MODEL_NAME = os.getenv("VOICE_MODEL", "turbo")
 MAX_AUDIO_SIZE = 15 * 1024 * 1024
 model = None
 
@@ -41,8 +42,23 @@ async def transcribe(audio: UploadFile = File(...)):
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temporary_file:
             temporary_file.write(content)
             temporary_path = temporary_file.name
-        segments, _ = model.transcribe(temporary_path, language="fa", beam_size=5, vad_filter=True)
+        started_at = time.monotonic()
+        segments, info = model.transcribe(
+            temporary_path,
+            language="fa",
+            task="transcribe",
+            beam_size=2,
+            temperature=0,
+            vad_filter=True,
+            condition_on_previous_text=False,
+            without_timestamps=True,
+        )
         text = " ".join(segment.text.strip() for segment in segments).strip()
+        print(
+            f"voice_transcribed model={MODEL_NAME} audio_seconds={info.duration:.1f} "
+            f"processing_seconds={time.monotonic() - started_at:.1f}",
+            flush=True,
+        )
         if not text:
             raise HTTPException(status_code=422, detail="متن قابل تشخیصی از صوت دریافت نشد.")
         return {"text": text}

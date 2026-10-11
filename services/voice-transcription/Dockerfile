@@ -3,7 +3,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/models \
-    VOICE_MODEL=small
+    VOICE_MODEL=turbo
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ffmpeg libgomp1 \
