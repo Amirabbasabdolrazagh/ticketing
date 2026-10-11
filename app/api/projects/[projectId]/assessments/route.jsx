@@ -7,6 +7,7 @@ import getCurrentUser from "@/utils/auth";
 import authorization from "@/utils/authorization";
 import { isValidObjectId } from "mongoose";
 import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
+import { validateAssessment } from "@/lib/projectFormValidation";
 
 const escapeHtml = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
@@ -65,6 +66,10 @@ export async function PATCH(req, { params }) {
   }
   const update = {};
   if (body.data !== undefined) {
+    if (body.status === "submitted") {
+      const validationError = validateAssessment(body.data);
+      if (validationError) return NextResponse.json({ success: false, message: validationError }, { status: 400 });
+    }
     update.data = body.data || {};
     update.status = body.status === "submitted" ? "submitted" : "in_progress";
   }

@@ -4,6 +4,7 @@ import User from "@/models/users";
 import ConnectDb from "@/utils/connectDB";
 import getCurrentUser from "@/utils/auth";
 import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
+import { validateAssessment } from "@/lib/projectFormValidation";
 
 export const runtime = "nodejs";
 const escapeHtml = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -27,6 +28,10 @@ export async function PATCH(req, { params }) {
     return Response.json({ success: false, message: "اطلاعات فرم معتبر نیست" }, { status: 400 });
   }
   const submitting = body.status === "submitted";
+  if (submitting) {
+    const validationError = validateAssessment(data, { standalone: true });
+    if (validationError) return Response.json({ success: false, message: validationError }, { status: 400 });
+  }
   if (submitting && (![data.projectTitle, data.customerCompany, data.customerAddress].every((value) => typeof value === "string" && value.trim()))) {
     return Response.json({ success: false, message: "عنوان پروژه، نام مشتری و محل اجرا برای ارسال ارزیابی الزامی است" }, { status: 400 });
   }

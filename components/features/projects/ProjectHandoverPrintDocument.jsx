@@ -1,15 +1,17 @@
 import ProjectPrintDocument from "./ProjectPrintDocument";
+import { handoverNumber } from "@/lib/projectFormValidation";
 
 const passiveServices = ["کابل‌کشی شبکه", "نصب پریز و Keystone", "نصب Patch Panel", "نصب و تجهیز رک", "نصب Cable Management", "نصب Patch Cord", "لیبل‌گذاری کابل‌ها", "لیبل‌گذاری Patch Panel", "لیبل‌گذاری پریزها و نودها", "مرتب‌سازی کابل‌های داخل رک", "اتصال و ساماندهی تجهیزات داخل رک", "سایر خدمات Passive"];
 const activeServices = ["نصب Switch", "نصب Router", "نصب Access Point", "نصب Firewall", "تنظیم IP Address", "تنظیم Gateway", "تنظیم VLAN", "تنظیم Access و Trunk Port", "تنظیم DHCP", "تنظیم DNS", "تنظیم Wi-Fi و SSID", "تنظیمات امنیتی تجهیزات", "تهیه Backup Configuration", "سایر تنظیمات"];
 const networkTests = ["بررسی اتصال فیزیکی تجهیزات", "بررسی وضعیت لینک پورت‌ها", "بررسی ارتباط نودها", "بررسی ارتباط با Switch", "بررسی ارتباط با Gateway", "بررسی IP Addressing", "بررسی DHCP", "بررسی DNS", "بررسی اینترنت", "بررسی VLAN", "بررسی Access Pointها", "بررسی اتصال Clientها", "تست نهایی شبکه"];
 const documentation = ["لیست تجهیزات", "لیست Serial Number تجهیزات", "لیست IP Addressها", "اطلاعات VLAN", "نقشه و دیاگرام شبکه", "مستند ارتباط پورت‌ها", "Configuration Backup", "تصاویر Rack و تجهیزات", "سایر مستندات"];
+const attachmentChecklist = ["لیست تجهیزات", "لیست سریال تجهیزات", "لیست IP Addressها", "نقشه / دیاگرام شبکه", "مستند پورت‌ها", "فایل Backup تنظیمات", "تصاویر رک و تجهیزات", "گزارش تست شبکه", "سایر مستندات"];
 const training = ["نحوه ورود به تجهیزات", "مشاهده وضعیت تجهیزات", "مشاهده وضعیت پورت‌ها", "مدیریت Access Point", "مدیریت Switch و Router", "مشاهده و استفاده از مستندات", "سایر موارد"];
 
 const fields = (data, pairs) => pairs.map(([label, key]) => ({ label, value: data[key] }));
 const checklistFields = (data, names, completedOnly = false) => Object.entries(data || {}).filter(([, entry]) => entry?.status || entry?.note).filter(([, entry]) => !completedOnly || entry?.status === "انجام شد").map(([index, entry]) => ({
   label: names[Number(index)] || index,
-  value: [entry.status, entry.note].filter(Boolean).join(" — "),
+  value: [entry.status, entry.quantity ? `${entry.quantity}${names[Number(index)] === "کابل‌کشی شبکه" ? " متر" : " عدد"}` : "", entry.note].filter(Boolean).join(" — "),
 }));
 const checkedFields = (data) => Object.entries(data || {}).filter(([, checked]) => checked).map(([label]) => ({ label, value: "تأیید شد" }));
 
@@ -18,8 +20,7 @@ export default function ProjectHandoverPrintDocument({ item, data = item.data ||
   const active = item.assigneeRole === "active_agent";
   const project = item.project || {};
   const details = [
-    { label: "شماره صورتجلسه", value: data.meetingNumber },
-    { label: "شماره پروژه / قرارداد", value: data.contractNumber || project.code },
+    { label: "شماره صورتجلسه", value: data.meetingNumber || handoverNumber(project.code, item.assigneeRole) },
     { label: "تاریخ صدور", value: data.issueDate },
     { label: "وضعیت سند", value: data.documentStatus },
   ];
@@ -52,8 +53,7 @@ export default function ProjectHandoverPrintDocument({ item, data = item.data ||
       ...(!customer ? checkedFields(data.finalChecks) : []),
     ] },
     { title: "پیوست‌های صورتجلسه", fields: [
-      ...checkedFields(data.attachments),
-      ...fields(data, [["تعداد برگه‌های پیوست", "attachmentPages"], ["توضیحات پیوست‌ها", "attachmentNotes"]]),
+      ...checklistFields(data.attachmentsChecklist, attachmentChecklist),
     ] },
   ];
   const companySections = [
