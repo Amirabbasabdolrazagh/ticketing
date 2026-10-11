@@ -7,6 +7,7 @@ const installationProjectSchema = new Schema({
   description: { type: String, trim: true, default: "" },
   code: { type: String, required: true, unique: true, trim: true, uppercase: true, maxlength: 24 },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  originAssessment: { type: mongoose.Schema.Types.ObjectId, ref: "ProjectAssessment", unique: true, sparse: true },
   passiveAgent: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   activeAgent: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   status: { type: String, enum: ["planning", "in_progress", "archived"], default: "planning" },

@@ -204,7 +204,7 @@ export async function GET() {
     }
 
     const projectEvents = ["passive_agent", "active_agent"].includes(user.role)
-      ? (await ProjectAssessment.find({ assignee: user._id }).populate("project", "name code").sort({ createdAt: -1 }).lean()).map((item) => ({
+      ? (await ProjectAssessment.find({ assignee: user._id, project: { $ne: null } }).populate("project", "name code passiveAgent activeAgent").sort({ createdAt: -1 }).lean()).filter((item) => item.project && String(item.assigneeRole === "passive_agent" ? item.project.passiveAgent : item.project.activeAgent) === String(user._id)).map((item) => ({
         _id: `project-assignment:${item._id}`,
         type: "project-assignment",
         message: `پروژه «${item.project?.name || "بدون عنوان"}» با کد ${item.project?.code || "—"} به شما ارجاع شده است. فرم ارزیابی را تکمیل کنید.`,
@@ -212,7 +212,25 @@ export async function GET() {
         ticket: null,
       }))
       : [];
-    const notifications = [...messageEvents, ...deadlineEvents, ...attentionEvents, ...anniversaryEvents, ...projectEvents]
+    const assessmentEvents = user.role === "admin"
+      ? (await ProjectAssessment.find({ project: null, status: "submitted" }).populate("assignee", "name").sort({ submittedAt: -1 }).lean()).map((item) => ({
+        _id: `assessment-submitted:${item._id}`,
+        type: "assessment-submitted",
+        message: `فرم ارزیابی «${item.data?.projectTitle || "پروژه جدید"}» توسط ${item.assignee?.name || "پشتیبان"} برای بررسی و ساخت پروژه ارسال شده است.`,
+        createdAt: item.submittedAt || item.updatedAt,
+        ticket: null,
+      }))
+      : [];
+    const briefEvents = ["passive_agent", "active_agent"].includes(user.role)
+      ? (await ProjectAssessment.find({ assignee: user._id, jobBriefStatus: { $in: ["issued", "acknowledged"] } }).populate("project", "name code").lean()).map((item) => ({
+        _id: `project-brief:${item._id}:${item.jobBriefIssuedAt?.toISOString?.() || "issued"}`,
+        type: "project-brief",
+        message: `ابلاغ شرح وظایف پروژه «${item.project?.name || "پروژه"}» صادر شده است. آن را در منوی ابلاغ‌ها مشاهده کنید.`,
+        createdAt: item.jobBriefIssuedAt || item.updatedAt,
+        ticket: null,
+      }))
+      : [];
+    const notifications = [...messageEvents, ...deadlineEvents, ...attentionEvents, ...anniversaryEvents, ...projectEvents, ...assessmentEvents, ...briefEvents]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 100);
     return Response.json({ success: true, notifications });

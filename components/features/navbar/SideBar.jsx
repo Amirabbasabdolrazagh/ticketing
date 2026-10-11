@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
   Activity,
   BellRing,
+  ClipboardList,
   FolderKanban,
   LayoutDashboard,
   Menu,
@@ -121,6 +122,7 @@ export default function SideBar() {
     }] : []),
     ...(["passive_agent", "active_agent"].includes(userRole) ? [
       { label: "فرم ارزیابی", description: "ثبت اطلاعات اولیه پروژه", href: `/${userRole}/assessments`, icon: FolderKanban, active: pathname.startsWith(`/${userRole}/assessments`) },
+      { label: "ابلاغ‌ها", description: "شرح وظایف و برنامه اجرا", href: `/${userRole}/briefs`, icon: ClipboardList, active: pathname.startsWith(`/${userRole}/briefs`) },
       { label: "صورتجلسه تحویل", description: "ثبت تحویل و پایان اجرا", href: `/${userRole}/handovers`, icon: TicketCheck, active: pathname.startsWith(`/${userRole}/handovers`) },
     ] : []),
     ...(userRole === "admin"
@@ -205,6 +207,7 @@ export default function SideBar() {
               [
                 `/${userRole}`,
                 `/${userRole}/assessments`,
+                `/${userRole}/briefs`,
                 `/${userRole}/handovers`,
                 `/${userRole}/notifications`,
                 `/${userRole}/setting`,
