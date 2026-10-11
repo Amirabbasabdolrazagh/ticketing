@@ -496,12 +496,25 @@
 
   @page {
     size: A4;
-    /* Reserve the actual artwork, not a synthetic browser header/footer. */
+    /* Keep form content clear of the official letterhead artwork. */
     margin: 49mm 16mm 33mm;
-    background-image: url("/images/it-rasam-official-letterhead-a4.png");
-    background-repeat: no-repeat;
-    background-position: left -16mm top -49mm;
-    background-size: 210mm 297mm;
+
+    /* Images in page margin boxes print even when background graphics are off. */
+    @top-center {
+      content: url("/images/it-rasam-official-letterhead-header.png");
+      content: image-set(url("/images/it-rasam-official-letterhead-header-300dpi.png") 3.125x);
+      width: 210mm;
+      height: 49mm;
+      margin-left: -16mm;
+    }
+
+    @bottom-center {
+      content: url("/images/it-rasam-official-letterhead-footer.png");
+      content: image-set(url("/images/it-rasam-official-letterhead-footer-300dpi.png") 3.125x);
+      width: 210mm;
+      height: 33mm;
+      margin-left: -16mm;
+    }
   }
 
   html,
