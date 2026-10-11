@@ -1,0 +1,26 @@
+name: itrasam-voice-trial
+
+services:
+  voice-transcription-fast:
+    build:
+      context: ./services/voice-transcription-fast
+      dockerfile: Dockerfile
+    container_name: itrasam-voice-fast-trial
+    restart: "no"
+    environment:
+      VOICE_THREADS: 4
+    volumes:
+      - voice-transcription-fast-models:/models
+    ports:
+      - "127.0.0.1:9001:9000"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+
+volumes:
+  voice-transcription-fast-models:

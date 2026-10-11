@@ -13,6 +13,10 @@ export async function POST(request) {
     }
 
     const form = await request.formData();
+    const selectedModel = String(form.get("model") || "1");
+    if (selectedModel !== "1" && selectedModel !== "2") {
+      return Response.json({ success: false, message: "مدل تبدیل گفتار معتبر نیست." }, { status: 400 });
+    }
     const audio = form.get("audio");
     if (!audio || typeof audio.arrayBuffer !== "function" || audio.size < 1 || audio.size > MAX_AUDIO_SIZE) {
       return Response.json({ success: false, message: "فایل صوتی معتبر نیست یا حجم آن بیش از ۱۵ مگابایت است." }, { status: 400 });
@@ -21,9 +25,12 @@ export async function POST(request) {
       return Response.json({ success: false, message: "فقط فایل صوتی قابل تبدیل است." }, { status: 400 });
     }
 
-    const serviceUrl = process.env.VOICE_TRANSCRIPTION_URL || "http://voice-transcription:9000";
+    const serviceUrl = selectedModel === "2"
+      ? process.env.VOICE_TRANSCRIPTION_FAST_URL || "http://127.0.0.1:9001"
+      : process.env.VOICE_TRANSCRIPTION_URL || "http://voice-transcription:9000";
     const serviceForm = new FormData();
     serviceForm.append("audio", new Blob([await audio.arrayBuffer()], { type: audio.type }), audio.name || "voice.webm");
+    const startedAt = Date.now();
     const response = await fetch(`${serviceUrl}/transcribe`, {
       method: "POST",
       body: serviceForm,
@@ -33,7 +40,12 @@ export async function POST(request) {
     if (!response.ok || !payload.text) {
       return Response.json({ success: false, message: payload.message || payload.detail || "تبدیل صوت روی سرور ناموفق بود." }, { status: response.status >= 500 ? 503 : 400 });
     }
-    return Response.json({ success: true, text: String(payload.text).trim() });
+    return Response.json({
+      success: true,
+      text: String(payload.text).trim(),
+      model: selectedModel,
+      durationSeconds: Math.round((Date.now() - startedAt) / 1000),
+    });
   } catch (error) {
     if (error?.name === "TimeoutError") {
       return Response.json({ success: false, message: "تبدیل صوت بیش از حد طول کشید؛ دوباره با صدای کوتاه‌تر تلاش کنید." }, { status: 504 });
