@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { PrintSignaturePage } from "./PrintLetterhead";
+import { PrintSignaturePage } from "./PrintSignaturePage";
 
 const subscribeToClient = () => () => {};
 
@@ -61,7 +61,6 @@ export default function ProjectPrintDocument({ title, code, projectName, detailT
     <div className="project-print-portal">
       <article dir="rtl" className={`print-document print-contract hidden print:block ${compact ? "print-contract--compact" : ""}`}>
         <section className="print-contract__cover">
-          <p className="print-contract__eyebrow">سند رسمی پروژه | شرکت ای‌تی رسام</p>
           <h1>{title}</h1>
           <p className="print-contract__project">{projectName || "پروژه نصب و راه‌اندازی"}</p>
           <dl className="print-contract__identity">

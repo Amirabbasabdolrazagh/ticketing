@@ -496,37 +496,12 @@
 
   @page {
     size: A4;
-    margin: 30mm 17mm 22mm;
-
-    @top-left {
-      content: "تاریخ: ........................  شماره: ........................  پیوست: ........";
-      color: #334155;
-      font-size: 7.5pt;
-      border-bottom: 1px solid #cbd5e1;
-      vertical-align: bottom;
-    }
-
-    @top-right {
-      content: "";
-      width: 48mm;
-      height: 16mm;
-      background-image: url("/images/logo.png");
-      background-repeat: no-repeat;
-      background-position: right center;
-      background-size: contain;
-      vertical-align: middle;
-    }
-
-    @bottom-center {
-      content: "تهران، بلوار کشاورزی، خیابان نادری، پلاک ۲، واحد ۲۰۴\A 021 8619 1205  |  info@itrasam.com  |  www.itrasam.com";
-      white-space: pre;
-      direction: ltr;
-      color: #334155;
-      font-size: 7.5pt;
-      border-top: 1px solid #94a3b8;
-      vertical-align: top;
-    }
-
+    /* Reserve the actual artwork, not a synthetic browser header/footer. */
+    margin: 49mm 16mm 33mm;
+    background-image: url("/images/it-rasam-official-letterhead-a4.png");
+    background-repeat: no-repeat;
+    background-position: left -16mm top -49mm;
+    background-size: 210mm 297mm;
   }
 
   html,
@@ -571,11 +546,7 @@
     display: none !important;
   }
 
-  .print-letterhead {
-    display: none !important;
-  }
-
-  .print-document > :not(.print-letterhead) {
+  .print-document > * {
     position: relative;
     z-index: 1;
   }
@@ -775,12 +746,6 @@
     padding: 6mm 8mm;
     margin-bottom: 5mm;
     text-align: right;
-  }
-
-  .print-contract__eyebrow {
-    color: #0d6efd;
-    font-size: 10pt;
-    font-weight: 700;
   }
 
   .print-contract__cover h1 {

@@ -1,30 +1,7 @@
-import Image from "next/image";
-
-/**
- * A real A4 letterhead layer for browser print / Save as PDF. Form values remain
- * live HTML, so the saved document is selectable and searchable rather than a
- * screenshot of the screen.
- */
-export function PrintLetterhead() {
-  return (
-    <div className="print-letterhead hidden" aria-hidden="true">
-      <Image
-        src="/images/it-rasam-letterhead-a4.png"
-        alt=""
-        fill
-        priority
-        sizes="210mm"
-        className="object-fill"
-      />
-    </div>
-  );
-}
-
 export function PrintSignaturePage({ documentTitle, projectName, parties = [] }) {
   return (
     <section className="print-signature-page hidden print:block">
       <header className="print-signature-page__title">
-        <p>شرکت ای‌تی رسام | راهکارهای فناوری اطلاعات</p>
         <h2>صفحه امضا و تأیید نهایی</h2>
         <span>{documentTitle}</span>
         {projectName ? <strong>پروژه: {projectName}</strong> : null}
