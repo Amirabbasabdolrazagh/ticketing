@@ -13,6 +13,7 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
   const baseValueRef = useRef("");
   const [recording, setRecording] = useState(false);
   const [message, setMessage] = useState("");
+  const [permissionHelp, setPermissionHelp] = useState(false);
   const supported = Boolean(speechApi());
 
   useEffect(() => {
@@ -20,12 +21,28 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
   }, []);
 
   const stop = () => recognitionRef.current?.stop();
-  const start = () => {
+  const requestMicrophone = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) return true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((track) => track.stop());
+      return true;
+    } catch {
+      setRecording(false);
+      setMessage("دسترسی میکروفن فعال نیست. راهنمای فعال‌سازی را ببینید.");
+      setPermissionHelp(true);
+      return false;
+    }
+  };
+
+  const start = async () => {
     const Recognition = speechApi();
     if (!Recognition) {
-      setMessage("تبدیل گفتار در این مرورگر پشتیبانی نمی‌شود.");
+      setMessage("نسخهٔ این مرورگر تبدیل گفتار فارسی را پشتیبانی نمی‌کند.");
+      setPermissionHelp(true);
       return;
     }
+    if (!await requestMicrophone()) return;
 
     const recognition = new Recognition();
     recognition.lang = "fa-IR";
@@ -42,8 +59,9 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
       onChange([baseValueRef.current, transcript.trim()].filter(Boolean).join(baseValueRef.current && transcript.trim() ? " " : ""));
     };
     recognition.onerror = (event) => {
-      const errors = { "not-allowed": "اجازهٔ استفاده از میکروفن داده نشده است.", "no-speech": "صدایی دریافت نشد؛ دوباره تلاش کنید.", "network": "اتصال سرویس تبدیل گفتار برقرار نشد." };
+      const errors = { "not-allowed": "اجازهٔ استفاده از میکروفن داده نشده است.", "service-not-allowed": "سرویس تبدیل گفتار توسط مرورگر مسدود شده است.", "no-speech": "صدایی دریافت نشد؛ دوباره تلاش کنید.", "network": "اتصال سرویس تبدیل گفتار برقرار نشد." };
       setMessage(errors[event.error] || "تبدیل گفتار ناموفق بود؛ دوباره تلاش کنید.");
+      if (["not-allowed", "service-not-allowed"].includes(event.error)) setPermissionHelp(true);
     };
     recognition.onend = () => {
       setRecording(false);
@@ -60,5 +78,6 @@ export default function VoiceTextarea({ value, onChange, className = "", placeho
       {recording ? <Square className="size-3.5" /> : <Mic className="size-3.5" />}{recording ? "پایان ضبط" : "تبدیل گفتار"}
     </button>
     {message && <p className={`mt-1 text-xs ${recording ? "text-red-600" : "text-slate-500"}`} aria-live="polite">{message}</p>}
+    {permissionHelp && <div role="alert" className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-right text-xs leading-6 text-amber-950"><div className="flex items-start justify-between gap-3"><strong>راهنمای فعال‌سازی میکروفن</strong><button type="button" onClick={() => setPermissionHelp(false)} className="text-amber-800" aria-label="بستن راهنما">×</button></div><p className="mt-2"><strong>Chrome در اندروید:</strong> کنار نوار آدرس، روی نماد قفل یا تنظیمات بزنید ← «مجوزها» ← «میکروفن» ← «اجازه دادن». سپس صفحه را یک‌بار تازه‌سازی کنید.</p><p className="mt-2"><strong>Chrome در آیفون / آیپد:</strong> وارد Settings گوشی شوید ← Chrome ← Microphone ← آن را فعال کنید.</p><p className="mt-2"><strong>Safari در آیفون / آیپد:</strong> در Safari، دکمهٔ aA کنار آدرس سایت ← Website Settings ← Microphone ← Allow. اگر گزینه نبود: Settings ← Privacy & Security ← Microphone ← Safari Websites را فعال کنید.</p><p className="mt-2 text-amber-800">تبدیل گفتار فقط روی نسخهٔ HTTPS سایت کار می‌کند. پس از فعال‌سازی، دوباره «تبدیل گفتار» را بزنید.</p></div>}
   </div>;
 }
