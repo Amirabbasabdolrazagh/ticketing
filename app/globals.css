@@ -505,7 +505,6 @@
       content: image-set(url("/images/it-rasam-official-letterhead-header-300dpi.png") 3.125x);
       width: 210mm;
       height: 49mm;
-      margin-left: -16mm;
     }
 
     @bottom-center {
@@ -513,7 +512,6 @@
       content: image-set(url("/images/it-rasam-official-letterhead-footer-300dpi.png") 3.125x);
       width: 210mm;
       height: 33mm;
-      margin-left: -16mm;
     }
   }
 
