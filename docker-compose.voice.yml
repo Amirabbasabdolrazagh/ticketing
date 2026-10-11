@@ -6,7 +6,7 @@ services:
       context: ./services/voice-transcription-fast
       dockerfile: Dockerfile
     container_name: itrasam-voice-fast-trial
-    restart: "no"
+    restart: unless-stopped
     environment:
       VOICE_THREADS: 4
     volumes:
