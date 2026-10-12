@@ -20,6 +20,12 @@
       "welcomeText": "پشتیبانی از راه دور، فقط با رضایت مشتری",
       "loginfooter": "<span dir='rtl'>اتصال ایمن و موقت با رضایت مشتری</span>",
       "footer": "<span dir='rtl'>سامانه پشتیبانی از راه دور آی تی رسام</span>",
+      "customFiles": {
+        "itrasam-login": {
+          "css": ["itrasam-login.css"],
+          "scope": ["login", "login2", "login-mobile"]
+        }
+      },
       "newAccounts": false,
       "agentInviteCodes": true,
       "certUrl": "https://remote.itrasam.com/",
