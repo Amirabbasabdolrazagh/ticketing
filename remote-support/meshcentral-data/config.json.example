@@ -28,6 +28,7 @@
         },
         "itrasam-portal": {
           "css": ["itrasam-portal.css"],
+          "js": ["itrasam-portal.js"],
           "scope": ["default", "default3", "default-mobile"]
         }
       },

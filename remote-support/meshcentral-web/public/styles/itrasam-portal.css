@@ -1,12 +1,18 @@
 /* آی‌تی رسام — پوستهٔ پنل مدیریت پشتیبانی از راه دور. */
 :root { --rasam-navy:#0a2540; --rasam-blue:#1463ff; --rasam-text:#1b2b47; --rasam-border:#d9e6f7; --rasam-panel:rgba(255,255,255,.86); }
 html, body, body#body { min-height:100%; color:var(--rasam-text)!important; font-family:Tahoma,Arial,sans-serif!important; background:radial-gradient(circle at 8% 6%,rgba(91,208,255,.18),transparent 28rem),radial-gradient(circle at 94% 96%,rgba(126,102,255,.16),transparent 31rem),#f7fbff!important; }
+/* Never inherit a user's old MeshCentral night-mode preference. */
+html, body, body.night, [data-bs-theme='dark'] { --bs-body-color:var(--rasam-text)!important; --bs-body-color-rgb:27,43,71!important; --bs-body-bg:#f7fbff!important; --bs-body-bg-rgb:247,251,255!important; --bs-secondary-bg:#eef4fb!important; --bs-secondary-color:#52647e!important; --bs-border-color:var(--rasam-border)!important; --sub-menu-bg:#eef4fb!important; }
+body.night #container, body.night #column_l, body.night .content-area, body.night .panel-content, body.night .card-body, body.night .table, body.night .list-group-item, [data-bs-theme='dark'] .content-area, [data-bs-theme='dark'] .panel-content, [data-bs-theme='dark'] .card-body, [data-bs-theme='dark'] .table, [data-bs-theme='dark'] .list-group-item { color:var(--rasam-text)!important; background:#fff!important; }
+body.night .style6, body.night .style10, body.night .style10s, body.night .style14, [data-bs-theme='dark'] .style6, [data-bs-theme='dark'] .style10, [data-bs-theme='dark'] .style10s, [data-bs-theme='dark'] .style14 { color:var(--rasam-text)!important; background:#f4f8fd!important; }
 a { color:#1260d6!important; font-weight:700; } a:hover { color:#0d48ad!important; }
 
 /* Header, navigation, sidebar and footer in legacy and modern MeshCentral views. */
 #container, #page_content, #column_l, #column_r { background:transparent!important; }
 #masthead, #topbar, #footer { color:var(--rasam-navy)!important; background:var(--rasam-panel)!important; border-color:var(--rasam-border)!important; box-shadow:0 9px 28px rgba(27,76,135,.08); backdrop-filter:blur(18px); }
 #masthead { min-height:78px; } #masthead *, #topbar *, #footer * { color:inherit!important; }
+#masthead .masthead-title { display:block!important; width:260px; min-height:66px; background:url('/title-itrasam.png') center / 225px auto no-repeat!important; }
+#masthead .masthead-title * { display:none!important; }
 #page_leftbar, .sidebar, #leftmenu { color:var(--rasam-navy)!important; background:rgba(255,255,255,.82)!important; border-color:var(--rasam-border)!important; box-shadow:8px 0 26px rgba(27,76,135,.07); backdrop-filter:blur(18px); }
 #page_leftbar .lbbutton, #page_leftbar .lbbuttonsel, .sidebar .nav-link, .sidebar a { color:var(--rasam-navy)!important; background:transparent!important; border-radius:14px!important; transition:.18s ease; }
 #page_leftbar .lbbutton:hover, .sidebar .nav-link:hover, .sidebar a:hover { color:var(--rasam-blue)!important; background:#eef5ff!important; }
