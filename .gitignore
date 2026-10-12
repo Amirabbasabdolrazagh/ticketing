@@ -44,3 +44,8 @@ next-env.d.ts
 # uploaded ticket attachments
 /storage/ticket-attachments/*
 !/storage/ticket-attachments/.gitkeep
+
+# MeshCentral keeps encryption keys, its local database and audit data here.
+# Keep the versioned sample configuration only.
+/remote-support/meshcentral-data/*
+!/remote-support/meshcentral-data/config.json.example

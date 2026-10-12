@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import TicketAttachment from "@/components/features/tickets/ticketAttachment/TicketAttachment";
 import { CalendarClock, Check } from "lucide-react";
 import TicketRatingSummary from "@/components/features/tickets/TicketRating";
+import RemoteSupportPanel from "@/components/features/tickets/RemoteSupportPanel";
 
 export default function TicketDetails() {
   const [ticket, setTicket] = useState({});
@@ -419,6 +420,7 @@ export default function TicketDetails() {
           </div>
         </div>
         <TicketRatingSummary resolution={resolution} showFeedback />
+        <RemoteSupportPanel ticketId={ticketId} role="admin" />
         <Separator className="my-5" />
         <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
         <div className="flex w-full max-w-full flex-col gap-6 py-12">

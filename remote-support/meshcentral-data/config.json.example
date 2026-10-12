@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Ylianst/MeshCentral/master/meshcentral-config-schema.json",
+  "settings": {
+    "cert": "remote.itrasam.com",
+    "WANonly": true,
+    "port": 4430,
+    "aliasPort": 443,
+    "redirPort": 0,
+    "tlsOffload": true,
+    "agentPong": 300,
+    "webRTC": true,
+    "allowFraming": false
+  },
+  "domains": {
+    "": {
+      "title": "پشتیبانی از راه دور آی تی رسام",
+      "title2": "اتصال فقط با رضایت مشتری",
+      "newAccounts": false,
+      "agentInviteCodes": true,
+      "certUrl": "https://remote.itrasam.com/",
+      "agentCustomization": {
+        "displayName": "پشتیبانی آی تی رسام",
+        "description": "عامل دسترسی از راه دور با رضایت مشتری",
+        "companyName": "آی تی رسام",
+        "serviceName": "ITRasamRemoteSupport",
+        "installText": "این برنامه فقط برای پشتیبانی موقت و با رضایت شما استفاده می‌شود.",
+        "fileName": "ITRasamSupport",
+        "foregroundColor": "#0d6efd",
+        "backgroundColor": "#0a2540"
+      }
+    }
+  }
+}
