@@ -494,6 +494,28 @@
     padding-bottom: 11rem;
   }
 
+  .project-form-actions,
+  .form-dialog-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 0.65rem !important;
+  }
+
+  .project-form-actions > button,
+  .form-dialog-actions > button {
+    min-width: 0;
+    width: 100%;
+    min-height: 3.1rem;
+    justify-content: center;
+    padding-inline: 0.65rem;
+    text-align: center;
+  }
+
+  .form-actions-three .form-primary-action {
+    grid-column: 1 / -1;
+  }
+
   /* Form dialogs also need to clear the fixed mobile navigation. */
   .form-mobile-modal {
     z-index: 80 !important;
