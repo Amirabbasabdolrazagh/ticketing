@@ -5,6 +5,9 @@ html, body, body#body { min-height:100%; color:var(--rasam-text)!important; font
 html, body, body.night, [data-bs-theme='dark'] { --bs-body-color:var(--rasam-text)!important; --bs-body-color-rgb:27,43,71!important; --bs-body-bg:#f7fbff!important; --bs-body-bg-rgb:247,251,255!important; --bs-secondary-bg:#eef4fb!important; --bs-secondary-color:#52647e!important; --bs-border-color:var(--rasam-border)!important; --sub-menu-bg:#eef4fb!important; }
 body.night #container, body.night #column_l, body.night .content-area, body.night .panel-content, body.night .card-body, body.night .table, body.night .list-group-item, [data-bs-theme='dark'] .content-area, [data-bs-theme='dark'] .panel-content, [data-bs-theme='dark'] .card-body, [data-bs-theme='dark'] .table, [data-bs-theme='dark'] .list-group-item { color:var(--rasam-text)!important; background:#fff!important; }
 body.night .style6, body.night .style10, body.night .style10s, body.night .style14, [data-bs-theme='dark'] .style6, [data-bs-theme='dark'] .style10, [data-bs-theme='dark'] .style10s, [data-bs-theme='dark'] .style14 { color:var(--rasam-text)!important; background:#f4f8fd!important; }
+#p1, #p2, #p3, #p4, #p5, #p6, #p10, #p20, #p30, #p40, #p50, #p60, #xdevices, #xdevices > div, #xdevices table, #xdevices tr, #xdevices td, #xdevices [name^='xxdevice'] { color:var(--rasam-text)!important; background-color:#fff!important; }
+#xdevices [name^='xxdevice'] { border:1px solid var(--rasam-border)!important; border-radius:14px!important; box-shadow:0 6px 18px rgba(27,76,135,.07); }
+#xdevices .g1, #xdevices .g2, #xdevices .g1t, #xdevices .g2t { background:#eef5ff!important; }
 a { color:#1260d6!important; font-weight:700; } a:hover { color:#0d48ad!important; }
 
 /* Header, navigation, sidebar and footer in legacy and modern MeshCentral views. */
@@ -17,9 +20,16 @@ a { color:#1260d6!important; font-weight:700; } a:hover { color:#0d48ad!importan
 #page_leftbar .lbbutton, #page_leftbar .lbbuttonsel, .sidebar .nav-link, .sidebar a { color:var(--rasam-navy)!important; background:transparent!important; border-radius:14px!important; transition:.18s ease; }
 #page_leftbar .lbbutton:hover, .sidebar .nav-link:hover, .sidebar a:hover { color:var(--rasam-blue)!important; background:#eef5ff!important; }
 #page_leftbar .lbbuttonsel, .sidebar .nav-link.active, .sidebar .active { color:#fff!important; background:linear-gradient(135deg,#287cff,#1459e5)!important; box-shadow:0 10px 20px rgba(20,99,255,.22); }
+.fullscreen #container { grid-template-columns:220px minmax(0,1fr)!important; }
+.fullscreen #page_leftbar { width:220px!important; padding:12px 10px; direction:rtl; }
+#page_leftbar::before { display:block; padding:10px 12px 16px; color:#4c6381; font-size:12px; font-weight:800; content:'سامانه پشتیبانی از راه دور'; }
+#page_leftbar .nav-link { display:flex!important; align-items:center; justify-content:flex-start!important; gap:12px; min-height:48px; margin:4px 0; padding:10px 13px!important; text-align:right!important; }
+#page_leftbar .nav-link > svg, #page_leftbar .nav-link > i { width:24px; font-size:18px; text-align:center; }
+.rasam-nav-label { display:inline-block; font-family:Tahoma,Arial,sans-serif; font-size:14px; font-weight:800; white-space:nowrap; }
 
 /* Workspace, lists and cards. */
 #column_l, #main, .main-content, .content, .tab-content { color:var(--rasam-text)!important; background:rgba(255,255,255,.72)!important; }
+#column_l, #topbar, #xdevices, #devListToolbarSpan { direction:ltr; }
 #column_l h1, #column_l h2, #column_l h3, .main-content h1, .main-content h2, .content h1, .content h2 { color:var(--rasam-navy)!important; }
 .style1, .style2, .style3, .style3x, .style6, .style10, .style14, .deviceList, .deviceListHeader, .card, .modal-content, .dropdown-menu { color:var(--rasam-text)!important; background:var(--rasam-panel)!important; border-color:var(--rasam-border)!important; }
 .style3, .style3x, .deviceList, .card, .modal-content { border-radius:18px!important; box-shadow:0 10px 28px rgba(27,76,135,.08); }

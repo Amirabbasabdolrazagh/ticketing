@@ -47,15 +47,37 @@
     });
   }
 
+  const navigationLabels = {
+    LeftMenuMyDevices: 'دستگاه‌ها',
+    LeftMenuMyAccount: 'حساب کاربری',
+    LeftMenuMyEvents: 'رویدادها',
+    LeftMenuMyFiles: 'فایل‌ها',
+    LeftMenuMyUsers: 'کاربران',
+    LeftMenuMyServer: 'مدیریت سامانه'
+  };
+
+  function addNavigationLabels() {
+    Object.entries(navigationLabels).forEach(([id, label]) => {
+      const item = document.getElementById(id);
+      if (!item || item.querySelector('.rasam-nav-label')) return;
+      const title = document.createElement('span');
+      title.className = 'rasam-nav-label';
+      title.textContent = label;
+      item.appendChild(title);
+      item.setAttribute('aria-label', label);
+    });
+  }
+
   function start() {
     document.documentElement.lang = 'fa';
-    document.documentElement.dir = 'rtl';
     document.body?.classList.remove('night');
     document.documentElement.setAttribute('data-bs-theme', 'light');
     translate(document.body);
+    addNavigationLabels();
     new MutationObserver((changes) => changes.forEach((change) => change.addedNodes.forEach((node) => {
       if (node.nodeType === Node.ELEMENT_NODE) translate(node);
     }))).observe(document.body, { childList: true, subtree: true });
+    window.setTimeout(addNavigationLabels, 250);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
