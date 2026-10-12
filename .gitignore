@@ -49,3 +49,4 @@ next-env.d.ts
 # Keep the versioned sample configuration only.
 /remote-support/meshcentral-data/*
 !/remote-support/meshcentral-data/config.json.example
+!/remote-support/meshcentral-data/title-itrasam.png

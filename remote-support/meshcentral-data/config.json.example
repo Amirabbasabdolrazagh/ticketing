@@ -13,8 +13,13 @@
   },
   "domains": {
     "": {
-      "title": "پشتیبانی از راه دور آی تی رسام",
-      "title2": "اتصال فقط با رضایت مشتری",
+      "title": "",
+      "title2": "",
+      "titlePicture": "title-itrasam.png",
+      "loginPicture": "title-itrasam.png",
+      "welcomeText": "پشتیبانی از راه دور، فقط با رضایت مشتری",
+      "loginfooter": "<span dir='rtl'>اتصال ایمن و موقت با رضایت مشتری</span>",
+      "footer": "<span dir='rtl'>سامانه پشتیبانی از راه دور آی تی رسام</span>",
       "newAccounts": false,
       "agentInviteCodes": true,
       "certUrl": "https://remote.itrasam.com/",

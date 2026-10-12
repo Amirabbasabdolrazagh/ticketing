@@ -10,7 +10,8 @@ services:
     volumes:
       - ./meshcentral-data:/opt/meshcentral/meshcentral-data
       - meshcentral-files:/opt/meshcentral/meshcentral-files
-      - meshcentral-web:/opt/meshcentral/meshcentral-web
+      # Versioned, upgrade-safe visual overrides for the branded portal.
+      - ./meshcentral-web:/opt/meshcentral/meshcentral-web
       - meshcentral-backups:/opt/meshcentral/meshcentral-backups
     security_opt:
       - no-new-privileges:true
@@ -23,5 +24,4 @@ services:
 
 volumes:
   meshcentral-files:
-  meshcentral-web:
   meshcentral-backups:
