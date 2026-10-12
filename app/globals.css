@@ -493,6 +493,12 @@
   .project-form-editor {
     padding-bottom: 11rem;
   }
+
+  /* Form dialogs also need to clear the fixed mobile navigation. */
+  .form-mobile-modal {
+    z-index: 80 !important;
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom)) !important;
+  }
 }
 
 @media print {
