@@ -476,11 +476,22 @@
   }
 }
 
-/* Keep project-form actions above the liquid mobile navigation. */
+/* Keep every project-form action bar reachable above the liquid mobile navigation. */
 @media (max-width: 1023px) {
   .project-form-actions {
-    bottom: calc(6.75rem + env(safe-area-inset-bottom)) !important;
-    margin-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+    position: fixed !important;
+    z-index: 70;
+    right: max(0.65rem, env(safe-area-inset-right));
+    bottom: calc(6.45rem + env(safe-area-inset-bottom)) !important;
+    left: max(0.65rem, env(safe-area-inset-left));
+    margin: 0 !important;
+    max-height: calc(100dvh - 9rem);
+    overflow-y: auto;
+    box-shadow: 0 16px 40px rgb(15 23 42 / 0.18);
+  }
+
+  .project-form-editor {
+    padding-bottom: 11rem;
   }
 }
 
