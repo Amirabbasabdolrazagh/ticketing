@@ -1,0 +1,30 @@
+/* آی‌تی رسام — پوستهٔ پنل مدیریت پشتیبانی از راه دور. */
+:root { --rasam-navy:#0a2540; --rasam-blue:#1463ff; --rasam-text:#1b2b47; --rasam-border:#d9e6f7; --rasam-panel:rgba(255,255,255,.86); }
+html, body, body#body { min-height:100%; color:var(--rasam-text)!important; font-family:Tahoma,Arial,sans-serif!important; background:radial-gradient(circle at 8% 6%,rgba(91,208,255,.18),transparent 28rem),radial-gradient(circle at 94% 96%,rgba(126,102,255,.16),transparent 31rem),#f7fbff!important; }
+a { color:#1260d6!important; font-weight:700; } a:hover { color:#0d48ad!important; }
+
+/* Header, navigation, sidebar and footer in legacy and modern MeshCentral views. */
+#container, #page_content, #column_l, #column_r { background:transparent!important; }
+#masthead, #topbar, #footer { color:var(--rasam-navy)!important; background:var(--rasam-panel)!important; border-color:var(--rasam-border)!important; box-shadow:0 9px 28px rgba(27,76,135,.08); backdrop-filter:blur(18px); }
+#masthead { min-height:78px; } #masthead *, #topbar *, #footer * { color:inherit!important; }
+#page_leftbar, .sidebar, #leftmenu { color:var(--rasam-navy)!important; background:rgba(255,255,255,.82)!important; border-color:var(--rasam-border)!important; box-shadow:8px 0 26px rgba(27,76,135,.07); backdrop-filter:blur(18px); }
+#page_leftbar .lbbutton, #page_leftbar .lbbuttonsel, .sidebar .nav-link, .sidebar a { color:var(--rasam-navy)!important; background:transparent!important; border-radius:14px!important; transition:.18s ease; }
+#page_leftbar .lbbutton:hover, .sidebar .nav-link:hover, .sidebar a:hover { color:var(--rasam-blue)!important; background:#eef5ff!important; }
+#page_leftbar .lbbuttonsel, .sidebar .nav-link.active, .sidebar .active { color:#fff!important; background:linear-gradient(135deg,#287cff,#1459e5)!important; box-shadow:0 10px 20px rgba(20,99,255,.22); }
+
+/* Workspace, lists and cards. */
+#column_l, #main, .main-content, .content, .tab-content { color:var(--rasam-text)!important; background:rgba(255,255,255,.72)!important; }
+#column_l h1, #column_l h2, #column_l h3, .main-content h1, .main-content h2, .content h1, .content h2 { color:var(--rasam-navy)!important; }
+.style1, .style2, .style3, .style3x, .style6, .style10, .style14, .deviceList, .deviceListHeader, .card, .modal-content, .dropdown-menu { color:var(--rasam-text)!important; background:var(--rasam-panel)!important; border-color:var(--rasam-border)!important; }
+.style3, .style3x, .deviceList, .card, .modal-content { border-radius:18px!important; box-shadow:0 10px 28px rgba(27,76,135,.08); }
+
+/* Controls, filters and action buttons. */
+button, input:not([type='checkbox']):not([type='radio']), select, textarea, .btn, .form-control, .form-select { box-sizing:border-box; color:var(--rasam-text)!important; background:#fff!important; border:1px solid #cbdcf3!important; border-radius:11px!important; box-shadow:none!important; }
+input:focus, select:focus, textarea:focus, .form-control:focus, .form-select:focus { outline:3px solid rgba(20,99,255,.14)!important; border-color:var(--rasam-blue)!important; }
+button:not([disabled]), .btn-primary, input[type='button']:not([disabled]), input[type='submit']:not([disabled]) { cursor:pointer; color:#fff!important; font-weight:700; background:linear-gradient(135deg,#287cff,#1459e5)!important; border-color:transparent!important; box-shadow:0 8px 18px rgba(20,99,255,.22)!important; }
+button[disabled], input[disabled] { opacity:.52; }
+table, table tr, table td, table th { color:var(--rasam-text)!important; border-color:var(--rasam-border)!important; } table tr:nth-child(even) { background:#f7fbff!important; }
+
+/* A concise Persian guide remains visible on the device screen. */
+#column_l::before, .main-content::before { display:block; direction:rtl; margin:0 0 16px; padding:13px 16px; color:#17416c; font-size:13px; font-weight:700; line-height:1.9; content:"راهنمای پشتیبانی از راه دور: ابتدا گروه دستگاه مشتری را انتخاب کنید. پس از اجرای برنامهٔ آی‌تی رسام روی سیستم مشتری، دستگاه در این فهرست ظاهر می‌شود؛ برای ورود، روی نام دستگاه و سپس Desktop بزنید. پس از پایان کار، دسترسی را از تیکت پایان دهید."; background:linear-gradient(135deg,#edf8ff,#f4f0ff); border:1px solid #cfe4ff; border-radius:16px; }
+@media (max-width:720px) { #masthead { min-height:64px; } #column_l::before, .main-content::before { margin:10px; font-size:12px; } .style3, .style3x, .deviceList, .card { border-radius:13px!important; } }

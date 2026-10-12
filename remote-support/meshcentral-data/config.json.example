@@ -15,6 +15,7 @@
     "": {
       "title": "",
       "title2": "",
+      "siteStyle": 3,
       "titlePicture": "title-itrasam.png",
       "loginPicture": "title-itrasam.png",
       "welcomeText": "پشتیبانی از راه دور، فقط با رضایت مشتری",
@@ -24,6 +25,10 @@
         "itrasam-login": {
           "css": ["itrasam-login.css"],
           "scope": ["login", "login2", "login-mobile"]
+        },
+        "itrasam-portal": {
+          "css": ["itrasam-portal.css"],
+          "scope": ["default", "default3", "default-mobile"]
         }
       },
       "newAccounts": false,
