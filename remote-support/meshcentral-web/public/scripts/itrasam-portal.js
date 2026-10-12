@@ -74,9 +74,12 @@
     document.documentElement.setAttribute('data-bs-theme', 'light');
     translate(document.body);
     addNavigationLabels();
-    new MutationObserver((changes) => changes.forEach((change) => change.addedNodes.forEach((node) => {
-      if (node.nodeType === Node.ELEMENT_NODE) translate(node);
-    }))).observe(document.body, { childList: true, subtree: true });
+    new MutationObserver((changes) => {
+      changes.forEach((change) => change.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) translate(node);
+      }));
+      addNavigationLabels();
+    }).observe(document.body, { childList: true, subtree: true });
     window.setTimeout(addNavigationLabels, 250);
   }
 
