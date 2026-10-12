@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { flushSync } from "react-dom";
@@ -57,6 +57,7 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
   const [data, setData] = useState(assessment.data || {});
   const [files, setFiles] = useState(assessment.attachments || []);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
   const [printDocument, setPrintDocument] = useState(null);
   useEffect(() => {
     const clear = () => setPrintDocument(null);
@@ -73,6 +74,7 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
     ? `/api/projects/${assessment.project._id}/assessments`
     : `/api/assessments/${assessment._id}`;
   const save = async (status = "in_progress") => {
+    if (savingRef.current) return;
     if (status === "submitted") {
       const validationError = validateAssessment(data, { standalone: !assessment.project?._id });
       if (validationError) {
@@ -80,14 +82,29 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
         return;
       }
     }
+    savingRef.current = true;
     setSaving(true);
     try {
-      const { data: result } = await axios.patch(assessmentUrl, { assessmentId: assessment._id, data, status });
+      const payload = { assessmentId: assessment._id, data, status };
+      let response;
+      try {
+        response = await axios.patch(assessmentUrl, payload);
+      } catch (error) {
+        if (error.response?.status !== 401) throw error;
+        try {
+          const refresh = await axios.post("/api/auth/refreshToken");
+          if (!refresh.data?.success) throw new Error("نشست شما منقضی شده است؛ دوباره وارد شوید.");
+        } catch {
+          throw new Error("نشست شما منقضی شده است؛ دوباره وارد شوید. اطلاعات فرم تا زمان خروج از صفحه باقی می‌ماند.");
+        }
+        response = await axios.patch(assessmentUrl, payload);
+      }
+      const result = response.data;
       if (!result.success) throw new Error(result.message || "ذخیره فرم ناموفق بود");
       toast.success(status === "submitted" ? "فرم کامل برای ادمین ارسال شد" : "فرم ذخیره شد");
       if (status === "submitted") onSubmitted?.();
     } catch (error) { toast.error(error.response?.data?.message || error.message || "ذخیره فرم ناموفق بود"); }
-    finally { setSaving(false); }
+    finally { savingRef.current = false; setSaving(false); }
   };
   const upload = async (file) => {
     if (!file) return;

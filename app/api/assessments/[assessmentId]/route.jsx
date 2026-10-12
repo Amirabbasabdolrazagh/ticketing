@@ -1,4 +1,6 @@
 import { isValidObjectId } from "mongoose";
+import path from "path";
+import { unlink } from "fs/promises";
 import ProjectAssessment from "@/models/projectAssessments";
 import User from "@/models/users";
 import ConnectDb from "@/utils/connectDB";
@@ -13,7 +15,10 @@ export async function PATCH(req, { params }) {
   await ConnectDb();
   const user = await getCurrentUser();
   const { assessmentId } = await params;
-  if (!user || !["passive_agent", "active_agent"].includes(user.role)) {
+  if (!user) {
+    return Response.json({ success: false, message: "نشست شما منقضی شده است؛ دوباره وارد شوید." }, { status: 401 });
+  }
+  if (!["passive_agent", "active_agent"].includes(user.role)) {
     return Response.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
   }
   if (!isValidObjectId(assessmentId)) {
@@ -50,4 +55,31 @@ export async function PATCH(req, { params }) {
       `📋 <b>ارزیابی جدید پروژه</b>\nعنوان: <b>${escapeHtml(String(data.projectTitle).slice(0, 100))}</b>\nمشتری: ${escapeHtml(String(data.customerCompany).slice(0, 100))}\nفرم برای بررسی و تأیید در پنل مدیریت آماده است.`)));
   }
   return Response.json({ success: true, assessment });
+}
+
+export async function DELETE(req, { params }) {
+  await ConnectDb();
+  const user = await getCurrentUser();
+  const { assessmentId } = await params;
+  if (!user) return Response.json({ success: false, message: "نشست شما منقضی شده است؛ دوباره وارد شوید." }, { status: 401 });
+  if (!isValidObjectId(assessmentId)) return Response.json({ success: false, message: "شناسه فرم معتبر نیست" }, { status: 400 });
+
+  const isAdmin = user.role === "admin";
+  const isAgent = ["passive_agent", "active_agent"].includes(user.role);
+  if (!isAdmin && !isAgent) return Response.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
+
+  const filter = isAdmin
+    ? { _id: assessmentId, project: null }
+    : { _id: assessmentId, assignee: user._id, project: null, status: { $in: ["assigned", "in_progress"] } };
+  const assessment = await ProjectAssessment.findOneAndDelete(filter);
+  if (!assessment) {
+    return Response.json({ success: false, message: "فرم پیدا نشد یا امکان حذف آن وجود ندارد" }, { status: 404 });
+  }
+
+  const attachmentDirectory = path.join(process.cwd(), "storage", "project-assessments");
+  await Promise.allSettled((assessment.attachments || [])
+    .map((attachment) => attachment?.path && path.join(attachmentDirectory, path.basename(attachment.path)))
+    .filter(Boolean)
+    .map((filePath) => unlink(filePath)));
+  return Response.json({ success: true, message: "ارزیابی حذف شد" });
 }

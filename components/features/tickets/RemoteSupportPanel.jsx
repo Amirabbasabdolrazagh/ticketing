@@ -54,9 +54,12 @@ export default function RemoteSupportPanel({ ticketId, role }) {
   }, [ticketId]);
 
   useEffect(() => {
-    load();
+    const initialTimer = window.setTimeout(load, 0);
     const timer = window.setInterval(load, 10000);
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearTimeout(initialTimer);
+      window.clearInterval(timer);
+    };
   }, [load]);
 
   async function requestAccess() {

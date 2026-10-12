@@ -23,8 +23,24 @@ export async function GET() {
 export async function POST() {
   await ConnectDb();
   const user = await getCurrentUser();
-  if (!user || !["passive_agent", "active_agent"].includes(user.role)) {
+  if (!user) {
+    return Response.json({ success: false, message: "نشست شما منقضی شده است؛ دوباره وارد شوید." }, { status: 401 });
+  }
+  if (!["passive_agent", "active_agent"].includes(user.role)) {
     return Response.json({ success: false, message: "فقط پشتیبان اکتیو یا پسیو می‌تواند ارزیابی جدید ثبت کند" }, { status: 403 });
+  }
+  // Reuse an untouched standalone draft. This makes repeated clicks or a retried
+  // request safe instead of creating several empty assessments.
+  const existingDraft = await ProjectAssessment.findOne({
+    assignee: user._id,
+    assigneeRole: user.role,
+    project: null,
+    status: "in_progress",
+    data: {},
+    "attachments.0": { $exists: false },
+  }).sort({ updatedAt: -1 });
+  if (existingDraft) {
+    return Response.json({ success: true, assessment: existingDraft, reused: true });
   }
   const assessment = await ProjectAssessment.create({
     assignee: user._id,
