@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { ExternalLink, LaptopMinimalCheck, LoaderCircle, MonitorCog, ShieldCheck, X } from "lucide-react";
+import { Download, ExternalLink, LaptopMinimalCheck, LoaderCircle, MonitorCog, ShieldCheck, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,27 @@ const statusCopy = {
   expired: "مهلت نشست تمام شد",
 };
 const activeStatuses = ["requested", "approved"];
+
+const installers = [
+  {
+    title: "دانلود برای ویندوز",
+    detail: "Windows 10 و 11 — نسخهٔ ۶۴ بیتی",
+    href: "/downloads/remote-support/ITRasamSupport-Windows-x64.exe",
+    fileName: "ITRasamSupport-Windows-x64.exe",
+  },
+  {
+    title: "دانلود برای مک با Apple Silicon",
+    detail: "Macهای دارای تراشهٔ M1، M2، M3 و جدیدتر",
+    href: "/downloads/remote-support/ITRasamSupport-macOS-Apple-Silicon.zip",
+    fileName: "ITRasamSupport-macOS-Apple-Silicon.zip",
+  },
+  {
+    title: "دانلود برای مک Intel",
+    detail: "Macهای قدیمی‌تر با پردازندهٔ Intel",
+    href: "/downloads/remote-support/ITRasamSupport-macOS-Intel.zip",
+    fileName: "ITRasamSupport-macOS-Intel.zip",
+  },
+];
 
 export default function RemoteSupportPanel({ ticketId, role }) {
   const [data, setData] = useState(null);
@@ -84,6 +105,23 @@ export default function RemoteSupportPanel({ ticketId, role }) {
     {loading ? <div className="mt-4 flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="animate-spin" size={16} />در حال بررسی وضعیت…</div> : <>
       {session?.requestNote && <p className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-sm leading-7 text-slate-700">{session.requestNote}</p>}
       {session?.expiresAt && activeStatuses.includes(session.status) && <p className="mt-3 text-xs text-slate-500">مهلت این درخواست: {new Date(session.expiresAt).toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" })}</p>}
+
+      {!isStaff && <div className="mt-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+        <div className="flex items-start gap-3">
+          <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-600 text-white"><Download size={18} /></div>
+          <div>
+            <h3 className="text-sm font-black text-slate-900">نصب برنامهٔ پشتیبانی آی‌تی رسام</h3>
+            <p className="mt-1 text-xs leading-6 text-slate-600">فایل مناسب سیستم خود را دانلود و اجرا کنید. پس از درخواست و تأیید شما، پشتیبان فقط برای زمان محدود به سیستم متصل می‌شود.</p>
+          </div>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {installers.map((installer) => <a key={installer.href} href={installer.href} download={installer.fileName} className="group rounded-xl border border-slate-200 bg-white px-3 py-3 text-right transition hover:border-blue-400 hover:shadow-sm">
+            <span className="flex items-center gap-2 text-sm font-bold text-blue-700"><Download size={16} />{installer.title}</span>
+            <span className="mt-1 block text-[11px] leading-5 text-slate-500">{installer.detail}</span>
+          </a>)}
+        </div>
+        <p className="mt-3 text-[11px] leading-5 text-slate-500">در Mac اگر هشدار امنیتی دیدید، برنامه را فقط پس از تأیید اینکه از همین سامانه دانلود شده است اجرا کنید.</p>
+      </div>}
 
       {isStaff && data?.canRequest && !activeStatuses.includes(session?.status) && <div className="mt-4 grid gap-3"><label className="text-sm font-bold text-slate-700">توضیح برای مشتری (اختیاری)<textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={1000} rows={2} placeholder="برای مثال: برای بررسی تنظیمات شبکه، نیاز به مشاهده موقت صفحه شما دارم." className="mt-2 w-full resize-y rounded-2xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-blue-500" /></label><Button onClick={requestAccess} disabled={busy}>{busy ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}ارسال درخواست دسترسی</Button></div>}
 
