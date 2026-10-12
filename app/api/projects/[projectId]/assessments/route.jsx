@@ -49,7 +49,8 @@ export async function POST(req, { params }) {
 export async function PATCH(req, { params }) {
   await ConnectDb();
   const user = await getCurrentUser();
-  if (!user || !["admin", "passive_agent", "active_agent"].includes(user.role)) return NextResponse.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
+  if (!user) return NextResponse.json({ success: false, message: "نشست شما منقضی شده است؛ دوباره وارد شوید." }, { status: 401 });
+  if (!["admin", "passive_agent", "active_agent"].includes(user.role)) return NextResponse.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
   const { projectId } = await params;
   const body = await req.json();
   const filter = authorization(user, ["admin"]) ? { _id: body.assessmentId, project: projectId } : { _id: body.assessmentId, project: projectId, assignee: user._id };

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { flushSync } from "react-dom";
@@ -38,6 +38,10 @@ function DataTable({ title, columns, rows, data, setData }) {
 export default function ProjectHandoverForm({ handover, onDone }) {
   const [data, setData] = useState(handover.data || {});
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const dataRef = useRef(handover.data || {});
+  const lastSavedDataRef = useRef(JSON.stringify(handover.data || {}));
+  const [autoSaveState, setAutoSaveState] = useState("ready");
   const [saveError, setSaveError] = useState("");
   const [savedAt, setSavedAt] = useState(handover.updatedAt || null);
   const [printAudience, setPrintAudience] = useState(null);
@@ -50,24 +54,27 @@ export default function ProjectHandoverForm({ handover, onDone }) {
     flushSync(() => setPrintAudience(audience));
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()));
   };
-  const update = (key, value) => { setSaveError(""); setData((old) => ({ ...old, [key]: value })); };
+  const update = (key, value) => { setSaveError(""); setData((old) => { const next = { ...old, [key]: value }; dataRef.current = next; setAutoSaveState("pending"); return next; }); };
   const updateList = (key, index, value) => update(key, { ...(data[key] || {}), [index]: value });
-  const save = async (status = "assigned") => {
+  const save = useCallback(async (status = "assigned", { silent = false } = {}) => {
+    if (savingRef.current) return;
+    const formData = dataRef.current;
     if (status === "submitted") {
-      const validationError = validateHandover(data, handover.assigneeRole);
+      const validationError = validateHandover(formData, handover.assigneeRole);
       if (validationError) {
         setSaveError(validationError);
         toast.error(validationError);
         return;
       }
     }
+    savingRef.current = true;
     setSaving(true);
     setSaveError("");
     try {
       const projectId = typeof handover.project === "string" ? handover.project : handover.project?._id;
       if (!projectId) throw new Error("شناسه پروژه در صورتجلسه پیدا نشد؛ فرم را دوباره باز کنید.");
       const url = `/api/projects/${projectId}/handovers`;
-      const payload = { handoverId: handover._id, data, status };
+      const payload = { handoverId: handover._id, data: formData, status };
       let result;
       try {
         result = await axios.patch(url, payload);
@@ -82,20 +89,31 @@ export default function ProjectHandoverForm({ handover, onDone }) {
       }
       const response = result.data;
       if (!response?.success || !response.handover) throw new Error(response?.message || "تأیید ذخیره از سرور دریافت نشد.");
+      lastSavedDataRef.current = JSON.stringify(formData);
+      setAutoSaveState("saved");
       setSavedAt(response.handover?.updatedAt || new Date().toISOString());
-      toast.success(status === "submitted" ? "صورتجلسه برای ادمین ارسال شد" : "صورتجلسه در دیتابیس ذخیره شد");
+      if (!silent) toast.success(status === "submitted" ? "صورتجلسه برای ادمین ارسال شد" : "صورتجلسه در دیتابیس ذخیره شد");
       const refreshed = onDone?.();
       if (refreshed?.catch) refreshed.catch(() => {});
     } catch (error) {
       const message = error.response?.data?.message || error.message || "ذخیره صورتجلسه ناموفق بود";
+      setAutoSaveState("error");
       setSaveError(message);
-      toast.error(message);
+      if (!silent) toast.error(message);
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
-  };
+  }, [handover._id, handover.assigneeRole, handover.project, onDone]);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (savingRef.current || JSON.stringify(dataRef.current) === lastSavedDataRef.current) return;
+      save("assigned", { silent: true });
+    }, 10_000);
+    return () => window.clearInterval(timer);
+  }, [save]);
   return <><section dir="rtl" className="app-page project-form-editor space-y-5">
-    <div className="glass-panel print-header p-6"><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">IT-RASAM-NET-FRM-001</span><h1 className="mt-3 page-heading">صورتجلسه تحویل و تأیید پروژه</h1><p className="mt-2 text-sm text-slate-500">{handover.project?.name} — کارشناس {handover.assigneeRole === "passive_agent" ? "پسیو" : "اکتیو"}</p>{savedAt && <p className="mt-2 text-xs font-semibold text-emerald-700">آخرین ذخیره: {new Date(savedAt).toLocaleString("fa-IR")}</p>}</div>
+    <div className="glass-panel print-header p-6"><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">IT-RASAM-NET-FRM-001</span><h1 className="mt-3 page-heading">صورتجلسه تحویل و تأیید پروژه</h1><p className="mt-2 text-sm text-slate-500">{handover.project?.name} — کارشناس {handover.assigneeRole === "passive_agent" ? "پسیو" : "اکتیو"}</p>{savedAt && <p className="mt-2 text-xs font-semibold text-emerald-700">آخرین ذخیره: {new Date(savedAt).toLocaleString("fa-IR")}</p>}<p className={`mt-2 text-xs font-bold ${autoSaveState === "error" ? "text-amber-700" : "text-emerald-700"}`}>{autoSaveState === "error" ? "ذخیره خودکار ناموفق بود؛ پس از ورود مجدد آخرین نسخهٔ ذخیره‌شده در دسترس است." : autoSaveState === "pending" ? "تغییرات شما حداکثر تا ۱۰ ثانیه دیگر خودکار ذخیره می‌شود." : autoSaveState === "saved" ? "تغییرات به‌صورت خودکار ذخیره شد." : "ذخیره خودکار هر ۱۰ ثانیه فعال است."}</p></div>
     <section className="glass-panel p-5"><h2 className="text-lg font-black">مشخصات سند و پروژه</h2><div className="mt-4 grid gap-4 md:grid-cols-3"><TextInput label="شماره صورتجلسه" value={handoverNumber(handover.project?.code, handover.assigneeRole)} onChange={() => {}} readOnly /><label className="text-sm font-bold">تاریخ صدور (شمسی) (الزامی)<div className="mt-2"><PersianDateInput value={data.issueDate} onChange={(v) => update("issueDate", v)} /></div></label><label className="text-sm font-bold">وضعیت سند (الزامی)<select value={data.documentStatus || ""} onChange={(e) => update("documentStatus", e.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3"><option value="">انتخاب وضعیت</option><option>اولیه</option><option>اصلاحیه</option><option>نهایی</option></select></label></div></section>
     <section className="glass-panel p-5"><h2 className="text-lg font-black">مشخصات پروژه و طرفین</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><TextInput label="نام کارفرما / مشتری" value={data.customerName} onChange={(v) => update("customerName", v)} /><TextInput label="محل اجرای پروژه" value={data.location} onChange={(v) => update("location", v)} /><TextInput label="نام نماینده کارفرما" value={data.customerRepresentative} onChange={(v) => update("customerRepresentative", v)} /><TextInput label="سمت نماینده کارفرما" value={data.customerRepresentativeRole} onChange={(v) => update("customerRepresentativeRole", v)} /><TextInput label="شماره تماس نماینده" value={data.customerPhone} onChange={(v) => update("customerPhone", v)} /><TextInput label="کارشناس / مجری پروژه" value={data.executorName} onChange={(v) => update("executorName", v)} /><TextInput label="مدیر / مسئول پروژه ای‌تی رسام" value={data.projectManager} onChange={(v) => update("projectManager", v)} /><label className="text-sm font-bold">تاریخ شروع عملیات (شمسی) (الزامی)<div className="mt-2"><PersianDateInput value={data.startDate} onChange={(v) => update("startDate", v)} /></div></label><label className="text-sm font-bold">تاریخ پایان عملیات (شمسی) (الزامی)<div className="mt-2"><PersianDateInput value={data.endDate} onChange={(v) => update("endDate", v)} /></div></label><label className="text-sm font-bold">تاریخ تحویل (شمسی) (الزامی)<div className="mt-2"><PersianDateInput value={data.handoverDate} onChange={(v) => update("handoverDate", v)} /></div></label></div></section>
     <Checklist title="شرح خدمات پسیو انجام‌شده" items={passiveServices} data={data.passiveServices} setData={(i, v) => updateList("passiveServices", i, v)} detailConfig={{ "کابل‌کشی شبکه": { label: "مقدار", unit: "متر" }, "نصب پریز و Keystone": { label: "تعداد", unit: "عدد" }, "نصب Patch Panel": { label: "تعداد" }, "نصب Cable Management": { label: "تعداد", unit: "عدد" }, "نصب Patch Cord": { label: "تعداد", unit: "عدد" }, "لیبل‌گذاری کابل‌ها": { label: "تعداد", unit: "عدد" }, "لیبل‌گذاری Patch Panel": { label: "تعداد", unit: "عدد" }, "لیبل‌گذاری پریزها و نودها": { label: "تعداد", unit: "عدد" } }} />
@@ -115,6 +133,6 @@ export default function ProjectHandoverForm({ handover, onDone }) {
     <section className="glass-panel p-5"><h2 className="text-lg font-black">شرح فعالیت و تأییدها</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><TextInput label="شرح فعالیت‌های انجام‌شده" value={data.activities} onChange={(v) => update("activities", v)} multiline /><TextInput label="تجهیزات / اقلام نصب و راه‌اندازی‌شده" value={data.installedItems} onChange={(v) => update("installedItems", v)} multiline /><TextInput label="تنظیمات انجام‌شده" value={data.configurations} onChange={(v) => update("configurations", v)} multiline /><TextInput label="مشکلات یا موانع حین اجرا" value={data.obstacles} onChange={(v) => update("obstacles", v)} multiline /><TextInput label="اقدامات اصلاحی انجام‌شده" value={data.correctiveActions} onChange={(v) => update("correctiveActions", v)} multiline /><TextInput label="توضیحات نماینده کارفرما" value={data.customerNotes} onChange={(v) => update("customerNotes", v)} multiline /></div><div className="mt-5 grid gap-3 md:grid-cols-2">{customerConfirmations.map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm"><input type="checkbox" checked={Boolean(data.customerConfirmations?.[item])} onChange={(e) => update("customerConfirmations", { ...(data.customerConfirmations || {}), [item]: e.target.checked })} />{item}</label>)}</div><div className="mt-5 grid gap-4 md:grid-cols-3"><TextInput label="نام و نام‌خانوادگی نماینده کارفرما" value={data.customerConfirmationName} onChange={(v) => update("customerConfirmationName", v)} /><label className="text-sm font-bold">تاریخ تأیید کارفرما (شمسی)<div className="mt-2"><PersianDateInput value={data.customerConfirmationDate} onChange={(v) => update("customerConfirmationDate", v)} /></div></label><TextInput label="نام کارشناس اجرا" value={data.executorConfirmationName} onChange={(v) => update("executorConfirmationName", v)} /><label className="text-sm font-bold">تاریخ تأیید کارشناس (شمسی)<div className="mt-2"><PersianDateInput value={data.executorConfirmationDate} onChange={(v) => update("executorConfirmationDate", v)} /></div></label><TextInput label="نام مسئول پروژه ای‌تی رسام" value={data.managerConfirmationName} onChange={(v) => update("managerConfirmationName", v)} /><label className="text-sm font-bold">تاریخ تأیید مسئول پروژه (شمسی)<div className="mt-2"><PersianDateInput value={data.managerConfirmationDate} onChange={(v) => update("managerConfirmationDate", v)} /></div></label></div><div className="mt-5 grid gap-3 md:grid-cols-2">{["عملیات Passive بررسی شد", "عملیات Active بررسی شد", "تجهیزات تحویل شد", "تست‌های لازم انجام شد", "مستندات تحویل شد", "دسترسی‌ها تحویل شد", "موارد باقی‌مانده ثبت شد", "تأیید کارفرما اخذ شد", "تأیید کارشناس اجرا اخذ شد", "تأیید مسئول پروژه اخذ شد"].map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm"><input type="checkbox" checked={Boolean(data.finalChecks?.[item])} onChange={(e) => update("finalChecks", { ...(data.finalChecks || {}), [item]: e.target.checked })} />{item}</label>)}</div><label className="mt-5 block text-sm font-bold">وضعیت نهایی تحویل<select value={data.finalDeliveryStatus || ""} onChange={(e) => update("finalDeliveryStatus", e.target.value)} className="mt-2 h-11 w-full rounded-xl border border-slate-200 bg-white px-3"><option value="">انتخاب وضعیت</option><option>تحویل کامل و مورد تأیید کارفرما</option><option>تحویل با موارد جزئی باقی‌مانده</option><option>تحویل موقت تا زمان رفع موارد</option><option>تحویل مورد تأیید نمی‌باشد</option></select></label></section>
     <Checklist title="پیوست‌های صورتجلسه" items={attachments} data={data.attachmentsChecklist} setData={(i, v) => updateList("attachmentsChecklist", i, v)} options={["تحویل شد", "مشمول پروژه نیست"]} />
     {saveError && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{saveError}</p>}
-    <div className="project-form-actions glass-panel sticky bottom-4 flex flex-wrap justify-end gap-3 p-4 print:hidden"><button type="button" onClick={() => print("company")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای شرکت</button><button type="button" onClick={() => print("customer")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای مشتری</button><button type="button" disabled={saving} onClick={() => save()} className="rounded-xl border px-5 py-3 font-bold">{saving ? "در حال ذخیره..." : "ذخیره موقت"}</button><button type="button" disabled={saving} onClick={() => save("submitted")} className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">{saving ? "در حال ارسال..." : "ثبت و ارسال برای ادمین"}</button></div>
+    <div className="project-form-actions glass-panel sticky bottom-4 flex flex-wrap justify-end gap-3 p-4 print:hidden"><button type="button" onClick={() => print("company")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای شرکت</button><button type="button" onClick={() => print("customer")} className="rounded-xl border px-5 py-3 font-bold">چاپ برای مشتری</button><button type="button" disabled={saving} onClick={() => save("submitted")} className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">{saving ? "در حال ارسال..." : "ثبت و ارسال برای ادمین"}</button></div>
   </section>{printAudience && <ProjectHandoverPrintDocument item={handover} data={data} audience={printAudience} />}</>;
 }

@@ -31,7 +31,8 @@ export async function POST(req, { params }) {
 export async function PATCH(req, { params }) {
   await ConnectDb();
   const user = await getCurrentUser();
-  if (!user || !["admin", "passive_agent", "active_agent"].includes(user.role)) return Response.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
+  if (!user) return Response.json({ success: false, message: "نشست شما منقضی شده است؛ دوباره وارد شوید." }, { status: 401 });
+  if (!["admin", "passive_agent", "active_agent"].includes(user.role)) return Response.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
   const { projectId } = await params;
   const body = await req.json();
   if (!isValidObjectId(projectId) || !isValidObjectId(body.handoverId)) return Response.json({ success: false, message: "شناسه صورتجلسه یا پروژه معتبر نیست" }, { status: 400 });

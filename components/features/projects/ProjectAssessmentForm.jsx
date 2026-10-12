@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { flushSync } from "react-dom";
@@ -58,6 +58,9 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
   const [files, setFiles] = useState(assessment.attachments || []);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const dataRef = useRef(assessment.data || {});
+  const lastSavedDataRef = useRef(JSON.stringify(assessment.data || {}));
+  const [autoSaveState, setAutoSaveState] = useState("ready");
   const [printDocument, setPrintDocument] = useState(null);
   useEffect(() => {
     const clear = () => setPrintDocument(null);
@@ -68,15 +71,21 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
     flushSync(() => setPrintDocument(documentType));
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()));
   };
-  const update = (key, value) => setData((old) => ({ ...old, [key]: value }));
+  const update = (key, value) => setData((old) => {
+    const next = { ...old, [key]: value };
+    dataRef.current = next;
+    setAutoSaveState("pending");
+    return next;
+  });
   const updateTable = (key, index, value) => update(key, { ...(data[key] || {}), [index]: value });
   const assessmentUrl = assessment.project?._id
     ? `/api/projects/${assessment.project._id}/assessments`
     : `/api/assessments/${assessment._id}`;
-  const save = async (status = "in_progress") => {
+  const save = useCallback(async (status = "in_progress", { silent = false } = {}) => {
     if (savingRef.current) return;
+    const formData = dataRef.current;
     if (status === "submitted") {
-      const validationError = validateAssessment(data, { standalone: !assessment.project?._id });
+      const validationError = validateAssessment(formData, { standalone: !assessment.project?._id });
       if (validationError) {
         toast.error(validationError);
         return;
@@ -85,7 +94,7 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
     savingRef.current = true;
     setSaving(true);
     try {
-      const payload = { assessmentId: assessment._id, data, status };
+      const payload = { assessmentId: assessment._id, data: formData, status };
       let response;
       try {
         response = await axios.patch(assessmentUrl, payload);
@@ -101,11 +110,23 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
       }
       const result = response.data;
       if (!result.success) throw new Error(result.message || "ذخیره فرم ناموفق بود");
-      toast.success(status === "submitted" ? "فرم کامل برای ادمین ارسال شد" : "فرم ذخیره شد");
+      lastSavedDataRef.current = JSON.stringify(formData);
+      setAutoSaveState("saved");
+      if (!silent) toast.success(status === "submitted" ? "فرم کامل برای ادمین ارسال شد" : "فرم ذخیره شد");
       if (status === "submitted") onSubmitted?.();
-    } catch (error) { toast.error(error.response?.data?.message || error.message || "ذخیره فرم ناموفق بود"); }
+    } catch (error) {
+      setAutoSaveState("error");
+      if (!silent) toast.error(error.response?.data?.message || error.message || "ذخیره فرم ناموفق بود");
+    }
     finally { savingRef.current = false; setSaving(false); }
-  };
+  }, [assessment._id, assessment.project?._id, assessmentUrl, onSubmitted]);
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (savingRef.current || JSON.stringify(dataRef.current) === lastSavedDataRef.current) return;
+      save("in_progress", { silent: true });
+    }, 10_000);
+    return () => window.clearInterval(timer);
+  }, [save]);
   const upload = async (file) => {
     if (!file) return;
     const form = new FormData(); form.append("assessmentId", assessment._id); form.append("file", file);
@@ -123,7 +144,7 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
     catch (error) { toast.error(error.response?.data?.message || "ثبت تأیید ناموفق بود"); }
   };
 
-  return <><section dir="rtl" className="app-page project-form-editor space-y-5"><div className="glass-panel print-header p-6"><h1 className="page-heading">فرم ارزیابی و ثبت اولیه پروژه</h1><p className="mt-2 text-sm text-slate-500">پس از تکمیل، فرم برای بررسی ادمین ارسال می‌شود؛ پروژه فقط پس از تأیید ساخته خواهد شد. {assessment.project?.name || ""}</p></div>
+  return <><section dir="rtl" className="app-page project-form-editor space-y-5"><div className="glass-panel print-header p-6"><h1 className="page-heading">فرم ارزیابی و ثبت اولیه پروژه</h1><p className="mt-2 text-sm text-slate-500">پس از تکمیل، فرم برای بررسی ادمین ارسال می‌شود؛ پروژه فقط پس از تأیید ساخته خواهد شد. {assessment.project?.name || ""}</p><p className={`mt-2 text-xs font-bold ${autoSaveState === "error" ? "text-amber-700" : "text-emerald-700"}`}>{autoSaveState === "error" ? "ذخیره خودکار ناموفق بود؛ پس از ورود مجدد آخرین نسخهٔ ذخیره‌شده در دسترس است." : autoSaveState === "pending" ? "تغییرات شما حداکثر تا ۱۰ ثانیه دیگر خودکار ذخیره می‌شود." : autoSaveState === "saved" ? "تغییرات به‌صورت خودکار ذخیره شد." : "ذخیره خودکار هر ۱۰ ثانیه فعال است."}</p></div>
     {!assessment.project && <section className="glass-panel p-5"><h2 className="text-lg font-black">مشخصات پروژه پیشنهادی</h2><p className="mt-2 text-sm text-slate-500">عنوان پروژه، نام مشتری و محل اجرا برای ارسال فرم الزامی هستند.</p><div className="mt-4 grid gap-4 md:grid-cols-2"><Field label="عنوان پروژه پیشنهادی" value={data.projectTitle} onChange={(v) => update("projectTitle", v)} /><Field label="نام مشتری / شرکت" value={data.customerCompany} onChange={(v) => update("customerCompany", v)} /><Field label="محل اجرای پروژه" value={data.customerAddress} onChange={(v) => update("customerAddress", v)} /><Field label="توضیح کوتاه پروژه" value={data.projectDescription} onChange={(v) => update("projectDescription", v)} multiline /></div></section>}
     <section className="glass-panel p-5"><h2 className="text-lg font-black">۱. اطلاعات مشتری / شرکت</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><Field label="نام شرکت / مجموعه" value={data.customerCompany} onChange={(v) => update("customerCompany", v)} /><Field label="نام مدیر / مسئول" value={data.customerManager} onChange={(v) => update("customerManager", v)} /><Field label="سمت" value={data.customerRole} onChange={(v) => update("customerRole", v)} /><Field label="شماره تماس" value={data.customerPhone} onChange={(v) => update("customerPhone", v)} /><Field label="آدرس" value={data.customerAddress} onChange={(v) => update("customerAddress", v)} /><Field label="تاریخ ثبت درخواست (شمسی)" value={data.requestDate} onChange={(v) => update("requestDate", v)} date /></div><h3 className="mt-5 text-sm font-bold">نحوه دریافت درخواست</h3><ChoiceList items={requestMethods} value={data.requestMethods} onChange={(v) => update("requestMethods", v)} other /></section>
     <section className="glass-panel p-5"><h2 className="text-lg font-black">۲. اطلاعات اولیه مجموعه</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><Field label="تعداد کاربران" value={data.userCount} onChange={(v) => update("userCount", v)} /><Field label="تعداد سیستم‌های کامپیوتری" value={data.computerCount} onChange={(v) => update("computerCount", v)} /><Field label="تعداد سرورها" value={data.serverCount} onChange={(v) => update("serverCount", v)} /><Field label="تعداد شعب" value={data.branchCount} onChange={(v) => update("branchCount", v)} /></div><h3 className="mt-5 text-sm font-bold">نوع زیرساخت</h3><ChoiceList items={infrastructureTypes} value={data.infrastructureTypes} onChange={(v) => update("infrastructureTypes", v)} other /></section>
@@ -141,6 +162,6 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
     <section className="glass-panel p-5"><h2 className="text-lg font-black">۱۴. نتیجه ارزیابی اولیه</h2><div className="mt-4 grid gap-4 md:grid-cols-2"><Field label="وضعیت پروژه"><OptionSelect value={data.evaluationResult} onChange={(v) => update("evaluationResult", v)} options={["آماده ارجاع به کارشناس", "نیازمند بازدید اولیه", "نیازمند نیازسنجی بیشتر", "نیازمند برآورد دقیق‌تر", "نیازمند بررسی مدیریتی", "فعلاً قابل ارجاع نیست"]} /></Field><Field label="توضیحات مسئول بررسی" value={data.evaluationNotes} onChange={(v) => update("evaluationNotes", v)} multiline /></div></section>
     {assessment.jobBriefStatus === "issued" && <IssuedBrief brief={assessment.jobBrief || {}} onAcknowledge={acknowledge} onPrintBrief={() => print("brief")} />}
     <section className="print-exclude glass-panel space-y-3 p-5"><h2 className="font-black">پیوست‌های فرم ارزیابی و تصویر فرم امضاشده مشتری</h2><input type="file" accept="image/*,application/pdf" onChange={(event) => upload(event.target.files?.[0])} className="block w-full rounded-xl border border-slate-200 bg-white p-3" />{files.length > 0 && <div className="flex flex-wrap gap-2">{files.map((file, index) => <span key={`${file.path || file.name}-${index}`} className="rounded-lg bg-slate-100 px-3 py-2 text-xs">{file.name}</span>)}</div>}</section>
-    <div className="project-form-actions glass-panel sticky bottom-4 flex flex-wrap justify-end gap-3 p-4 print:hidden"><button type="button" onClick={() => print("assessment")} className="rounded-xl border border-slate-200 bg-white px-5 py-3 font-bold">چاپ فرم ارزیابی</button><button disabled={saving} onClick={() => save()} className="rounded-xl border border-slate-200 bg-white px-5 py-3 font-bold">ذخیره موقت</button><button disabled={saving} onClick={() => save("submitted")} className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">ثبت و ارسال برای ادمین</button></div>
+    <div className="project-form-actions glass-panel sticky bottom-4 flex flex-wrap justify-end gap-3 p-4 print:hidden"><button type="button" onClick={() => print("assessment")} className="rounded-xl border border-slate-200 bg-white px-5 py-3 font-bold">چاپ فرم ارزیابی</button><button disabled={saving} onClick={() => save("submitted")} className="rounded-xl bg-blue-600 px-5 py-3 font-bold text-white">ثبت و ارسال برای ادمین</button></div>
   </section><ProjectPrintDocument printable={printDocument === "assessment"} title="فرم ارزیابی و ثبت اولیه پروژه" code="IT-RASAM-NET-FRM-003" projectName={assessment.project?.name || data.projectTitle} details={[{ label: "نام شرکت / مجموعه", value: data.customerCompany }, { label: "نام مدیر / مسئول", value: data.customerManager }, { label: "شماره تماس", value: data.customerPhone }, { label: "تاریخ ثبت درخواست", value: data.requestDate }, { label: "آدرس", value: data.customerAddress }]} sections={[{ title: "اطلاعات اولیه و درخواست مشتری", fields: [{ label: "تعداد کاربران", value: data.userCount }, { label: "تعداد سیستم‌های کامپیوتری", value: data.computerCount }, { label: "تعداد سرورها", value: data.serverCount }, { label: "تعداد شعب", value: data.branchCount }, { label: "نوع زیرساخت", value: data.infrastructureTypes }, { label: "نحوه دریافت درخواست", value: data.requestMethods }, { label: "شرح مشکل / درخواست", value: data.requestDescription }, { label: "زمان ایجاد مشکل", value: data.issueSince }, { label: "اولویت", value: data.issuePriority }, { label: "توقف فعالیت مجموعه", value: data.businessStopped }] }, { title: "نیازسنجی و بررسی فنی", fields: [{ label: "نیازهای اعلام‌شده مشتری", value: data.statedNeeds }, { label: "نیازهای شناسایی‌شده", value: data.identifiedNeeds }, { label: "موارد نیازمند بازدید حضوری", value: data.onSiteNeeds }, { label: "وضعیت شبکه", value: data.networkStatus }, { label: "وضعیت سرورها", value: data.serverStatus }, { label: "وضعیت Backup", value: data.backupStatus }, { label: "وضعیت امنیت", value: data.securityStatus }, { label: "نظر اولیه کارشناس", value: data.technicalOpinion }, { label: "نیاز به بازدید حضوری", value: data.onSiteRequired }, { label: "نیاز به دسترسی Remote", value: data.remoteRequired }] }, { title: "برآورد، ریسک و نتیجه ارزیابی", fields: [{ label: "شرح محدوده کار", value: data.scopeDescription }, { label: "زمان تقریبی", value: data.estimatedTime }, { label: "تعداد نفر مورد نیاز", value: data.requiredPeople }, { label: "برآورد اولیه هزینه", value: data.estimatedCost }, { label: "زمان موردنظر مشتری برای شروع", value: data.customerStart }, { label: "مهلت اعلام‌شده مشتری", value: data.customerDeadline }, { label: "پیشنهاد کارشناس", value: data.executionSuggestion }, { label: "وضعیت نهایی ارزیابی", value: data.evaluationResult }, { label: "توضیحات مسئول بررسی", value: data.evaluationNotes }] }]} tables={[{ title: "مشکلات و نقاط ضعف شناسایی‌شده", rows: data.identifiedProblems, columns: [{ key: "item", label: "مورد" }, { key: "status", label: "وضعیت" }, { key: "priority", label: "اهمیت" }, { key: "notes", label: "توضیحات" }] }, { title: "ریسک‌ها و محدودیت‌ها", rows: data.risks, columns: [{ key: "risk", label: "ریسک / محدودیت" }, { key: "probability", label: "احتمال" }, { key: "impact", label: "اثر" }, { key: "solution", label: "راهکار" }] }]} parties={[{ title: "کارشناس ارزیابی", name: data.agentConfirmationName }, { title: "نماینده کارفرما", name: data.customerManager, role: data.customerRole }, { title: "مسئول پروژه ای‌تی رسام", name: data.ownerConfirmationName }]} /><ProjectPrintDocument printable={printDocument === "brief"} title="فرم ابلاغ شرح وظایف و برنامه اجرای پروژه" code="IT-RASAM-NET-FRM-002" projectName={assessment.project?.name || data.projectTitle} details={[{ label: "شماره ابلاغ", value: assessment.jobBrief?.issueNumber }, { label: "شماره پروژه", value: assessment.project?.code }, { label: "تاریخ ابلاغ", value: assessment.jobBrief?.issueDate }, { label: "نام مشتری", value: assessment.jobBrief?.customerName || assessment.project?.customerName }, { label: "محل اجرا", value: assessment.jobBrief?.location || assessment.project?.location }, { label: "کارشناس اجرا", value: assessment.assignee?.name }, { label: "نقش", value: assessment.assigneeRole === "passive_agent" ? "پشتیبان پسیو" : "پشتیبان اکتیو" }]} sections={[{ title: "هدف و محدوده ابلاغ", fields: [{ label: "شرح کلی و برنامه اجرا", value: assessment.jobBrief?.summary }, { label: "نوع فعالیت", value: assessment.jobBrief?.activityType }, { label: "پیش‌نیازها", value: assessment.jobBrief?.pendingPrerequisites }, { label: "مسئولیت‌ها", value: assessment.jobBrief?.responsibilities }, { label: "معیار پایان کار", value: assessment.jobBrief?.completionCriteria }] }, { title: "وظایف پسیو ابلاغ‌شده", fields: [{ label: "وظایف", value: assessment.jobBrief?.passiveTasks }] }, { title: "وظایف اکتیو ابلاغ‌شده", fields: [{ label: "وظایف", value: assessment.jobBrief?.activeTasks }] }, { title: "برنامه و گزارش‌دهی", fields: [{ label: "شروع و پایان برنامه", value: `${assessment.jobBrief?.startDate || "—"} تا ${assessment.jobBrief?.endDate || "—"}` }, { label: "ساعت کاری", value: `${assessment.jobBrief?.workStart || "—"} تا ${assessment.jobBrief?.workEnd || "—"}` }, { label: "گزارش پیشرفت", value: assessment.jobBrief?.progressReport }, { label: "ثبت تصاویر و مستندات", value: assessment.jobBrief?.mediaReporting }, { label: "توضیحات نهایی", value: assessment.jobBrief?.finalNotes }] }]} tables={[{ title: "خروجی‌های مورد انتظار", rows: assessment.jobBrief?.deliverables, columns: [{ key: "output", label: "خروجی" }, { key: "deadline", label: "مهلت" }, { key: "status", label: "وضعیت" }] }, { title: "برنامه زمان‌بندی اجرا", rows: assessment.jobBrief?.schedule, columns: [{ key: "activity", label: "فعالیت" }, { key: "start", label: "شروع" }, { key: "end", label: "پایان" }, { key: "duration", label: "مدت" }] }]} parties={[{ title: "کارشناس اجرا", name: assessment.assignee?.name, role: assessment.assigneeRole === "passive_agent" ? "پشتیبان پسیو" : "پشتیبان اکتیو" }, { title: "مسئول پروژه ای‌تی رسام", name: assessment.jobBrief?.managerName }, { title: "نماینده کارفرما", name: assessment.jobBrief?.customerName }]} /></>;
 }
