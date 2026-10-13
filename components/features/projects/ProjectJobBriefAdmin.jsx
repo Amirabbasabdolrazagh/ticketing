@@ -21,11 +21,11 @@ function Checklist({ title, items, values = {}, onChange, options = ["ابلاغ
 function Checkboxes({ items, values = {}, onChange }) { return <div className="mt-4 grid gap-2 md:grid-cols-2">{items.map((item) => <label key={item} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm"><input type="checkbox" checked={Boolean(values[item])} onChange={(event) => onChange({ ...values, [item]: event.target.checked })} />{item}</label>)}</div>; }
 function Table({ title, rows, columns, data = {}, onChange }) { return <section className="glass-panel overflow-x-auto"><div className="border-b border-slate-100 p-5"><h2 className="text-lg font-black">{title}</h2></div><table className="min-w-[820px] w-full text-right text-sm"><thead className="bg-slate-50 text-slate-600"><tr><th className="p-3">ردیف</th>{columns.map((column) => <th key={column.key} className="p-3">{column.label}</th>)}</tr></thead><tbody>{rows.map((label, index) => <tr key={index} className="border-t border-slate-100"><td className="p-3 text-center text-slate-400">{(index + 1).toLocaleString("fa-IR")}</td>{columns.map((column) => <td key={column.key} className="p-2">{column.type === "fixed" ? <span className="font-semibold">{label}</span> : column.type === "select" ? <select value={data[index]?.[column.key] || ""} onChange={(event) => onChange(index, { ...(data[index] || {}), [column.key]: event.target.value })} className="h-10 min-w-28 rounded-lg border border-slate-200 bg-white px-2"><option value="">انتخاب</option>{column.options.map((option) => <option key={option}>{option}</option>)}</select> : <input value={data[index]?.[column.key] || ""} onChange={(event) => onChange(index, { ...(data[index] || {}), [column.key]: event.target.value })} inputMode={column.type === "date" ? "numeric" : undefined} placeholder={column.type === "date" ? "۱۴۰۵/۰۷/۱۸" : ""} className="h-10 min-w-24 w-full rounded-lg border border-slate-200 bg-white px-2" />}</td>)}</tr>)}</tbody></table></section>; }
 
-export default function ProjectJobBriefAdmin({ projectId, project }) {
+export default function ProjectJobBriefAdmin({ projectId, project, selectedAssessmentId = null }) {
   const [items, setItems] = useState([]);
   const [drafts, setDrafts] = useState({});
   const [printId, setPrintId] = useState(null);
-  const [openId, setOpenId] = useState(null);
+  const [openId, setOpenId] = useState(selectedAssessmentId);
   const [savingId, setSavingId] = useState(null);
   const [actionMessage, setActionMessage] = useState("");
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function ProjectJobBriefAdmin({ projectId, project }) {
     flushSync(() => setPrintId(id));
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()));
   };
-  const load = async () => { try { const { data } = await axios.get(`/api/projects/${projectId}/assessments`); if (data.success) { const assigned = data.assessments.filter((assessment) => { const agent = assessment.assigneeRole === "passive_agent" ? project?.passiveAgent : project?.activeAgent; return agent && String(assessment.assignee?._id || assessment.assignee) === String(agent._id || agent); }); setItems(assigned); setDrafts(Object.fromEntries(assigned.map((assessment) => [assessment._id, assessment.jobBrief || {}]))); } } catch { toast.error("دریافت فرم‌های ابلاغ ناموفق بود"); } };
+  const load = async () => { try { const { data } = await axios.get(`/api/projects/${projectId}/assessments`); if (data.success) { const assigned = data.assessments.filter((assessment) => { const agent = assessment.assigneeRole === "passive_agent" ? project?.passiveAgent : project?.activeAgent; return agent && String(assessment.assignee?._id || assessment.assignee) === String(agent._id || agent); }); setItems(selectedAssessmentId ? assigned.filter((assessment) => assessment._id === selectedAssessmentId) : assigned); setDrafts(Object.fromEntries(assigned.map((assessment) => [assessment._id, assessment.jobBrief || {}]))); if (selectedAssessmentId) setOpenId(selectedAssessmentId); } } catch { toast.error("دریافت فرم‌های ابلاغ ناموفق بود"); } };
   // Data is intentionally refreshed only when the selected installation project changes.
   // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [projectId]);

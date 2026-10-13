@@ -7,6 +7,7 @@ import ConnectDb from "@/utils/connectDB";
 import getCurrentUser from "@/utils/auth";
 import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
 import { validateAssessment } from "@/lib/projectFormValidation";
+import { projectFormProgress } from "@/lib/projectFormProgress";
 
 export const runtime = "nodejs";
 const escapeHtml = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -28,6 +29,15 @@ export async function PATCH(req, { params }) {
   if (raw.length > 250_000) return Response.json({ success: false, message: "حجم اطلاعات فرم بیش از حد مجاز است" }, { status: 413 });
   let body;
   try { body = JSON.parse(raw); } catch { return Response.json({ success: false, message: "اطلاعات فرم معتبر نیست" }, { status: 400 }); }
+  if (body.trackingEvent === "opened") {
+    const assessment = await ProjectAssessment.findOneAndUpdate(
+      { _id: assessmentId, assignee: user._id, project: null },
+      { $set: { openedAt: new Date() } },
+      { returnDocument: "after" },
+    );
+    if (!assessment) return Response.json({ success: false, message: "فرم پیدا نشد" }, { status: 404 });
+    return Response.json({ success: true, assessment });
+  }
   const data = body.data;
   if (!data || typeof data !== "object" || Array.isArray(data)) {
     return Response.json({ success: false, message: "اطلاعات فرم معتبر نیست" }, { status: 400 });
@@ -45,7 +55,7 @@ export async function PATCH(req, { params }) {
   }
   const assessment = await ProjectAssessment.findOneAndUpdate(
     { _id: assessmentId, assignee: user._id, project: null, status: { $in: ["assigned", "in_progress"] } },
-    { $set: { data, status: submitting ? "submitted" : "in_progress", ...(submitting ? { submittedAt: new Date() } : {}) } },
+    { $set: { data, status: submitting ? "submitted" : "in_progress", lastSavedAt: new Date(), progressPercent: projectFormProgress(data, "assessment", submitting), ...(submitting ? { submittedAt: new Date() } : {}) } },
     { returnDocument: "after", runValidators: true },
   );
   if (!assessment) return Response.json({ success: false, message: "فرم پیدا نشد یا قبلاً برای بررسی ارسال شده است" }, { status: 409 });

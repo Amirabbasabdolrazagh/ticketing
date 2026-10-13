@@ -8,6 +8,7 @@ import authorization from "@/utils/authorization";
 import { isValidObjectId } from "mongoose";
 import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
 import { validateAssessment } from "@/lib/projectFormValidation";
+import { projectFormProgress } from "@/lib/projectFormProgress";
 
 const escapeHtml = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
@@ -55,7 +56,7 @@ export async function PATCH(req, { params }) {
   const body = await req.json();
   const filter = authorization(user, ["admin"]) ? { _id: body.assessmentId, project: projectId } : { _id: body.assessmentId, project: projectId, assignee: user._id };
   if (!isValidObjectId(projectId) || !isValidObjectId(body.assessmentId)) return NextResponse.json({ success: false, message: "شناسه فرم یا پروژه معتبر نیست" }, { status: 400 });
-  const previous = await ProjectAssessment.findOne(filter).select("jobBriefStatus assignee status").lean();
+  const previous = await ProjectAssessment.findOne(filter).select("jobBriefStatus jobBriefViewedAt openedAt assignee status").lean();
   if (!previous) return NextResponse.json({ success: false, message: "فرم پیدا نشد" }, { status: 404 });
   if (body.jobBrief !== undefined || body.jobBriefStatus !== undefined) {
     const project = await Project.findById(projectId).select("passiveAgent activeAgent").lean();
@@ -66,6 +67,13 @@ export async function PATCH(req, { params }) {
     }
   }
   const update = {};
+  const now = new Date();
+  if (body.trackingEvent === "opened" && !authorization(user, ["admin"])) {
+    if (!previous.openedAt) update.openedAt = now;
+  }
+  if (body.trackingEvent === "job_brief_viewed" && !authorization(user, ["admin"]) && previous.jobBriefStatus !== "draft" && !previous.jobBriefViewedAt) {
+    update.jobBriefViewedAt = now;
+  }
   if (body.data !== undefined) {
     if (body.status === "submitted") {
       const validationError = validateAssessment(body.data);
@@ -73,9 +81,20 @@ export async function PATCH(req, { params }) {
     }
     update.data = body.data || {};
     update.status = body.status === "submitted" ? "submitted" : "in_progress";
+    update.lastSavedAt = now;
+    update.progressPercent = projectFormProgress(
+      body.data,
+      "assessment",
+      update.status === "submitted",
+    );
   }
   if (body.jobBrief !== undefined && authorization(user, ["admin"])) {
     update.jobBrief = body.jobBrief || {};
+    update.jobBriefProgressPercent = projectFormProgress(
+      body.jobBrief,
+      "jobBrief",
+      body.jobBriefStatus === "issued",
+    );
     update.jobBriefStatus = body.jobBriefStatus === "issued" ? "issued" : (["issued", "acknowledged"].includes(previous.jobBriefStatus) ? previous.jobBriefStatus : "draft");
     if (update.jobBriefStatus === "issued") {
       update.jobBriefIssuedAt = new Date();
@@ -84,6 +103,8 @@ export async function PATCH(req, { params }) {
   }
   if (body.jobBriefStatus === "acknowledged" && !authorization(user, ["admin"]) && previous.jobBriefStatus === "issued") {
     update.jobBriefStatus = "acknowledged";
+    update.jobBriefViewedAt = previous.jobBriefViewedAt || now;
+    update.jobBriefAcknowledgedAt = now;
   }
   if (update.status === "submitted") update.submittedAt = new Date();
   if (authorization(user, ["admin"]) && body.status === "reviewed") { update.status = "reviewed"; update.reviewedAt = new Date(); update.reviewedBy = user._id; }

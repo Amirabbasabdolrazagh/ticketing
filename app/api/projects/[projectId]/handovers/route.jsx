@@ -5,6 +5,7 @@ import ConnectDb from "@/utils/connectDB";
 import getCurrentUser from "@/utils/auth";
 import authorization from "@/utils/authorization";
 import { handoverNumber, validateHandover } from "@/lib/projectFormValidation";
+import { projectFormProgress } from "@/lib/projectFormProgress";
 
 export async function GET(req, { params }) {
   await ConnectDb();
@@ -37,11 +38,15 @@ export async function PATCH(req, { params }) {
   const body = await req.json();
   if (!isValidObjectId(projectId) || !isValidObjectId(body.handoverId)) return Response.json({ success: false, message: "شناسه صورتجلسه یا پروژه معتبر نیست" }, { status: 400 });
   const filter = authorization(user, ["admin"]) ? { _id: body.handoverId, project: projectId } : { _id: body.handoverId, project: projectId, assignee: user._id };
-  const existing = await ProjectHandover.findOne(filter).select("assigneeRole").lean();
+  const existing = await ProjectHandover.findOne(filter).select("assigneeRole openedAt").lean();
   if (!existing) return Response.json({ success: false, message: "صورتجلسه پیدا نشد" }, { status: 404 });
   const project = await Project.findById(projectId).select("code passiveAgent activeAgent").lean();
   if (!project) return Response.json({ success: false, message: "پروژه پیدا نشد" }, { status: 404 });
   const update = {};
+  const now = new Date();
+  if (body.trackingEvent === "opened" && !authorization(user, ["admin"]) && !existing.openedAt) {
+    update.openedAt = now;
+  }
   if (body.data !== undefined) {
     if (!body.data || typeof body.data !== "object" || Array.isArray(body.data)) return Response.json({ success: false, message: "اطلاعات صورتجلسه معتبر نیست" }, { status: 400 });
     if (body.status === "submitted") {
@@ -50,7 +55,13 @@ export async function PATCH(req, { params }) {
     }
     update.data = { ...body.data, meetingNumber: handoverNumber(project.code, existing.assigneeRole) };
     update.status = body.status === "submitted" ? "submitted" : "assigned";
-    if (update.status === "submitted") update.submittedAt = new Date();
+    update.lastSavedAt = now;
+    update.progressPercent = projectFormProgress(
+      update.data,
+      "handover",
+      update.status === "submitted",
+    );
+    if (update.status === "submitted") update.submittedAt = now;
   }
   if (authorization(user, ["admin"]) && ["approved", "rejected"].includes(body.status)) {
     update.status = body.status;
