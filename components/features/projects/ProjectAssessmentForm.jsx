@@ -58,6 +58,7 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
   const [files, setFiles] = useState(assessment.attachments || []);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const dirtyRef = useRef(false);
   const dataRef = useRef(assessment.data || {});
   const lastSavedDataRef = useRef(JSON.stringify(assessment.data || {}));
   const [autoSaveState, setAutoSaveState] = useState("ready");
@@ -75,6 +76,7 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
   const update = (key, value) => setData((old) => {
     const next = { ...old, [key]: value };
     dataRef.current = next;
+    dirtyRef.current = true;
     setAutoSaveState("pending");
     return next;
   });
@@ -119,7 +121,8 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
       const result = response.data;
       if (!result.success) throw new Error(result.message || "ذخیره فرم ناموفق بود");
       lastSavedDataRef.current = JSON.stringify(formData);
-      setAutoSaveState("saved");
+      dirtyRef.current = JSON.stringify(dataRef.current) !== lastSavedDataRef.current;
+      setAutoSaveState(dirtyRef.current ? "pending" : "saved");
       if (!silent) toast.success(status === "submitted" ? "فرم کامل برای ادمین ارسال شد" : "فرم ذخیره شد");
       if (status === "submitted") onSubmitted?.();
     } catch (error) {
@@ -130,7 +133,7 @@ export default function ProjectAssessmentForm({ assessment, onSubmitted }) {
   }, [assessment._id, assessment.project?._id, assessmentUrl, onSubmitted]);
   useEffect(() => {
     const timer = window.setInterval(() => {
-      if (savingRef.current || JSON.stringify(dataRef.current) === lastSavedDataRef.current) return;
+      if (savingRef.current || !dirtyRef.current) return;
       save("in_progress", { silent: true });
     }, 10_000);
     return () => window.clearInterval(timer);

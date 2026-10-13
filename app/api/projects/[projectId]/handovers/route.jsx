@@ -68,6 +68,9 @@ export async function PATCH(req, { params }) {
     update.approvedAt = body.status === "approved" ? new Date() : null;
     update.approvedBy = body.status === "approved" ? user._id : null;
   }
+  if (!Object.keys(update).length && body.trackingEvent === "opened") {
+    return Response.json({ success: true, handover: existing });
+  }
   if (!Object.keys(update).length) return Response.json({ success: false, message: "تغییری برای ذخیره وجود ندارد" }, { status: 400 });
   const handover = await ProjectHandover.findOneAndUpdate(filter, update, { returnDocument: "after", runValidators: true });
   if (authorization(user, ["admin"]) && body.status === "approved") {

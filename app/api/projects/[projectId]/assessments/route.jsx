@@ -108,6 +108,9 @@ export async function PATCH(req, { params }) {
   }
   if (update.status === "submitted") update.submittedAt = new Date();
   if (authorization(user, ["admin"]) && body.status === "reviewed") { update.status = "reviewed"; update.reviewedAt = new Date(); update.reviewedBy = user._id; }
+  if (!Object.keys(update).length && ["opened", "job_brief_viewed"].includes(body.trackingEvent)) {
+    return NextResponse.json({ success: true, assessment: previous });
+  }
   if (!Object.keys(update).length) return NextResponse.json({ success: false, message: "تغییری برای ذخیره وجود ندارد" }, { status: 400 });
   const assessment = await ProjectAssessment.findOneAndUpdate(filter, update, { returnDocument: "after", runValidators: true });
   if (!assessment) return NextResponse.json({ success: false, message: "فرم پیدا نشد" }, { status: 404 });

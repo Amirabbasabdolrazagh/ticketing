@@ -39,6 +39,7 @@ export default function ProjectHandoverForm({ handover, onDone }) {
   const [data, setData] = useState(handover.data || {});
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const dirtyRef = useRef(false);
   const dataRef = useRef(handover.data || {});
   const lastSavedDataRef = useRef(JSON.stringify(handover.data || {}));
   const [autoSaveState, setAutoSaveState] = useState("ready");
@@ -54,7 +55,7 @@ export default function ProjectHandoverForm({ handover, onDone }) {
     flushSync(() => setPrintAudience(audience));
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => window.print()));
   };
-  const update = (key, value) => { setSaveError(""); setData((old) => { const next = { ...old, [key]: value }; dataRef.current = next; setAutoSaveState("pending"); return next; }); };
+  const update = (key, value) => { setSaveError(""); setData((old) => { const next = { ...old, [key]: value }; dataRef.current = next; dirtyRef.current = true; setAutoSaveState("pending"); return next; }); };
   const updateList = (key, index, value) => update(key, { ...(data[key] || {}), [index]: value });
   const save = useCallback(async (status = "assigned", { silent = false } = {}) => {
     if (savingRef.current) return;
@@ -90,7 +91,8 @@ export default function ProjectHandoverForm({ handover, onDone }) {
       const response = result.data;
       if (!response?.success || !response.handover) throw new Error(response?.message || "تأیید ذخیره از سرور دریافت نشد.");
       lastSavedDataRef.current = JSON.stringify(formData);
-      setAutoSaveState("saved");
+      dirtyRef.current = JSON.stringify(dataRef.current) !== lastSavedDataRef.current;
+      setAutoSaveState(dirtyRef.current ? "pending" : "saved");
       setSavedAt(response.handover?.updatedAt || new Date().toISOString());
       if (!silent) toast.success(status === "submitted" ? "صورتجلسه برای ادمین ارسال شد" : "صورتجلسه در دیتابیس ذخیره شد");
       const refreshed = onDone?.();
@@ -107,7 +109,7 @@ export default function ProjectHandoverForm({ handover, onDone }) {
   }, [handover._id, handover.assigneeRole, handover.project, onDone]);
   useEffect(() => {
     const timer = window.setInterval(() => {
-      if (savingRef.current || JSON.stringify(dataRef.current) === lastSavedDataRef.current) return;
+      if (savingRef.current || !dirtyRef.current) return;
       save("assigned", { silent: true });
     }, 10_000);
     return () => window.clearInterval(timer);

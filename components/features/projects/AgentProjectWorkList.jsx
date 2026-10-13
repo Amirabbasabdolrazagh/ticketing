@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
 import { ClipboardCheck, FileCheck2, Trash2 } from "lucide-react";
@@ -21,6 +21,7 @@ export default function AgentProjectWorkList({ type }) {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [openingId, setOpeningId] = useState(null);
+  const openingRef = useRef(null);
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const isAssessment = type === "assessment";
@@ -64,7 +65,8 @@ export default function AgentProjectWorkList({ type }) {
   };
 
   const open = async (item) => {
-    if (openingId) return;
+    if (openingRef.current) return;
+    openingRef.current = item._id;
     setOpeningId(item._id);
     try {
       const freshItems = await fetchItems();
@@ -84,7 +86,10 @@ export default function AgentProjectWorkList({ type }) {
       setSelected(freshItem);
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || "دریافت آخرین نسخه فرم ناموفق بود");
-    } finally { setOpeningId(null); }
+    } finally {
+      openingRef.current = null;
+      setOpeningId(null);
+    }
   };
 
   useEffect(() => {
@@ -116,13 +121,13 @@ export default function AgentProjectWorkList({ type }) {
       {items.length === 0 ? <div className="glass-panel p-8 text-center text-slate-500 lg:col-span-2">فرمی برای شما ثبت نشده است.</div> : items.map((item) => {
         const canDelete = isAssessment && !item.project && ["assigned", "in_progress"].includes(item.status);
         const progress = item.progressPercent || (["submitted", "reviewed", "approved"].includes(item.status) ? 100 : 0);
-        return <article key={item._id} className="glass-panel overflow-hidden p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
-          <button type="button" disabled={Boolean(openingId)} onClick={() => open(item)} className="w-full text-right disabled:opacity-60">
+        return <article key={item._id} className="glass-panel overflow-hidden p-5">
+          <div className="w-full text-right">
             <div className="flex items-start justify-between gap-3"><div><strong className="text-base">{item.project?.name || item.data?.projectTitle || "ارزیابی جدید"}</strong><p className="mt-1 text-xs text-slate-500">{item.project?.code ? `کد پروژه: ${item.project.code}` : "پروژه پس از تأیید مدیر ساخته می‌شود"}</p></div><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{openingId === item._id ? "در حال بازکردن..." : statusLabels[item.status] || "در حال بررسی"}</span></div>
             <div className="mt-5"><div className="mb-2 flex justify-between text-xs font-bold text-slate-600"><span>میزان تکمیل فرم</span><span>{progress.toLocaleString("fa-IR")}٪</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${isAssessment ? "bg-cyan-600" : "bg-emerald-600"}`} style={{ width: `${progress}%` }} /></div></div>
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs"><span className="text-slate-500">آخرین فعالیت: {new Date(item.lastSavedAt || item.updatedAt).toLocaleString("fa-IR")}</span><span className="font-black text-blue-700">مشاهده فرم ←</span></div>
-          </button>
-          {canDelete && <button type="button" disabled={deletingId === item._id} onClick={() => removeAssessment(item)} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-60"><Trash2 className="size-4" />{deletingId === item._id ? "در حال حذف..." : "حذف پیش‌نویس"}</button>}
+            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs"><span className="text-slate-500">آخرین فعالیت: {new Date(item.lastSavedAt || item.updatedAt).toLocaleString("fa-IR")}</span></div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2"><button type="button" disabled={Boolean(openingId)} onClick={() => open(item)} className="min-h-11 flex-1 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-black text-blue-800 transition hover:bg-blue-100 disabled:opacity-60 sm:flex-none">{openingId === item._id ? "در حال بازکردن..." : "مشاهده و تکمیل فرم"}</button>{canDelete && <button type="button" disabled={deletingId === item._id} onClick={() => removeAssessment(item)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-60"><Trash2 className="size-4" />{deletingId === item._id ? "در حال حذف..." : "حذف پیش‌نویس"}</button>}</div>
         </article>;
       })}
     </div>
