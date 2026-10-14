@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { BarChart3, UsersRound } from "lucide-react";
 
 const statuses = { all: "همه سرنخ‌ها", new: "جدید", contacted: "تماس‌گرفته‌شده", qualified: "واجد شرایط", converted: "تبدیل‌شده", lost: "از دست‌رفته" };
 
@@ -42,21 +43,35 @@ export default function LeadsPage() {
   return (
     <section className="app-page w-full max-w-6xl">
       <Toaster />
-      <div className="mb-6">
-        <p className="section-kicker">مدیریت ارتباط با مشتری</p>
-        <h1 className="page-heading">بازاریابی و فروش</h1>
-        <p className="mt-2 text-sm text-slate-500">سرنخ‌های ثبت‌شده از سایت را پیگیری کنید و هر مشتری را در مرحله مناسب فروش قرار دهید.</p>
+      <div className="glass-panel relative mb-6 overflow-hidden p-5 sm:p-7">
+        <div className="pointer-events-none absolute -left-10 -top-16 size-44 rounded-full bg-blue-400/15 blur-3xl" />
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 text-white shadow-lg shadow-blue-500/20">
+              <BarChart3 className="size-6" />
+            </div>
+            <div>
+              <p className="section-kicker">مدیریت ارتباط با مشتری</p>
+              <h1 className="page-heading">بازاریابی و فروش</h1>
+              <p className="mt-2 text-sm text-slate-500">سرنخ‌های ثبت‌شده از سایت را پیگیری کنید و هر مشتری را در مرحله مناسب فروش قرار دهید.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-blue-700">
+            <UsersRound className="size-5" />
+            <div><strong className="block text-xl font-black">{leads.length.toLocaleString("fa-IR")}</strong><span className="text-[10px] font-bold">کل سرنخ‌ها</span></div>
+          </div>
+        </div>
       </div>
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {Object.entries(statuses).map(([key, label]) => (
-          <button key={key} type="button" onClick={() => setFilter(key)} className={`rounded-2xl border p-3 text-right transition ${filter === key ? "border-blue-300 bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "border-white/80 bg-white/65 text-slate-700 hover:bg-white"}`}>
+          <button key={key} type="button" onClick={() => setFilter(key)} className={`lead-filter-card rounded-2xl border p-3 text-right transition ${filter === key ? "lead-filter-card--active border-blue-300 bg-blue-600 text-white shadow-lg shadow-blue-500/20" : "border-white/80 bg-white/65 text-slate-700 hover:bg-white"}`}>
             <span className="block text-[11px] font-bold">{label}</span><strong className="mt-1 block text-xl">{counts[key] ?? 0}</strong>
           </button>
         ))}
       </div>
       <div className="glass-panel overflow-hidden p-3 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-black text-slate-800">سرنخ‌های مشتریان</h2><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{filteredLeads.length.toLocaleString("fa-IR")} مورد</span></div>
-        {loading ? <p className="p-8 text-center text-slate-500">در حال بارگذاری…</p> : filteredLeads.length === 0 ? <p className="p-8 text-center text-slate-500">در این دسته هنوز سرنخی ثبت نشده است.</p> : <div className="space-y-3">{filteredLeads.map((lead) => <article key={lead._id} className="rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold text-slate-800">{lead.name}</h3><a className="mt-1 block font-semibold text-blue-700" dir="ltr" href={`tel:${lead.phone}`}>{lead.phone}</a></div><select value={lead.status} onChange={(event) => update(lead._id, event.target.value)} className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-bold text-slate-700">{Object.entries(statuses).filter(([key]) => key !== "all").map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><p className="mt-3 whitespace-pre-wrap rounded-xl bg-slate-50/80 p-3 text-sm leading-7 text-slate-600">{lead.message}</p><time className="mt-2 block text-[11px] text-slate-400">{new Date(lead.createdAt).toLocaleString("fa-IR")}</time></article>)}</div>}
+        {loading ? <p className="p-8 text-center text-slate-500">در حال بارگذاری…</p> : filteredLeads.length === 0 ? <p className="p-8 text-center text-slate-500">در این دسته هنوز سرنخی ثبت نشده است.</p> : <div className="grid gap-3 md:grid-cols-2">{filteredLeads.map((lead) => <article key={lead._id} className="lead-card rounded-2xl border border-white/80 bg-white/60 p-4 shadow-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-bold text-slate-800">{lead.name}</h3><a className="mt-1 block font-semibold text-blue-700" dir="ltr" href={`tel:${lead.phone}`}>{lead.phone}</a></div><select value={lead.status} onChange={(event) => update(lead._id, event.target.value)} className="rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-bold text-slate-700">{Object.entries(statuses).filter(([key]) => key !== "all").map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><p className="mt-3 min-h-20 whitespace-pre-wrap rounded-xl bg-slate-50/80 p-3 text-sm leading-7 text-slate-600">{lead.message}</p><time className="mt-2 block text-[11px] text-slate-400">{new Date(lead.createdAt).toLocaleString("fa-IR")}</time></article>)}</div>}
       </div>
     </section>
   );

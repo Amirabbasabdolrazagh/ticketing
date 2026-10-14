@@ -245,15 +245,14 @@ export default function ProjectsInfo() {
 
         {allProjects ? (
           <>
-            <div className="glass-panel overflow-x-auto p-2 sm:p-4">
-              <Table>
+            <div className="glass-panel overflow-hidden p-2 sm:p-4" dir="rtl">
+              <Table className="services-table">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-right">عنوان</TableHead>
-                    <TableHead className="text-right">توضیحات</TableHead>
+                    <TableHead className="w-[38%] text-right">خدمت و توضیحات</TableHead>
                     <TableHead className="text-right">پشتیبان پیش‌فرض</TableHead>
-                    <TableHead className="text-right">زیرخدمت‌ها</TableHead>
-                    <TableHead className="text-right">اولویت</TableHead>
+                    <TableHead className="w-[32%] text-right">زیرخدمت‌ها</TableHead>
+                    <TableHead className="text-center">اولویت و عملیات</TableHead>
                   </TableRow>
                 </TableHeader>
                 {allProjects.map((project) => (

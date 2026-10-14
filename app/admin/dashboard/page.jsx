@@ -23,6 +23,7 @@ import {
   MdOutlineSupportAgent,
 } from "react-icons/md";
 import { Eye, EyeOff, MessageSquareReply } from "lucide-react";
+import TicketStatusOverview from "@/components/features/dashboard/TicketStatusOverview";
 
 export default function AdminDashborad() {
   const [allTickets, setAllTickets] = useState([]);
@@ -114,6 +115,12 @@ export default function AdminDashborad() {
   const assignedTickets = allTickets
     .filter((ticket) => ticket.assignedTo)
     .sort((a, b) => new Date(b.assignedAt || b.createdAt) - new Date(a.assignedAt || a.createdAt));
+  const chartData = [
+    { status: "open", tickets: numberOfOpenTicket },
+    { status: "in-progress", tickets: numberOfInProgressTicket },
+    { status: "resolved", tickets: numberOfResolvedTicket },
+    { status: "closed", tickets: numberOfClosedTicket },
+  ];
   return (
     <>
       <section className="app-page">
@@ -350,7 +357,7 @@ export default function AdminDashborad() {
           </div>
 
           {/* high priority tickets */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-6">
+          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-8">
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex min-w-0 gap-2">
                 <IoIosWarning
@@ -418,8 +425,12 @@ export default function AdminDashborad() {
             </div>
           </div>
 
+          <div className="col-span-1 min-w-0 lg:col-span-4">
+            <TicketStatusOverview data={chartData} />
+          </div>
+
           {/* Customer rejected resolution */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-6">
+          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-8">
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex min-w-0 gap-2">
                 <MdNotificationImportant

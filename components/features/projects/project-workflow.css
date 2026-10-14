@@ -1,15 +1,28 @@
-.project-workflow-container { container-type: inline-size; }
+.project-workflow-container { container-type: inline-size; overflow: hidden; }
 .project-workflow-table { width: 100%; table-layout: fixed; }
 .project-workflow-table th, .project-workflow-table td { padding: .75rem .5rem; vertical-align: middle; overflow-wrap: anywhere; }
 .project-workflow-table th { text-align: center; }
 .project-workflow-table td { text-align: center; }
 .project-workflow-table td > a { max-width: 100%; justify-content: center; }
-@container (max-width: 1100px) {
+@container (max-width: 720px) {
   .project-workflow-table, .project-workflow-table tbody { display: block; }
   .project-workflow-table thead { display: none; }
-  .project-workflow-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 1rem; }
+  .project-workflow-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1rem; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 1rem; background: rgb(255 255 255 / .82); }
   .project-workflow-table td { display: flex; min-width: 0; flex-direction: column; align-items: stretch; gap: .5rem; padding: 0; text-align: start; }
   .project-workflow-table td::before { content: attr(data-label); font-size: .75rem; font-weight: 700; color: #64748b; }
   .project-workflow-table td:first-child, .project-workflow-table td:last-child { grid-column: 1 / -1; }
   .project-workflow-table td[colspan]::before { display: none; }
 }
+
+@container (max-width: 430px) {
+  .project-workflow-table tr { grid-template-columns: minmax(0, 1fr); }
+  .project-workflow-table td:first-child,
+  .project-workflow-table td:last-child { grid-column: auto; }
+}
+
+.dark .project-workflow-table thead { background: rgb(30 41 59 / .94) !important; color: #cbd5e1; }
+.dark .project-workflow-table tbody { border-color: rgb(71 85 105 / .5); }
+.dark .project-workflow-table tr { border-color: rgb(71 85 105 / .55); }
+.dark .project-workflow-table .project-workflow-row { background: rgb(15 23 42 / .55) !important; }
+.dark .project-workflow-table .project-workflow-row:hover { background: rgb(30 58 138 / .22) !important; }
+.dark .project-workflow-table td::before { color: #94a3b8; }

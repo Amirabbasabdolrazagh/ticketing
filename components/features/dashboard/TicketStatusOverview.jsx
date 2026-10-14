@@ -7,9 +7,20 @@ const statusMeta = {
 
 export default function TicketStatusOverview({ data = [], title = "وضعیت تیکت‌ها" }) {
   const total = data.reduce((sum, item) => sum + item.tickets, 0);
+  let cursor = 0;
+  const stops = data.map((item) => {
+    const meta = statusMeta[item.status] || statusMeta.closed;
+    const size = total ? (item.tickets / total) * 100 : 0;
+    const start = cursor;
+    cursor += size;
+    return `${meta.color} ${start}% ${cursor}%`;
+  });
+  const chartBackground = total
+    ? `conic-gradient(${stops.join(", ")})`
+    : "conic-gradient(#e2e8f0 0 100%)";
 
   return (
-    <section className="glass-panel relative overflow-hidden p-4 sm:p-5">
+    <section className="ticket-status-chart glass-panel relative h-full overflow-hidden p-4 sm:p-5">
       <div className="pointer-events-none absolute -left-12 -top-16 size-36 rounded-full bg-blue-400/15 blur-3xl" />
       <div className="relative flex items-start justify-between gap-3">
         <div>
@@ -22,28 +33,28 @@ export default function TicketStatusOverview({ data = [], title = "وضعیت ت
         </div>
       </div>
 
-      <div className="relative mt-5 flex h-3 overflow-hidden rounded-full bg-slate-100 shadow-inner" aria-label="توزیع وضعیت تیکت‌ها">
-        {data.map((item) => {
-          const meta = statusMeta[item.status] || statusMeta.closed;
-          const width = total ? (item.tickets / total) * 100 : 0;
-          return (
-            <span
-              key={item.status}
-              title={`${meta.label}: ${item.tickets}`}
-              style={{ width: `${width}%`, backgroundColor: meta.color }}
-              className="h-full transition-[width] duration-500 first:rounded-r-full last:rounded-l-full"
-            />
-          );
-        })}
-      </div>
+      <div className="relative mt-5 grid items-center gap-5 sm:grid-cols-[8.5rem_1fr] lg:grid-cols-1 xl:grid-cols-[8.5rem_1fr]">
+        <div
+          className="ticket-status-chart__donut relative mx-auto grid size-32 place-items-center rounded-full"
+          style={{ background: chartBackground }}
+          role="img"
+          aria-label={`مجموع ${total.toLocaleString("fa-IR")} تیکت`}
+        >
+          <div className="grid size-[5.8rem] place-items-center rounded-full bg-white text-center shadow-inner">
+            <div>
+              <strong className="block text-2xl font-black text-slate-900">{total.toLocaleString("fa-IR")}</strong>
+              <span className="text-[10px] font-bold text-slate-500">تیکت</span>
+            </div>
+          </div>
+        </div>
 
-      <div className="relative mt-5 space-y-4">
+        <div className="space-y-3">
         {data.map((item) => {
           const meta = statusMeta[item.status] || statusMeta.closed;
           const percentage = total ? Math.round((item.tickets / total) * 100) : 0;
           return (
-            <div key={item.status}>
-              <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+            <div key={item.status} className="rounded-xl border border-slate-100 bg-white/55 p-2.5">
+              <div className="flex items-center justify-between gap-3 text-xs">
                 <span className="flex items-center gap-2 font-bold text-slate-700">
                   <span className="size-2.5 rounded-full" style={{ backgroundColor: meta.color }} />
                   {meta.label}
@@ -53,15 +64,10 @@ export default function TicketStatusOverview({ data = [], title = "وضعیت ت
                   <span className="mr-1 font-medium text-slate-400">({percentage.toLocaleString("fa-IR")}٪)</span>
                 </span>
               </div>
-              <div className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: meta.soft }}>
-                <div
-                  className="h-full rounded-full transition-[width] duration-500"
-                  style={{ width: `${percentage}%`, background: `linear-gradient(90deg, ${meta.color}, #0a2540)` }}
-                />
-              </div>
             </div>
           );
         })}
+        </div>
       </div>
     </section>
   );

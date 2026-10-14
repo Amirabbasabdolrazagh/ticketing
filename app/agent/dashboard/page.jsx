@@ -24,6 +24,7 @@ import {
   MdOutlineSupportAgent,
 } from "react-icons/md";
 import toast, { Toaster } from "react-hot-toast";
+import TicketStatusOverview from "@/components/features/dashboard/TicketStatusOverview";
 
 export default function AgentDashborad() {
   const [allTickets, setAllTickets] = useState([]);
@@ -90,6 +91,12 @@ export default function AgentDashborad() {
     (ticket) =>
       ticket.priority === "high" && ["open", "in-progress"].includes(ticket.status),
   );
+  const chartData = [
+    { status: "open", tickets: numberOfOpenTicket },
+    { status: "in-progress", tickets: numberOfInProgressTicket },
+    { status: "resolved", tickets: numberOfResolvedTicket },
+    { status: "closed", tickets: numberOfClosedTicket },
+  ];
   return (
     <>
       <Toaster />
@@ -218,7 +225,7 @@ export default function AgentDashborad() {
             </div>
           </div>
           {/* high priority ticketc */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-12">
+          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-8">
             <div className="flex justify-between w-full ">
               <div className="flex gap-2">
                 <IoIosWarning size={20} color="red" />
@@ -264,6 +271,9 @@ export default function AgentDashborad() {
                 )}
               </Table>
             </div>
+          </div>
+          <div className="col-span-1 min-w-0 lg:col-span-4">
+            <TicketStatusOverview data={chartData} />
           </div>
         </div>
       </section>

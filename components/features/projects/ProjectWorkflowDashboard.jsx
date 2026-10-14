@@ -134,10 +134,10 @@ export default function ProjectWorkflowDashboard({ projectId, project }) {
             return assignedAgent && String(item.assignee?._id || item.assignee) === String(assignedAgent?._id || assignedAgent);
           }).length
           : assessments.length;
-        return <article key={type} className={`group flex min-h-60 flex-col rounded-3xl border p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${config.cardClass}`}>
+        return <article key={type} className={`workflow-form-card group flex min-h-[13rem] flex-col rounded-3xl border p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl ${config.cardClass}`}>
           <div className="flex items-start justify-between gap-3">
             <div className={`grid size-12 place-items-center rounded-2xl shadow-lg ${config.iconClass}`}><Icon className="size-6" /></div>
-            <span className="rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black text-slate-600">{count.toLocaleString("fa-IR")} فرم</span>
+            <span className="workflow-form-count rounded-full border border-white bg-white/80 px-3 py-1 text-xs font-black text-slate-600">{count.toLocaleString("fa-IR")} فرم</span>
           </div>
           <h2 className="mt-5 text-xl font-black text-slate-900">{config.title}</h2>
           <p className="mt-2 flex-1 text-sm leading-7 text-slate-600">{config.description}</p>
@@ -148,7 +148,7 @@ export default function ProjectWorkflowDashboard({ projectId, project }) {
       })}
     </section>
 
-    <section className="glass-panel overflow-hidden">
+    <section className="project-workflow-panel glass-panel overflow-hidden">
       <div className="border-b border-slate-100 p-5 sm:p-6">
         <h2 className="text-xl font-black text-slate-900">جدول پیگیری زیرکارها</h2>
         <p className="mt-2 text-sm text-slate-500">وضعیت واقعی شروع، ذخیره، ارسال، مشاهده و تأیید هر فرم</p>
@@ -161,7 +161,7 @@ export default function ProjectWorkflowDashboard({ projectId, project }) {
           <tbody className="divide-y divide-slate-100">
             {loading && <tr><td colSpan="9" className="p-8 text-center text-slate-500">در حال دریافت اطلاعات...</td></tr>}
             {!loading && rows.length === 0 && <tr><td colSpan="9" className="p-8 text-center text-slate-500">هنوز فرمی برای این پروژه ثبت نشده است.</td></tr>}
-            {rows.map((row) => <tr key={`${row.type}-${row.id}`} className="bg-white/50 transition hover:bg-blue-50/40">
+            {rows.map((row) => <tr key={`${row.type}-${row.id}`} className="project-workflow-row bg-white/50 transition hover:bg-blue-50/40">
               <td data-label="فرم" className="p-4 font-black text-slate-800">{row.title}</td>
               <td data-label="پشتیبان" className="p-4"><strong>{row.agent}</strong><span className="mt-1 block text-xs text-slate-500">{row.role === "passive_agent" ? "پشتیبان پسیو" : "پشتیبان اکتیو"}</span></td>
               <td data-label="وضعیت" className="p-4"><ProjectFormStatus status={row.status} progress={row.progress} viewedAt={row.openedAt} /></td>

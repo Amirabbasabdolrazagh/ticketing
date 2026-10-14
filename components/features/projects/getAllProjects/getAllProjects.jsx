@@ -35,9 +35,11 @@ export default function GetAllProjects({
      
 
       <TableBody>
-        <TableRow  onClick={() => route.push(`/admin/projects/${_id}`)}>
-          <TableCell>{name}</TableCell>
-          <TableCell>{description}</TableCell>
+        <TableRow className="cursor-pointer" onClick={() => route.push(`/admin/projects/${_id}`)}>
+          <TableCell className="whitespace-normal py-4">
+            <strong className="block text-sm font-black text-slate-900">{name}</strong>
+            <span className="mt-1 block line-clamp-2 text-xs leading-6 text-slate-500">{description || "بدون توضیحات"}</span>
+          </TableCell>
           <TableCell>
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
               {defaultAgent?.name || "تعیین نشده"}
@@ -51,32 +53,30 @@ export default function GetAllProjects({
               {subcategories.length > 3 && <span className="text-xs text-slate-400">+{subcategories.length - 3}</span>}
             </div>
           </TableCell>
-          <TableCell>
-            <span
-              className={priorityStyle(priority) + " px-2 py-1 rounded text-sm"}
-            >
-              {faLabel(priorityLabels, priority)}
-            </span>
-          </TableCell>
-          <TableCell onClick={(e) => e.stopPropagation()}>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button variant="ghost" size="icon" className="size-8 ">
-                    <MoreHorizontalIcon />
-                    <span className="sr-only">باز کردن منو</span>
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => editHandler(_id)}
-                  className="flex justify-center hover:bg-green-300"
-                >
-                  ویرایش
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="inline-flex items-center justify-center gap-2">
+              <span className={priorityStyle(priority) + " rounded-lg px-2.5 py-1 text-xs font-bold"}>
+                {faLabel(priorityLabels, priority)}
+              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl border border-slate-200 bg-white/70">
+                      <MoreHorizontalIcon />
+                      <span className="sr-only">باز کردن منو</span>
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => editHandler(_id)}
+                    className="flex justify-center hover:bg-green-300"
+                  >
+                    ویرایش
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </TableCell>
         </TableRow>
       </TableBody>

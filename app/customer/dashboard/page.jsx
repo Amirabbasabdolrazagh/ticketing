@@ -23,6 +23,7 @@ import {
   MdKeyboardArrowRight,
   MdOutlineSupportAgent,
 } from "react-icons/md";
+import TicketStatusOverview from "@/components/features/dashboard/TicketStatusOverview";
 
 export default function AdminDashborad() {
   const [allTickets, setAllTickets] = useState([]);
@@ -77,6 +78,12 @@ export default function AdminDashborad() {
     (ticket) =>
       ticket.priority === "high" && ["open", "in-progress"].includes(ticket.status),
   );
+  const chartData = [
+    { status: "open", tickets: numberOfOpenTicket },
+    { status: "in-progress", tickets: numberOfInProgressTicket },
+    { status: "resolved", tickets: numberOfResolvedTicket },
+    { status: "closed", tickets: numberOfClosedTicket },
+  ];
   return (
     <>
       <section className="app-page">
@@ -200,7 +207,7 @@ export default function AdminDashborad() {
             </div>
           </div>
           {/* high priority ticketc */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-12">
+          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-8">
             <div className="flex justify-between w-full ">
               <div className="flex gap-2">
                 <IoIosWarning size={20} color="red" />
@@ -242,6 +249,9 @@ export default function AdminDashborad() {
                 )}
               </Table>
             </div>
+          </div>
+          <div className="col-span-1 min-w-0 lg:col-span-4">
+            <TicketStatusOverview data={chartData} title="وضعیت کلی تیکت‌ها" />
           </div>
         </div>
       </section>

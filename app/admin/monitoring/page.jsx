@@ -453,10 +453,10 @@ export default function AdminMonitoringPage() {
                     type="button"
                     key={agent.id}
                     onClick={() => setSelectedAgentId(agent.id)}
-                    className={`group w-full rounded-2xl border p-4 text-right transition-all ${
+                    className={`monitor-agent-card group w-full rounded-2xl border p-4 text-right transition-all ${
                       active
-                        ? "border-blue-300 bg-gradient-to-l from-blue-50 via-blue-50/60 to-white shadow-[0_10px_35px_rgba(37,99,235,0.10)]"
-                        : "border-transparent bg-white/55 hover:border-slate-200 hover:bg-white"
+                        ? "monitor-agent-card--active border-blue-300 shadow-[0_10px_35px_rgba(37,99,235,0.10)]"
+                        : "border-slate-100 hover:border-slate-200 hover:bg-white"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -502,7 +502,7 @@ export default function AdminMonitoringPage() {
                     </div>
 
                     <div className="mt-4 grid grid-cols-3 gap-2">
-                      <div className="rounded-xl bg-white/80 px-2 py-2 text-center">
+                      <div className="rounded-xl border border-blue-100 bg-blue-50/80 px-2 py-2 text-center">
                         <div className="text-sm font-black text-slate-900">
                           {faNumber(agent.stats.openTickets)}
                         </div>
