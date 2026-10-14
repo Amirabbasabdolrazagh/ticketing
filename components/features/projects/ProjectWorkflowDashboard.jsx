@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import ProjectFormStatus from "./ProjectFormStatus";
+import "./project-workflow.css";
 import axios from "axios";
 import toast from "react-hot-toast";
 import {
@@ -38,17 +40,6 @@ const FORM_CONFIG = {
   },
 };
 
-const statusLabels = {
-  assigned: "شروع نشده",
-  in_progress: "در حال تکمیل",
-  submitted: "ارسال‌شده",
-  reviewed: "تأییدشده",
-  draft: "پیش‌نویس",
-  issued: "ابلاغ‌شده",
-  acknowledged: "مشاهده و تأییدشده",
-  approved: "تأیید نهایی",
-  rejected: "نیازمند اصلاح",
-};
 
 function dateTime(value) {
   if (!value) return "—";
@@ -59,7 +50,7 @@ function dateTime(value) {
 }
 
 function Progress({ value = 0 }) {
-  return <div className="min-w-32">
+  return <div className="min-w-0 w-full">
     <div className="mb-1 flex items-center justify-between text-xs font-bold text-slate-600">
       <span>پیشرفت</span><span>{Number(value).toLocaleString("fa-IR")}٪</span>
     </div>
@@ -162,8 +153,8 @@ export default function ProjectWorkflowDashboard({ projectId, project }) {
         <h2 className="text-xl font-black text-slate-900">جدول پیگیری زیرکارها</h2>
         <p className="mt-2 text-sm text-slate-500">وضعیت واقعی شروع، ذخیره، ارسال، مشاهده و تأیید هر فرم</p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-[1050px] w-full text-right text-sm">
+      <div className="project-workflow-container">
+        <table className="project-workflow-table text-sm">
           <thead className="bg-slate-50 text-xs text-slate-500"><tr>
             <th className="p-4">فرم</th><th className="p-4">پشتیبان</th><th className="p-4">وضعیت</th><th className="p-4">میزان تکمیل</th><th className="p-4">اولین مشاهده</th><th className="p-4">آخرین فعالیت</th><th className="p-4">ارسال / ابلاغ</th><th className="p-4">تأیید</th><th className="p-4">عملیات</th>
           </tr></thead>
@@ -171,15 +162,15 @@ export default function ProjectWorkflowDashboard({ projectId, project }) {
             {loading && <tr><td colSpan="9" className="p-8 text-center text-slate-500">در حال دریافت اطلاعات...</td></tr>}
             {!loading && rows.length === 0 && <tr><td colSpan="9" className="p-8 text-center text-slate-500">هنوز فرمی برای این پروژه ثبت نشده است.</td></tr>}
             {rows.map((row) => <tr key={`${row.type}-${row.id}`} className="bg-white/50 transition hover:bg-blue-50/40">
-              <td className="p-4 font-black text-slate-800">{row.title}</td>
-              <td className="p-4"><strong>{row.agent}</strong><span className="mt-1 block text-xs text-slate-500">{row.role === "passive_agent" ? "پشتیبان پسیو" : "پشتیبان اکتیو"}</span></td>
-              <td className="p-4"><span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700">{statusLabels[row.status] || row.status}</span></td>
-              <td className="p-4"><Progress value={row.progress} /></td>
-              <td className="p-4 text-xs text-slate-600">{dateTime(row.openedAt)}</td>
-              <td className="p-4 text-xs text-slate-600">{dateTime(row.lastSavedAt)}</td>
-              <td className="p-4 text-xs text-slate-600">{dateTime(row.submittedAt)}</td>
-              <td className="p-4 text-xs text-slate-600">{dateTime(row.confirmedAt)}</td>
-              <td className="p-4"><Link href={`/admin/installation-projects/${projectId}/forms/${row.type}/${row.id}`} className="inline-flex rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50">مشاهده فرم</Link></td>
+              <td data-label="فرم" className="p-4 font-black text-slate-800">{row.title}</td>
+              <td data-label="پشتیبان" className="p-4"><strong>{row.agent}</strong><span className="mt-1 block text-xs text-slate-500">{row.role === "passive_agent" ? "پشتیبان پسیو" : "پشتیبان اکتیو"}</span></td>
+              <td data-label="وضعیت" className="p-4"><ProjectFormStatus status={row.status} progress={row.progress} viewedAt={row.openedAt} /></td>
+              <td data-label="میزان تکمیل" className="p-4"><Progress value={row.progress} /></td>
+              <td data-label="اولین مشاهده" className="p-4 text-xs text-slate-600">{dateTime(row.openedAt)}</td>
+              <td data-label="آخرین فعالیت" className="p-4 text-xs text-slate-600">{dateTime(row.lastSavedAt)}</td>
+              <td data-label="ارسال / ابلاغ" className="p-4 text-xs text-slate-600">{dateTime(row.submittedAt)}</td>
+              <td data-label="تأیید" className="p-4 text-xs text-slate-600">{dateTime(row.confirmedAt)}</td>
+              <td data-label="عملیات" className="p-4"><Link href={`/admin/installation-projects/${projectId}/forms/${row.type}/${row.id}`} className="inline-flex rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-black text-blue-700 hover:bg-blue-50">مشاهده فرم</Link></td>
             </tr>)}
           </tbody>
         </table>

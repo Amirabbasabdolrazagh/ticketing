@@ -1,4 +1,5 @@
 "use client";
+import ProjectFormStatus from "./ProjectFormStatus";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -11,17 +12,6 @@ const CONFIG = {
   handover: { title: "صورت‌جلسه‌های تحویل پروژه", description: "بررسی پیشرفت، مشاهده، چاپ و تأیید صورت‌جلسه", color: "emerald" },
 };
 
-const statusLabels = {
-  assigned: "شروع نشده",
-  in_progress: "در حال تکمیل",
-  submitted: "ارسال‌شده برای بررسی",
-  reviewed: "تأییدشده",
-  draft: "پیش‌نویس ابلاغ",
-  issued: "ابلاغ‌شده؛ در انتظار تأیید",
-  acknowledged: "مشاهده و تأییدشده",
-  approved: "تأیید نهایی",
-  rejected: "نیازمند اصلاح",
-};
 
 const accents = {
   cyan: "border-cyan-200 bg-cyan-50 text-cyan-800",
@@ -79,7 +69,7 @@ export default function AdminProjectFormsHub({ projectId, formType }) {
         return <article key={item._id} className="glass-panel overflow-hidden p-5 transition hover:-translate-y-0.5 hover:shadow-lg">
           <div className="flex items-start justify-between gap-3">
             <div><h2 className="font-black text-slate-900">{item.assignee?.name || "پشتیبان"}</h2><p className="mt-1 text-xs text-slate-500">{item.assigneeRole === "passive_agent" ? "پشتیبان پسیو" : "پشتیبان اکتیو"}</p></div>
-            <span className={`rounded-full border px-3 py-1 text-xs font-black ${accents[config.color]}`}>{statusLabels[status] || status}</span>
+            <ProjectFormStatus status={status} progress={progress} viewedAt={formType === "brief" ? item.jobBriefViewedAt : item.openedAt} />
           </div>
           <div className="mt-5">
             <div className="mb-2 flex justify-between text-xs font-bold text-slate-600"><span>میزان تکمیل</span><span>{progress.toLocaleString("fa-IR")}٪</span></div>

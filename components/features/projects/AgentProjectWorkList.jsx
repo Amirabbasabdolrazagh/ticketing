@@ -1,4 +1,5 @@
 "use client";
+import ProjectFormStatus from "./ProjectFormStatus";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -8,14 +9,6 @@ import ProjectAssessmentForm from "@/components/features/projects/ProjectAssessm
 import ProjectHandoverForm from "@/components/features/projects/ProjectHandoverForm";
 import ProjectFormRecord from "@/components/features/projects/ProjectFormRecord";
 
-const statusLabels = {
-  assigned: "شروع نشده",
-  in_progress: "پیش‌نویس در حال تکمیل",
-  submitted: "ارسال‌شده برای ادمین",
-  reviewed: "تأیید و تبدیل به پروژه",
-  approved: "تأییدشده",
-  rejected: "نیازمند اصلاح",
-};
 
 export default function AgentProjectWorkList({ type }) {
   const [items, setItems] = useState([]);
@@ -123,7 +116,7 @@ export default function AgentProjectWorkList({ type }) {
         const progress = item.progressPercent || (["submitted", "reviewed", "approved"].includes(item.status) ? 100 : 0);
         return <article key={item._id} className="glass-panel overflow-hidden p-5">
           <div className="w-full text-right">
-            <div className="flex items-start justify-between gap-3"><div><strong className="text-base">{item.project?.name || item.data?.projectTitle || "ارزیابی جدید"}</strong><p className="mt-1 text-xs text-slate-500">{item.project?.code ? `کد پروژه: ${item.project.code}` : "پروژه پس از تأیید مدیر ساخته می‌شود"}</p></div><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{openingId === item._id ? "در حال بازکردن..." : statusLabels[item.status] || "در حال بررسی"}</span></div>
+            <div className="flex items-start justify-between gap-3"><div><strong className="text-base">{item.project?.name || item.data?.projectTitle || "ارزیابی جدید"}</strong><p className="mt-1 text-xs text-slate-500">{item.project?.code ? `کد پروژه: ${item.project.code}` : "پروژه پس از تأیید مدیر ساخته می‌شود"}</p></div><ProjectFormStatus status={item.status} progress={item.progressPercent} viewedAt={item.openedAt} /></div>
             <div className="mt-5"><div className="mb-2 flex justify-between text-xs font-bold text-slate-600"><span>میزان تکمیل فرم</span><span>{progress.toLocaleString("fa-IR")}٪</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full ${isAssessment ? "bg-cyan-600" : "bg-emerald-600"}`} style={{ width: `${progress}%` }} /></div></div>
             <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 text-xs"><span className="text-slate-500">آخرین فعالیت: {new Date(item.lastSavedAt || item.updatedAt).toLocaleString("fa-IR")}</span></div>
           </div>

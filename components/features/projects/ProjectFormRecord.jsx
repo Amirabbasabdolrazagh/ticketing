@@ -26,11 +26,15 @@ function Value({ value, parentKey }) {
   return <div className="mt-2 space-y-2">{Object.entries(value).filter(([, child]) => hasData(child)).map(([key, child]) => <div key={key} className="rounded-xl border border-slate-100 bg-white p-3"><span className="font-semibold text-slate-700">{nestedLabels[parentKey]?.[Number(key)] || labels[key] || (/^\d+$/.test(key) ? `ردیف ${Number(key) + 1}` : key)}: </span><Value value={child} parentKey={key} /></div>)}</div>;
 }
 
-export default function ProjectFormRecord({ data = {}, attachments = [], attachmentBaseUrl = "" }) {
-  const entries = Object.entries(data).filter(([, value]) => hasData(value));
+export default function ProjectFormRecord({ data = {}, attachments = [], attachmentBaseUrl = "", errors = [] }) {
+  const entries = Object.entries(data || {}).filter(([, value]) => hasData(value));
+  for (const { path } of errors) {
+    const key = path.split(".")[0];
+    if (!entries.some(([entry]) => entry === key)) entries.push([key, "تکمیل نشده"]);
+  }
   return <div dir="rtl" className="grid gap-3 md:grid-cols-2">
     {entries.length === 0 && <p className="text-sm text-slate-500">هنوز اطلاعاتی در این فرم ثبت نشده است.</p>}
-    {entries.map(([key, value]) => <div key={key} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"><h3 className="text-sm font-black text-blue-900">{projectFormLabel(key)}</h3><div className="mt-2 break-words text-sm leading-7 text-slate-800"><Value value={value} parentKey={key} /></div></div>)}
+    {entries.map(([key, value]) => <div key={key} data-field-path={key} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"><h3 className="text-sm font-black text-blue-900">{projectFormLabel(key)}</h3><div className="mt-2 break-words text-sm leading-7 text-slate-800"><Value value={value} parentKey={key} /></div></div>)}
     {attachments.length > 0 && <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 md:col-span-2"><h3 className="text-sm font-black text-blue-900">فایل‌های پیوست</h3><ul className="mt-2 space-y-1 text-sm">{attachments.map((file) => <li key={file.path}>{attachmentBaseUrl ? <a href={`${attachmentBaseUrl}${encodeURIComponent(file.path)}`} target="_blank" rel="noopener noreferrer" className="font-bold text-blue-700 underline">{file.name}</a> : file.name}</li>)}</ul></div>}
   </div>;
 }

@@ -1,4 +1,5 @@
 "use client";
+import ProjectFormStatus from "./ProjectFormStatus";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -7,6 +8,8 @@ import toast from "react-hot-toast";
 import { flushSync } from "react-dom";
 import { ArrowRight, CheckCircle2, Printer, RotateCcw } from "lucide-react";
 import ProjectFormRecord from "./ProjectFormRecord";
+import { assessmentErrors, handoverErrors } from "@/lib/projectFormValidation";
+import { useProjectFormFeedback, ProjectFormErrorSummary } from "./ProjectFormFeedback";
 import ProjectJobBriefAdmin from "./ProjectJobBriefAdmin";
 import ProjectHandoverPrintDocument from "./ProjectHandoverPrintDocument";
 import { assessmentDocument } from "./ProjectAssessmentsAdmin";
@@ -17,17 +20,6 @@ const titles = {
   handover: "صورت‌جلسه تحویل و تأیید پروژه",
 };
 
-const statusLabels = {
-  assigned: "شروع نشده",
-  in_progress: "در حال تکمیل",
-  submitted: "ارسال‌شده برای بررسی",
-  reviewed: "تأییدشده",
-  draft: "پیش‌نویس",
-  issued: "ابلاغ‌شده",
-  acknowledged: "مشاهده و تأییدشده",
-  approved: "تأیید نهایی",
-  rejected: "نیازمند اصلاح",
-};
 
 function dateTime(value) {
   return value ? new Date(value).toLocaleString("fa-IR") : "ثبت نشده";
@@ -37,6 +29,7 @@ export default function AdminProjectFormDetail({ projectId, formType, formId }) 
   const [project, setProject] = useState(null);
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const feedback = useProjectFormFeedback(item ? formType === "assessment" ? assessmentErrors(item.data) : formType === "handover" ? handoverErrors(item.data, item.assigneeRole) : [] : []);
   const [printAudience, setPrintAudience] = useState(null);
 
   const load = useCallback(async () => {
@@ -70,6 +63,10 @@ export default function AdminProjectFormDetail({ projectId, formType, formId }) 
   };
 
   const review = async (status) => {
+    if (status !== "rejected") {
+      const errors = formType === "assessment" ? assessmentErrors(item.data) : handoverErrors(item.data, item.assigneeRole);
+      if (!feedback.report(errors)) { toast.error("موارد الزامی مشخص‌شده باید توسط پشتیبان تکمیل شوند."); return; }
+    }
     try {
       if (formType === "assessment") {
         await axios.patch(`/api/projects/${projectId}/assessments`, { assessmentId: formId, status: "reviewed" });
@@ -96,7 +93,8 @@ export default function AdminProjectFormDetail({ projectId, formType, formId }) 
 
   const status = item.status;
   const progress = item.progressPercent || (["submitted", "reviewed", "approved"].includes(status) ? 100 : 0);
-  return <section dir="rtl" className="app-page space-y-5">
+  return <section ref={(node) => feedback.attach(node)} dir="rtl" className="app-page space-y-5">
+    <ProjectFormErrorSummary feedback={feedback} />
     <div className="print:hidden flex flex-wrap items-center justify-between gap-3">
       <Link href={`/admin/installation-projects/${projectId}/forms/${formType}`} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm font-black text-slate-700"><ArrowRight className="size-4" />بازگشت به فهرست</Link>
       <button type="button" onClick={() => print("company")} className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white"><Printer className="size-4" />چاپ فرم</button>
@@ -105,7 +103,7 @@ export default function AdminProjectFormDetail({ projectId, formType, formId }) 
     <header className="glass-panel overflow-hidden p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-700">{formType === "assessment" ? "IT-RASAM-NET-FRM-003" : "IT-RASAM-NET-FRM-001"}</span><h1 className="mt-3 text-2xl font-black">{titles[formType]}</h1><p className="mt-2 text-sm text-slate-500">{project.name} — {item.assignee?.name || "پشتیبان"} ({item.assigneeRole === "passive_agent" ? "پسیو" : "اکتیو"})</p></div>
-        <span className="rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white">{statusLabels[status] || status}</span>
+        <ProjectFormStatus status={status} progress={progress} viewedAt={item.openedAt} />
       </div>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">میزان تکمیل</p><strong className="mt-1 block text-lg">{progress.toLocaleString("fa-IR")}٪</strong></div>
@@ -115,7 +113,7 @@ export default function AdminProjectFormDetail({ projectId, formType, formId }) 
       </div>
     </header>
 
-    <div className="glass-panel p-5 sm:p-7"><ProjectFormRecord data={item.data} attachments={item.attachments} attachmentBaseUrl={formType === "assessment" ? `/api/projects/${projectId}/assessments/attachment?assessmentId=${item._id}&file=` : undefined} /></div>
+    <div className="glass-panel p-5 sm:p-7"><ProjectFormRecord errors={feedback.errors} data={item.data} attachments={item.attachments} attachmentBaseUrl={formType === "assessment" ? `/api/projects/${projectId}/assessments/attachment?assessmentId=${item._id}&file=` : undefined} /></div>
 
     {formType === "assessment" && status === "submitted" && <div className="print:hidden flex justify-end"><button type="button" onClick={() => review("reviewed")} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-black text-white"><CheckCircle2 className="size-5" />تأیید فرم ارزیابی</button></div>}
     {formType === "handover" && status === "submitted" && <div className="print:hidden flex flex-wrap justify-end gap-3"><button type="button" onClick={() => review("rejected")} className="inline-flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-black text-amber-800"><RotateCcw className="size-5" />برگشت برای اصلاح</button><button type="button" onClick={() => review("approved")} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-black text-white"><CheckCircle2 className="size-5" />تأیید صورت‌جلسه</button></div>}
