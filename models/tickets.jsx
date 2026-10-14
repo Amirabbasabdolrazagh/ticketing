@@ -58,6 +58,7 @@ const ticketSchema = new Schema(
       ref: "User",
       default: null,
     },
+    lastCustomerPhoneCallAt: { type: Date, default: null },
     agentViewedAt: { type: Date, default: null },
     agentFirstReplyAt: { type: Date, default: null },
     unseenReminder2hSentAt: { type: Date, default: null },

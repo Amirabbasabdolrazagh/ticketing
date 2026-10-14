@@ -1,11 +1,42 @@
 import { isValidObjectId } from "mongoose";
-import { originateCustomerCall } from "@/lib/issabelAmi";
+import { originateCustomerCall, originateCustomerToSupportCall } from "@/lib/issabelAmi";
 import Ticket from "@/models/tickets";
 import User from "@/models/users";
 import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
+import { systemMessage } from "@/utils/createSystemMessage";
+import { messengerUserSelect, sendMessengerNotification } from "@/utils/messenger";
 
 const STAFF_ROLES = ["admin", "agent"];
+
+function escapeHtml(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+}
+
+async function notifyCallbackRequest({ ticket, customer }) {
+  const recipientIds = new Set([
+    ticket.assignedTo?.toString(),
+    ticket.lastPhoneCallBy?.toString(),
+  ].filter(Boolean));
+  const [supportUsers, admins] = await Promise.all([
+    recipientIds.size
+      ? User.find({ _id: { $in: [...recipientIds] } }).select(messengerUserSelect)
+      : [],
+    User.find({ role: "admin" }).select(messengerUserSelect),
+  ]);
+  const recipients = [...supportUsers, ...admins].filter((item, index, list) =>
+    list.findIndex((candidate) => candidate._id.toString() === item._id.toString()) === index,
+  );
+  const text = [
+    "☎️ <b>درخواست تماس مشتری</b>",
+    "",
+    `🎫 تیکت: <b>${escapeHtml(ticket.ticketNumber || ticket._id)}</b>`,
+    `📌 عنوان: ${escapeHtml(ticket.title)}`,
+    `👤 مشتری: ${escapeHtml(customer.name || "مشتری")}`,
+    "برای برقراری تماس، وارد همان تیکت شوید و «تماس امن با مشتری» را بزنید.",
+  ].join("\n");
+  await Promise.allSettled(recipients.map((recipient) => sendMessengerNotification(recipient, text)));
+}
 
 function isTicketMember(ticket, user) {
   if (user.role === "admin") return true;
@@ -37,7 +68,10 @@ function publicState(ticket, user) {
     callbackRequestedAt: ticket.callbackRequestedAt,
     callbackRequestedByCustomer: Boolean(ticket.callbackRequestedAt && ticket.callbackRequestedBy?.toString() === ticket.creator?.toString()),
     lastPhoneCallAt: ticket.lastPhoneCallAt,
+    lastCustomerPhoneCallAt: ticket.lastCustomerPhoneCallAt,
     canRequestCallback: user.role === "customer" && ticket.status !== "closed",
+    canCallLastSupport: user.role === "customer" && ticket.status !== "closed" && Boolean(ticket.lastPhoneCallBy) && isPhoneSystemConfigured,
+    hasLastPhoneSupport: Boolean(ticket.lastPhoneCallBy),
     canCallCustomer: isStaff && ticket.status !== "closed" && Boolean(user.pbxExtension) && isPhoneSystemConfigured,
     hasPbxExtension: Boolean(user.pbxExtension),
     isPhoneSystemConfigured,
@@ -70,7 +104,30 @@ export async function POST(req, { params }) {
       ticket.callbackRequestedAt = new Date();
       ticket.callbackRequestedBy = user._id;
       await ticket.save();
+      await systemMessage(ticket._id, user._id, "مشتری درخواست تماس تلفنی ثبت کرد.");
+      await notifyCallbackRequest({ ticket, customer: user });
       return Response.json({ success: true, message: "درخواست تماس برای پشتیبان ثبت شد.", ...publicState(ticket, user) });
+    }
+
+    if (action === "call-last-support") {
+      if (user.role !== "customer" || ticket.status === "closed") {
+        return Response.json({ success: false, message: "امکان تماس برای این تیکت وجود ندارد." }, { status: 403 });
+      }
+      if (!ticket.lastPhoneCallBy) {
+        return Response.json({ success: false, message: "هنوز پشتیبانی برای تماس با شما تعیین نشده است." }, { status: 422 });
+      }
+      const [customer, support] = await Promise.all([
+        User.findById(ticket.creator).select("phone"),
+        User.findById(ticket.lastPhoneCallBy).select("role pbxExtension"),
+      ]);
+      if (!customer?.phone || !support?.pbxExtension || !STAFF_ROLES.includes(support.role)) {
+        return Response.json({ success: false, message: "تماس با پشتیبان فعلاً در دسترس نیست." }, { status: 422 });
+      }
+      await originateCustomerToSupportCall({ extension: support.pbxExtension, customerPhone: customer.phone });
+      ticket.lastCustomerPhoneCallAt = new Date();
+      await ticket.save();
+      await systemMessage(ticket._id, user._id, "مشتری تماس امن با آخرین پشتیبان را آغاز کرد.");
+      return Response.json({ success: true, message: "ابتدا تلفن شما زنگ می‌خورد؛ پس از پاسخ، پشتیبان متصل می‌شود.", ...publicState(ticket, user) });
     }
 
     if (action === "call-customer") {
