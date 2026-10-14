@@ -62,8 +62,8 @@ export default function PhoneSupportPanel({ ticketId, role }) {
     </div>
 
     {loading ? <div className="mt-4 flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="animate-spin" size={16} />در حال بررسی تماس…</div> : isCustomer ? <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
-      <p className="text-sm leading-7 text-slate-700">برای تماس مستقیم، ابتدا تلفن ثبت‌شدهٔ شما زنگ می‌خورد و پس از پاسخ به آخرین پشتیبانی که با شما تماس گرفته وصل می‌شوید. شماره شما نمایش داده نمی‌شود.</p>
-      {!data?.hasLastPhoneSupport && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-900">برای این تیکت هنوز تماس قبلی از پشتیبان ثبت نشده است. می‌توانید درخواست تماس ثبت کنید.</p>}
+      <p className="text-sm leading-7 text-slate-700">برای تماس مستقیم، ابتدا تلفن ثبت‌شدهٔ شما زنگ می‌خورد و پس از پاسخ به پشتیبان تیکت وصل می‌شوید. در تماس‌های بعدی، همان آخرین پشتیبان در اولویت است و شماره شما نمایش داده نمی‌شود.</p>
+      {!data?.hasLastPhoneSupport && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-900">داخلی پیش‌فرض پشتیبانی هنوز روی سرور تنظیم نشده است.</p>}
       <div className="mt-4 flex flex-wrap gap-3">
         <Button className="bg-violet-600 hover:bg-violet-700" disabled={busy || !data?.canCallLastSupport} onClick={() => action("call-last-support")}>
           {busy ? <LoaderCircle className="animate-spin" /> : <PhoneCall />} تماس با پشتیبان

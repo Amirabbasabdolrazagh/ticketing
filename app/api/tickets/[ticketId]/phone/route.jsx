@@ -64,14 +64,19 @@ function publicState(ticket, user) {
     "ISSABEL_AMI_SECRET",
     "ISSABEL_COMPANY_CALLER_ID",
   ].every((name) => Boolean(process.env[name]?.trim()));
+  const hasSupportRoute = Boolean(
+    ticket.lastPhoneCallBy
+    || ticket.assignedTo
+    || process.env.ISSABEL_DEFAULT_SUPPORT_EXTENSION?.trim(),
+  );
   return {
     callbackRequestedAt: ticket.callbackRequestedAt,
     callbackRequestedByCustomer: Boolean(ticket.callbackRequestedAt && ticket.callbackRequestedBy?.toString() === ticket.creator?.toString()),
     lastPhoneCallAt: ticket.lastPhoneCallAt,
     lastCustomerPhoneCallAt: ticket.lastCustomerPhoneCallAt,
     canRequestCallback: user.role === "customer" && ticket.status !== "closed",
-    canCallLastSupport: user.role === "customer" && ticket.status !== "closed" && Boolean(ticket.lastPhoneCallBy) && isPhoneSystemConfigured,
-    hasLastPhoneSupport: Boolean(ticket.lastPhoneCallBy),
+    canCallLastSupport: user.role === "customer" && ticket.status !== "closed" && hasSupportRoute && isPhoneSystemConfigured,
+    hasLastPhoneSupport: hasSupportRoute,
     canCallCustomer: isStaff && ticket.status !== "closed" && Boolean(user.pbxExtension) && isPhoneSystemConfigured,
     hasPbxExtension: Boolean(user.pbxExtension),
     isPhoneSystemConfigured,
@@ -113,20 +118,32 @@ export async function POST(req, { params }) {
       if (user.role !== "customer" || ticket.status === "closed") {
         return Response.json({ success: false, message: "امکان تماس برای این تیکت وجود ندارد." }, { status: 403 });
       }
-      if (!ticket.lastPhoneCallBy) {
-        return Response.json({ success: false, message: "هنوز پشتیبانی برای تماس با شما تعیین نشده است." }, { status: 422 });
-      }
-      const [customer, support] = await Promise.all([
-        User.findById(ticket.creator).select("phone"),
-        User.findById(ticket.lastPhoneCallBy).select("role pbxExtension"),
+      const supportIds = [ticket.lastPhoneCallBy, ticket.assignedTo]
+        .filter(Boolean)
+        .map((id) => id.toString())
+        .filter((id, index, ids) => ids.indexOf(id) === index);
+      const [customer, supportUsers] = await Promise.all([
+        User.findById(ticket.creator).select("phone name"),
+        supportIds.length
+          ? User.find({ _id: { $in: supportIds }, role: { $in: STAFF_ROLES } }).select("role pbxExtension")
+          : [],
       ]);
-      if (!customer?.phone || !support?.pbxExtension || !STAFF_ROLES.includes(support.role)) {
+      const support = supportIds
+        .map((id) => supportUsers.find((candidate) => candidate._id.toString() === id))
+        .find((candidate) => candidate?.pbxExtension);
+      const extension = support?.pbxExtension || process.env.ISSABEL_DEFAULT_SUPPORT_EXTENSION?.trim();
+      if (!customer?.phone || !extension) {
         return Response.json({ success: false, message: "تماس با پشتیبان فعلاً در دسترس نیست." }, { status: 422 });
       }
-      await originateCustomerToSupportCall({ extension: support.pbxExtension, customerPhone: customer.phone });
+      await originateCustomerToSupportCall({
+        extension,
+        customerPhone: customer.phone,
+        customerName: customer.name,
+      });
       ticket.lastCustomerPhoneCallAt = new Date();
+      if (support) ticket.lastPhoneCallBy = support._id;
       await ticket.save();
-      await systemMessage(ticket._id, user._id, "مشتری تماس امن با آخرین پشتیبان را آغاز کرد.");
+      await systemMessage(ticket._id, user._id, "مشتری تماس امن با پشتیبانی را آغاز کرد.");
       return Response.json({ success: true, message: "ابتدا تلفن شما زنگ می‌خورد؛ پس از پاسخ، پشتیبان متصل می‌شود.", ...publicState(ticket, user) });
     }
 
