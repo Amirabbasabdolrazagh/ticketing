@@ -49,6 +49,30 @@ export default function AdminSetting() {
   const [userId, setUserId] = useState("");
   const [isChange, setIsChange] = useState(false);
   const [openSheet, setOpenSheet] = useState(false);
+  const [currentPass, setCurrentPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+
+  const changePassHandler = async () => {
+    if (!currentPass.trim() || !newPass.trim()) {
+      toast.error("لطفاً رمز عبور فعلی و رمز عبور جدید را وارد کنید");
+      return;
+    }
+    try {
+      const { data } = await axios.patch("/api/auth/change-password", {
+        currentPassword: currentPass,
+        newPassword: newPass,
+      });
+      if (data.success) {
+        toast.success(data.message);
+        setCurrentPass("");
+        setNewPass("");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "تغییر رمز عبور انجام نشد");
+    }
+  };
   useEffect(() => {
     async function getUser() {
       try {
@@ -439,6 +463,7 @@ export default function AdminSetting() {
             sm:px-5
             sm:py-8
             lg:col-span-8
+            lg:col-start-5
             lg:row-span-1
           "
         >
@@ -505,6 +530,35 @@ export default function AdminSetting() {
               </p>
             </div>
           </div>
+        </div>
+        {/* Security */}
+        <div className="glass-panel col-span-1 px-4 py-6 sm:px-5 sm:py-8 lg:col-span-8 lg:col-start-5">
+          <div className="mb-5">
+            <h2 className="text-lg font-black text-foreground">امنیت و رمز عبور</h2>
+            <p className="mt-1 text-xs text-muted-foreground">برای حفظ امنیت حساب، یک رمز قوی و اختصاصی انتخاب کنید.</p>
+          </div>
+          <Field>
+            <FieldLabel>رمز عبور فعلی</FieldLabel>
+            <Input
+              placeholder="رمز عبور فعلی را وارد کنید"
+              onChange={(e) => setCurrentPass(e.target.value)}
+              value={currentPass}
+              type="password"
+            />
+            <FieldLabel>رمز عبور جدید</FieldLabel>
+            <Input
+              type="password"
+              placeholder="رمز عبور جدید را وارد کنید"
+              value={newPass}
+              onChange={(e) => setNewPass(e.target.value)}
+            />
+          </Field>
+          <Button
+            className="my-4 w-full rounded-xl bg-sky-600 text-white shadow-md shadow-sky-500/20 hover:bg-sky-700"
+            onClick={changePassHandler}
+          >
+            تغییر رمز عبور
+          </Button>
         </div>
         <AccountLogoutCard />
       </section>

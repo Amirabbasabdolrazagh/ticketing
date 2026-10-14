@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
 
-export default function PhoneSupportPanel({ ticketId, role }) {
+export default function PhoneSupportPanel({ ticketId, role, className = "" }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -49,7 +49,7 @@ export default function PhoneSupportPanel({ ticketId, role }) {
 
   const hasOpenRequest = Boolean(data?.callbackRequestedAt);
 
-  return <section className="glass-panel mt-5 w-full overflow-hidden p-4 sm:p-5" dir="rtl">
+  return <section className={`ticket-support-card glass-panel h-full w-full overflow-hidden p-4 sm:p-5 ${className}`} dir="rtl">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex items-start gap-3">
         <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-violet-600 text-white shadow-lg shadow-violet-500/25"><PhoneCall size={22} /></div>

@@ -1,8 +1,7 @@
 "use client";
 
 import TicketMessageEditor from "@/components/features/tickets/ticketMessageEditor/TicketMessageEditor";
-import TicketMessages from "@/components/features/tickets/ticketMessages/ticketMessages";
-import { Separator } from "@/components/ui/separator";
+import TicketConversationPanel from "@/components/features/tickets/TicketConversationPanel";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -145,18 +144,8 @@ export default function TicketDetails() {
             )}
           </div>
         </div>
-        <RemoteSupportPanel ticketId={ticketId} role="agent" />
-        <PhoneSupportPanel ticketId={ticketId} role="agent" />
         <TicketRatingSummary resolution={resolution} />
-        <Separator className="my-5" />
-        <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
-        <div className="flex w-full max-w-full flex-col gap-6 py-12">
-          {messages.map((message) => (
-            <TicketMessages {...message} key={message._id} />
-          ))}
-        </div>
-        <Separator />
-        <div className="w-full">
+        <TicketConversationPanel messages={messages}>
           {ticket.status !== "closed" ? (
             <TicketMessageEditor
               setNewMessage={setNewMessage}
@@ -164,10 +153,14 @@ export default function TicketDetails() {
               newMessage={newMessage}
             />
           ) : (
-            <p className="py-5 text-center text-sm text-gray-500">
+            <p className="py-3 text-center text-sm text-muted-foreground">
               این تیکت بسته شده و امکان ارسال پیام جدید وجود ندارد.
             </p>
           )}
+        </TicketConversationPanel>
+        <div className="ticket-support-grid grid w-full gap-4 lg:grid-cols-2">
+          <RemoteSupportPanel ticketId={ticketId} role="agent" />
+          <PhoneSupportPanel ticketId={ticketId} role="agent" />
         </div>
       </section>
     </>

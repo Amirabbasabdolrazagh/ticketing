@@ -23,7 +23,6 @@ import {
   MdKeyboardArrowRight,
   MdOutlineSupportAgent,
 } from "react-icons/md";
-import TicketStatusOverview from "@/components/features/dashboard/TicketStatusOverview";
 
 export default function AdminDashborad() {
   const [allTickets, setAllTickets] = useState([]);
@@ -78,34 +77,12 @@ export default function AdminDashborad() {
     (ticket) =>
       ticket.priority === "high" && ["open", "in-progress"].includes(ticket.status),
   );
-  const chartData = [
-    {
-      status: "open",
-      tickets: numberOfOpenTicket,
-      fill: "#3b82f6",
-    },
-    {
-      status: "in-progress",
-      tickets: numberOfInProgressTicket,
-      fill: "#f59e0b",
-    },
-    {
-      status: "resolved",
-      tickets: numberOfResolvedTicket,
-      fill: "#22c55e",
-    },
-    {
-      status: "closed",
-      tickets: numberOfClosedTicket,
-      fill: "#64748b",
-    },
-  ];
   return (
     <>
       <section className="app-page">
         {/* top chart */}
-        <div className="grid grid-cols-1 gap-4 py-5 text-center sm:grid-cols-2 xl:grid-cols-5">
-          <div className="metric-card flex items-center justify-center gap-5 border-blue-200 bg-blue-50/80 px-5">
+        <div className="grid grid-cols-1 gap-4 py-3 text-center sm:grid-cols-2 xl:grid-cols-5">
+          <div className="metric-card dashboard-metric dashboard-metric--all flex items-center justify-center gap-5 border-blue-200 bg-blue-50/80 px-5">
             <div>
               <IoDocumentText size={35} className=" text-blue-500 " />
             </div>
@@ -114,7 +91,7 @@ export default function AdminDashborad() {
               <p className="text-sm">همه تیکت ها</p>
             </div>
           </div>
-          <div className="metric-card flex items-center justify-center gap-5 border-amber-200 bg-amber-50/80 px-5">
+          <div className="metric-card dashboard-metric dashboard-metric--open flex items-center justify-center gap-5 border-amber-200 bg-amber-50/80 px-5">
             <div>
               <FaRegCircle size={35} className=" text-yellow-500 " />
             </div>
@@ -123,7 +100,7 @@ export default function AdminDashborad() {
               <p className="text-sm">تیکت های باز</p>
             </div>
           </div>
-          <div className="metric-card flex items-center justify-center gap-5 border-violet-200 bg-violet-50/80 px-5">
+          <div className="metric-card dashboard-metric dashboard-metric--progress flex items-center justify-center gap-5 border-violet-200 bg-violet-50/80 px-5">
             <div>
               <FaRegClock size={35} className=" text-violet-500 " />
             </div>
@@ -132,7 +109,7 @@ export default function AdminDashborad() {
               <p className="text-sm">در دست اقدام</p>
             </div>
           </div>
-          <div className="metric-card flex items-center justify-center gap-5 border-emerald-200 bg-emerald-50/80 px-5">
+          <div className="metric-card dashboard-metric dashboard-metric--resolved flex items-center justify-center gap-5 border-emerald-200 bg-emerald-50/80 px-5">
             <div>
               <FaRegCheckCircle size={35} className=" text-green-500 " />
             </div>
@@ -141,7 +118,7 @@ export default function AdminDashborad() {
               <p className="text-sm">برطرف شده</p>
             </div>
           </div>
-          <div className="metric-card flex items-center justify-center gap-5 border-slate-200 bg-slate-50/80 px-5">
+          <div className="metric-card dashboard-metric dashboard-metric--closed flex items-center justify-center gap-5 border-slate-200 bg-slate-50/80 px-5">
             <div>
               <IoIosCloseCircleOutline size={35} className=" text-gray-500 " />
             </div>
@@ -152,9 +129,9 @@ export default function AdminDashborad() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
           {/* recent tickets */}
-          <div className="col-span-1 lg:col-span-8 min-w-0 row-span-3 p-5 border bg-gray-50 rounded-xl">
+          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-8">
             <div className="flex justify-between w-full ">
               <Label className={"text-md"}>تیکت های اخیر</Label>
               <Link href={"/customer/tickets"} className="flex text-blue-400">
@@ -182,7 +159,7 @@ export default function AdminDashborad() {
             </div>
           </div>
           {/* quick overview */}
-          <div className="col-span-1 lg:col-span-4 min-w-0 row-span-3 p-5 border bg-gray-50 rounded-xl">
+          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-4">
             <div className="flex justify-between w-full ">
               <Label className={"text-md"}>نمای کلی</Label>
             </div>
@@ -195,7 +172,7 @@ export default function AdminDashborad() {
                       <IoDocumentText size={20} className=" text-blue-500 " />
                     </TableCell>
                     <TableCell>همه تیکت ها</TableCell>
-                    <TableCell>{numberOfOpenTicket}</TableCell>
+                    <TableCell>{numberOfTickets}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>
@@ -223,7 +200,7 @@ export default function AdminDashborad() {
             </div>
           </div>
           {/* high priority ticketc */}
-          <div className="col-span-1 lg:col-span-8 min-w-0 row-span-3 p-5 border bg-gray-50 rounded-xl">
+          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-12">
             <div className="flex justify-between w-full ">
               <div className="flex gap-2">
                 <IoIosWarning size={20} color="red" />
@@ -265,10 +242,6 @@ export default function AdminDashborad() {
                 )}
               </Table>
             </div>
-          </div>
-          {/* Ticket Status Distribution */}
-          <div className="col-span-1 min-w-0 lg:col-span-4">
-            <TicketStatusOverview data={chartData} title="وضعیت کلی تیکت‌ها" />
           </div>
         </div>
       </section>

@@ -36,7 +36,7 @@ const installers = [
   },
 ];
 
-export default function RemoteSupportPanel({ ticketId, role }) {
+export default function RemoteSupportPanel({ ticketId, role, className = "" }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -93,7 +93,7 @@ export default function RemoteSupportPanel({ ticketId, role }) {
   const isStaff = role === "agent" || role === "admin";
   const isActive = session?.status === "approved";
 
-  return <section className="glass-panel mt-5 w-full overflow-hidden p-4 sm:p-5" dir="rtl">
+  return <section className={`ticket-support-card glass-panel h-full w-full overflow-hidden p-4 sm:p-5 ${className}`} dir="rtl">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="flex items-start gap-3">
         <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/25"><MonitorCog size={22} /></div>
@@ -109,7 +109,8 @@ export default function RemoteSupportPanel({ ticketId, role }) {
       {session?.requestNote && <p className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-sm leading-7 text-slate-700">{session.requestNote}</p>}
       {session?.expiresAt && activeStatuses.includes(session.status) && <p className="mt-3 text-xs text-slate-500">مهلت این درخواست: {new Date(session.expiresAt).toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" })}</p>}
 
-      {!isStaff && <div className="mt-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
+      {!isStaff && <details className="mt-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 dark:border-blue-400/20 dark:from-blue-500/10 dark:to-transparent">
+        <summary className="cursor-pointer list-none">
         <div className="flex items-start gap-3">
           <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-600 text-white"><Download size={18} /></div>
           <div>
@@ -117,6 +118,7 @@ export default function RemoteSupportPanel({ ticketId, role }) {
             <p className="mt-1 text-xs leading-6 text-slate-600">فایل مناسب سیستم خود را دانلود و اجرا کنید. پس از درخواست و تأیید شما، پشتیبان فقط برای زمان محدود به سیستم متصل می‌شود.</p>
           </div>
         </div>
+        </summary>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           {installers.map((installer) => <a key={installer.href} href={installer.href} download={installer.fileName} className="group rounded-xl border border-slate-200 bg-white px-3 py-3 text-right transition hover:border-blue-400 hover:shadow-sm">
             <span className="flex items-center gap-2 text-sm font-bold text-blue-700"><Download size={16} />{installer.title}</span>
@@ -124,7 +126,7 @@ export default function RemoteSupportPanel({ ticketId, role }) {
           </a>)}
         </div>
         <p className="mt-3 text-[11px] leading-5 text-slate-500">در Mac اگر هشدار امنیتی دیدید، برنامه را فقط پس از تأیید اینکه از همین سامانه دانلود شده است اجرا کنید.</p>
-      </div>}
+      </details>}
 
       {isStaff && data?.canRequest && !activeStatuses.includes(session?.status) && <div className="mt-4 grid gap-3"><label className="text-sm font-bold text-slate-700">توضیح برای مشتری (اختیاری)<textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={1000} rows={2} placeholder="برای مثال: برای بررسی تنظیمات شبکه، نیاز به مشاهده موقت صفحه شما دارم." className="mt-2 w-full resize-y rounded-2xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-blue-500" /></label><Button onClick={requestAccess} disabled={busy}>{busy ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}ارسال درخواست دسترسی</Button></div>}
 

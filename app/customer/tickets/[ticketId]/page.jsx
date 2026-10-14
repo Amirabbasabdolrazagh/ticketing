@@ -1,8 +1,7 @@
 "use client";
 
 import TicketMessageEditor from "@/components/features/tickets/ticketMessageEditor/TicketMessageEditor";
-import TicketMessages from "@/components/features/tickets/ticketMessages/ticketMessages";
-import { Separator } from "@/components/ui/separator";
+import TicketConversationPanel from "@/components/features/tickets/TicketConversationPanel";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -172,15 +171,17 @@ export default function TicketDetails() {
             <TicketAttachment ticketId={ticketId} attachment={ticket.attachment} />
           </div>
         </div>
-        <RemoteSupportPanel ticketId={ticketId} role="customer" />
-        <PhoneSupportPanel ticketId={ticketId} role="customer" />
         <TicketRatingSummary resolution={resolution} />
-        <Separator className="my-5" />
-        <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
-        <div className="flex w-full max-w-full flex-col gap-6 py-12">
-          {messages.map((message) => (
-            <TicketMessages {...message} key={message._id} />
-          ))}
+        <TicketConversationPanel messages={messages}>
+          <TicketMessageEditor
+            setNewMessage={setNewMessage}
+            sendNewMessageHandler={sendNewMessageHandler}
+            newMessage={newMessage}
+          />
+        </TicketConversationPanel>
+        <div className="ticket-support-grid grid w-full gap-4 lg:grid-cols-2">
+          <RemoteSupportPanel ticketId={ticketId} role="customer" />
+          <PhoneSupportPanel ticketId={ticketId} role="customer" />
         </div>
         {needsConfirmation && (
           <div
@@ -246,14 +247,6 @@ export default function TicketDetails() {
             </div>
           </div>
         )}
-        <Separator />
-        <div className="w-full">
-          <TicketMessageEditor
-            setNewMessage={setNewMessage}
-            sendNewMessageHandler={sendNewMessageHandler}
-            newMessage={newMessage}
-          />
-        </div>
       </section>
     </>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import TicketMessageEditor from "@/components/features/tickets/ticketMessageEditor/TicketMessageEditor";
-import TicketMessages from "@/components/features/tickets/ticketMessages/ticketMessages";
+import TicketConversationPanel from "@/components/features/tickets/TicketConversationPanel";
 import { Separator } from "@/components/ui/separator";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -421,22 +421,16 @@ export default function TicketDetails() {
           </div>
         </div>
         <TicketRatingSummary resolution={resolution} showFeedback />
-        <RemoteSupportPanel ticketId={ticketId} role="admin" />
-        <PhoneSupportPanel ticketId={ticketId} role="admin" />
-        <Separator className="my-5" />
-        <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
-        <div className="flex w-full max-w-full flex-col gap-6 py-12">
-          {messages.map((message) => (
-            <TicketMessages {...message} key={message._id} />
-          ))}
-        </div>
-        <Separator />
-        <div className="w-full ">
+        <TicketConversationPanel messages={messages}>
           <TicketMessageEditor
             setNewMessage={setNewMessage}
             sendNewMessageHandler={sendNewMessageHandler}
             newMessage={newMessage}
           />
+        </TicketConversationPanel>
+        <div className="ticket-support-grid grid w-full gap-4 lg:grid-cols-2">
+          <RemoteSupportPanel ticketId={ticketId} role="admin" />
+          <PhoneSupportPanel ticketId={ticketId} role="admin" />
         </div>
       </section>
     </>

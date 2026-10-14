@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, KeyRound, LockKeyhole, MessageSquareText, Phone, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import ThemeToggle from "@/components/features/theme/ThemeToggle";
 
 export default function AuthPage() {
   let initialState = { success: null, message: "" };
@@ -221,6 +222,7 @@ export default function AuthPage() {
     <>
       <Toaster />
       <section className="fixed inset-0 flex min-h-svh w-full items-center justify-center overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,.2),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,.16),transparent_38%)] p-4">
+        <ThemeToggle className="fixed left-4 top-4 z-20" showLabel />
         {!isSentCode && !signwithEmail && !resetStep && (
           <div className="glass-panel flex w-full max-w-md flex-col gap-4 p-6 sm:p-8">
             <h1 className="bg-gradient-to-l from-blue-600 to-violet-600 bg-clip-text text-center text-3xl font-black text-transparent">پشتیبانی آی تی رسام</h1>

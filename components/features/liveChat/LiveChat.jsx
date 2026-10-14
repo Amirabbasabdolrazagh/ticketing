@@ -14,6 +14,13 @@ function getPresenceStatus(contactId, presences, now) {
   return { color: "bg-red-500", label: "۱۵ دقیقه غیرفعال" };
 }
 
+function clampLauncherPosition(position) {
+  return {
+    left: Math.min(Math.max(12, position.left), Math.max(12, window.innerWidth - 60)),
+    bottom: Math.min(Math.max(12, position.bottom), Math.max(12, window.innerHeight - 68)),
+  };
+}
+
 export default function LiveChat() {
   const [currentUser, setCurrentUser] = useState(null);
   const [contacts, setContacts] = useState([]);
@@ -31,6 +38,68 @@ export default function LiveChat() {
   const userRef = useRef(null);
   const selectedRef = useRef(null);
   const receivedMessageIds = useRef(new Set());
+  const dragState = useRef(null);
+  const dragged = useRef(false);
+  const [launcherPosition, setLauncherPosition] = useState({ left: 20, bottom: 20 });
+
+  useEffect(() => {
+    let frame;
+    try {
+      const saved = JSON.parse(window.localStorage.getItem("itrasam-live-chat-position"));
+      if (Number.isFinite(saved?.left) && Number.isFinite(saved?.bottom)) {
+        frame = window.requestAnimationFrame(() => setLauncherPosition(clampLauncherPosition(saved)));
+      }
+    } catch {}
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  useEffect(() => {
+    const keepLauncherVisible = () => setLauncherPosition((current) => clampLauncherPosition(current));
+    window.addEventListener("resize", keepLauncherVisible);
+    return () => window.removeEventListener("resize", keepLauncherVisible);
+  }, []);
+
+  function startLauncherDrag(event) {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragged.current = false;
+    dragState.current = {
+      x: event.clientX,
+      y: event.clientY,
+      left: launcherPosition.left,
+      bottom: launcherPosition.bottom,
+    };
+  }
+
+  function moveLauncher(event) {
+    if (!dragState.current) return;
+    const deltaX = event.clientX - dragState.current.x;
+    const deltaY = dragState.current.y - event.clientY;
+    if (Math.abs(deltaX) + Math.abs(deltaY) > 5) dragged.current = true;
+    const next = clampLauncherPosition({
+      left: dragState.current.left + deltaX,
+      bottom: dragState.current.bottom + deltaY,
+    });
+    dragState.current.latest = next;
+    setLauncherPosition(next);
+  }
+
+  function endLauncherDrag(event) {
+    if (!dragState.current) return;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    const finalPosition = dragState.current.latest || launcherPosition;
+    dragState.current = null;
+    window.localStorage.setItem("itrasam-live-chat-position", JSON.stringify(finalPosition));
+  }
+
+  function toggleLauncher() {
+    if (dragged.current) {
+      dragged.current = false;
+      return;
+    }
+    setIsOpen((open) => !open);
+  }
 
   function selectContact(contact) {
     setSelectedContact(contact);
@@ -152,16 +221,16 @@ export default function LiveChat() {
   return (
     <>
       {popup && (
-        <button type="button" onClick={openPopupConversation} className="fixed left-5 top-5 z-[100] w-80 rounded-xl border border-blue-200 bg-white p-4 text-right shadow-xl">
+        <button type="button" onClick={openPopupConversation} className="fixed left-5 top-5 z-[100] w-80 rounded-xl border border-blue-200 bg-white p-4 text-right shadow-xl dark:border-blue-400/20 dark:bg-slate-900">
           <p className="mb-1 text-sm font-bold">پیام جدید از {popup.senderName}</p>
           <p className="line-clamp-2 text-sm text-gray-600">{popup.text}</p>
         </button>
       )}
 
       {isOpen && (
-        <section className="fixed bottom-28 left-5 z-[90] flex h-[min(32rem,calc(100dvh-8.5rem))] w-[42rem] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border bg-white shadow-2xl lg:bottom-20 lg:h-[32rem]">
+        <section className="fixed bottom-28 left-5 z-[90] flex h-[min(32rem,calc(100dvh-8.5rem))] w-[42rem] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border bg-white text-foreground shadow-2xl dark:bg-slate-900 lg:bottom-20 lg:h-[32rem]">
           <aside className={`${selectedContact ? "hidden sm:flex" : "flex"} w-full flex-col border-l sm:w-56`}>
-            <div className="flex items-center gap-2 border-b bg-gray-50 px-4 py-4">
+            <div className="flex items-center gap-2 border-b bg-gray-50 px-4 py-4 dark:bg-slate-800">
               <Users className="size-5 text-blue-600" />
               <p className="font-bold">{currentUser?.role === "admin" ? "پشتیبان‌ها" : "ادمین‌ها"}</p>
             </div>
@@ -170,7 +239,7 @@ export default function LiveChat() {
               {contacts.map((contact) => {
                 const status = getPresenceStatus(contact.userId, presences, now);
                 return (
-                  <button key={contact.userId} type="button" onClick={() => selectContact(contact)} className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-right hover:bg-blue-50 ${selectedContact?.userId === contact.userId ? "bg-blue-50" : ""}`}>
+                  <button key={contact.userId} type="button" onClick={() => selectContact(contact)} className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-right hover:bg-blue-50 dark:hover:bg-blue-500/10 ${selectedContact?.userId === contact.userId ? "bg-blue-50 dark:bg-blue-500/10" : ""}`}>
                     <span className={`size-3 shrink-0 rounded-full ${status.color}`} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{contact.name}</span>
@@ -195,25 +264,35 @@ export default function LiveChat() {
               <button type="button" onClick={() => setIsOpen(false)} aria-label="بستن چت"><X className="size-5" /></button>
             </header>
 
-            <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-3">
+            <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-3 dark:bg-slate-950/60">
               {!selectedContact && <p className="mt-16 text-center text-sm text-gray-400">از فهرست یک نفر را انتخاب کنید</p>}
               {selectedContact && uniqueActiveMessages.length === 0 && <p className="mt-16 text-center text-sm text-gray-400">هنوز پیامی ردوبدل نشده است</p>}
               {uniqueActiveMessages.map((message) => {
                 const isMine = message.senderId === currentUser?.id;
-                return <div key={message.id} className={`flex ${isMine ? "justify-start" : "justify-end"}`}><div className={`max-w-[82%] rounded-xl px-3 py-2 text-sm ${isMine ? "bg-blue-600 text-white" : "border bg-white"}`}><p className="whitespace-pre-wrap break-words">{message.text}</p><p className={`mt-1 text-[10px] ${isMine ? "text-blue-100" : "text-gray-400"}`}>{new Date(message.sentAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</p></div></div>;
+                return <div key={message.id} className={`flex ${isMine ? "justify-start" : "justify-end"}`}><div dir="rtl" className={`max-w-[82%] rounded-xl px-3 py-2 text-right text-sm ${isMine ? "bg-blue-600 text-white" : "border bg-white dark:bg-slate-800"}`}><p className="whitespace-pre-wrap break-words">{message.text}</p><p className={`mt-1 text-[10px] ${isMine ? "text-blue-100" : "text-gray-400"}`}>{new Date(message.sentAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</p></div></div>;
               })}
               <div ref={endRef} />
             </div>
 
             <form onSubmit={sendMessage} className="flex gap-2 border-t p-3">
-              <input value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} disabled={!selectedContact} placeholder={selectedContact ? "پیام خود را بنویسید..." : "ابتدا یک مخاطب انتخاب کنید"} className="min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:border-blue-500 disabled:bg-gray-100" />
+              <input dir="rtl" value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} disabled={!selectedContact} placeholder={selectedContact ? "پیام خود را بنویسید..." : "ابتدا یک مخاطب انتخاب کنید"} className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-right text-sm outline-none focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-slate-800" />
               <Button type="submit" size="icon" disabled={!text.trim() || !selectedContact || isSending || !isConnected}><Send className="size-4" /></Button>
             </form>
           </div>
         </section>
       )}
 
-      <button type="button" onClick={() => setIsOpen((open) => !open)} className="fixed bottom-5 left-5 z-[90] hidden size-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 lg:flex" aria-label="چت آنلاین">
+      <button
+        type="button"
+        onClick={toggleLauncher}
+        onPointerDown={startLauncherDrag}
+        onPointerMove={moveLauncher}
+        onPointerUp={endLauncherDrag}
+        style={{ left: launcherPosition.left, bottom: launcherPosition.bottom, touchAction: "none" }}
+        className="fixed z-[90] hidden size-12 cursor-grab items-center justify-center rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:cursor-grabbing lg:flex"
+        aria-label="چت آنلاین؛ برای جابه‌جایی بکشید"
+        title="چت آنلاین — برای جابه‌جایی بکشید"
+      >
         {isOpen ? <X className="size-5" /> : <MessageCircle className="size-6" />}
       </button>
     </>

@@ -29,13 +29,13 @@ export default function TicketMessages({ message, sender, createdAt }) {
   return (
     <>
     
-      <Bubble {...roleStyles(sender?.role)} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <BubbleContent>{message}</BubbleContent>
-        <div className={`flex items-center gap-1.5 px-1 text-[11px] text-slate-500 ${
+      <Bubble {...roleStyles(sender?.role)} dir="rtl" className="animate-in fade-in slide-in-from-bottom-2 text-right duration-300">
+        <BubbleContent className="text-right">{message}</BubbleContent>
+        <div className={`flex items-center gap-1.5 px-1 text-right text-[11px] text-muted-foreground ${
           sender?.role === "customer" ? "justify-start" : "justify-end"
         }`}>
           {sender?.role === "customer" ? <UserRound className="size-3.5" /> : <ShieldCheck className="size-3.5" />}
-          <span className="font-bold text-slate-600">{sender?.name || "کاربر"}</span>
+          <span className="font-bold text-foreground/80">{sender?.name || "کاربر"}</span>
           <span>•</span>
           <time>{persianDate}</time>
         </div>

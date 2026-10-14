@@ -31,6 +31,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { getSeenNotificationIds } from "@/utils/notificationSeen";
+import ThemeToggle from "@/components/features/theme/ThemeToggle";
 
 const roleLabels = {
   admin: "مدیر سیستم",
@@ -285,6 +286,7 @@ export default function SideBar() {
         </svg>
 
         <SidebarHeader className="relative z-10 gap-4 px-5 pb-4 pt-6">
+          <ThemeToggle className="absolute left-7 top-8 z-20" />
           <div className="flex min-h-20 items-center justify-center rounded-2xl border border-white/70 bg-white/55 px-4 shadow-[0_12px_40px_rgba(30,64,175,0.12)] backdrop-blur-xl">
             <Image
               src="/images/logo.png"

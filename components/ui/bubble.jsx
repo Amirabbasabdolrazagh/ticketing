@@ -23,7 +23,7 @@ const bubbleVariants = cva(
           "*:data-[slot=bubble-content]:border-blue-400/40 *:data-[slot=bubble-content]:bg-gradient-to-br *:data-[slot=bubble-content]:from-blue-600 *:data-[slot=bubble-content]:to-indigo-600 *:data-[slot=bubble-content]:text-white *:data-[slot=bubble-content]:shadow-[0_12px_30px_rgba(37,99,235,.2)]",
 
         agent:
-          "*:data-[slot=bubble-content]:border-slate-200 *:data-[slot=bubble-content]:bg-white *:data-[slot=bubble-content]:text-slate-800 *:data-[slot=bubble-content]:shadow-[0_10px_28px_rgba(15,23,42,.09)]",
+          "*:data-[slot=bubble-content]:border-slate-200 *:data-[slot=bubble-content]:bg-white *:data-[slot=bubble-content]:text-slate-800 *:data-[slot=bubble-content]:shadow-[0_10px_28px_rgba(15,23,42,.09)] dark:*:data-[slot=bubble-content]:border-slate-700 dark:*:data-[slot=bubble-content]:bg-slate-800 dark:*:data-[slot=bubble-content]:text-slate-100",
 
         admin:
           "*:data-[slot=bubble-content]:border-violet-400/40 *:data-[slot=bubble-content]:bg-gradient-to-br *:data-[slot=bubble-content]:from-violet-600 *:data-[slot=bubble-content]:to-fuchsia-600 *:data-[slot=bubble-content]:text-white *:data-[slot=bubble-content]:shadow-[0_12px_30px_rgba(124,58,237,.2)]",

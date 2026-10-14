@@ -320,6 +320,7 @@ export default function AdminSetting() {
             sm:px-5
             sm:py-8
             lg:col-span-8
+            lg:col-start-5
             lg:row-span-1
           "
         >
@@ -465,6 +466,7 @@ export default function AdminSetting() {
             sm:px-5
             sm:py-8
             lg:col-span-8
+            lg:col-start-5
             lg:row-span-1
           "
         >
@@ -533,7 +535,7 @@ export default function AdminSetting() {
           </div>
         </div>
         {/* security section */}
-        <div className="glass-panel col-span-1 px-4 py-6 sm:px-5 sm:py-8 lg:col-span-8">
+        <div className="glass-panel col-span-1 px-4 py-6 sm:px-5 sm:py-8 lg:col-span-8 lg:col-start-5">
           <div className="mb-5">
             <h2 className="text-lg font-black text-slate-900">امنیت و رمز عبور</h2>
             <p className="mt-1 text-xs text-slate-500">برای حفظ امنیت حساب، یک رمز قوی و اختصاصی انتخاب کنید.</p>
