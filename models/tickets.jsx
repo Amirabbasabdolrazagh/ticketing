@@ -46,6 +46,18 @@ const ticketSchema = new Schema(
       ref: "User",
     },
     assignedAt: { type: Date, default: null, index: true },
+    callbackRequestedAt: { type: Date, default: null, index: true },
+    callbackRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    lastPhoneCallAt: { type: Date, default: null },
+    lastPhoneCallBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     agentViewedAt: { type: Date, default: null },
     agentFirstReplyAt: { type: Date, default: null },
     unseenReminder2hSentAt: { type: Date, default: null },

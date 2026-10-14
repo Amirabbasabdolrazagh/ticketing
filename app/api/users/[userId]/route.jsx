@@ -47,7 +47,7 @@ async function refreshUserSession(userInfo) {
 }
 
 export async function PATCH(req, { params }) {
-  const { phone, name, role } = await req.json();
+  const { phone, name, role, pbxExtension } = await req.json();
   try {
     await ConnectDb();
     const { userId } = await params;
@@ -66,7 +66,7 @@ export async function PATCH(req, { params }) {
       );
     }
 
-    if (phone === undefined && name === undefined && role === undefined) {
+    if (phone === undefined && name === undefined && role === undefined && pbxExtension === undefined) {
       return Response.json(
         { success: false, message: "at least one field is required" },
         { status: 400 },
@@ -110,6 +110,16 @@ export async function PATCH(req, { params }) {
               { status: 400 },
             );
           }
+        }
+        if (pbxExtension !== undefined) {
+          const extension = String(pbxExtension || "").trim();
+          if (extension && !/^\d{2,8}$/.test(extension)) {
+            return Response.json(
+              { success: false, message: "داخلی ایزابل باید بین ۲ تا ۸ رقم باشد." },
+              { status: 400 },
+            );
+          }
+          userInfo.pbxExtension = extension || null;
         }
         await userInfo.save();
         const profileComplete = isSelfUpdate
@@ -237,6 +247,7 @@ export async function GET(req, { params }) {
       name: findUser.name,
       phone: findUser.phone,
       role: findUser.role,
+      pbxExtension: findUser.pbxExtension || "",
     };
     console.log(safeInfo);
 

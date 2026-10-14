@@ -7,6 +7,12 @@ const userSchema = new Schema(
       unique: true,
       trim: true,
     },
+    pbxExtension: {
+      type: String,
+      trim: true,
+      maxlength: 8,
+      default: null,
+    },
     name: {
       type: String,
       maxlength: 50,

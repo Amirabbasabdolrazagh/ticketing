@@ -21,6 +21,7 @@ import toast, { Toaster } from "react-hot-toast";
 import TicketAttachment from "@/components/features/tickets/ticketAttachment/TicketAttachment";
 import TicketRatingSummary, { StarRatingInput } from "@/components/features/tickets/TicketRating";
 import RemoteSupportPanel from "@/components/features/tickets/RemoteSupportPanel";
+import PhoneSupportPanel from "@/components/features/tickets/PhoneSupportPanel";
 
 export default function TicketDetails() {
   const [ticket, setTicket] = useState({});
@@ -172,6 +173,7 @@ export default function TicketDetails() {
           </div>
         </div>
         <RemoteSupportPanel ticketId={ticketId} role="customer" />
+        <PhoneSupportPanel ticketId={ticketId} role="customer" />
         <TicketRatingSummary resolution={resolution} />
         <Separator className="my-5" />
         <h1 className=" w-full text-end text-xl">گفت‌وگوها</h1>
