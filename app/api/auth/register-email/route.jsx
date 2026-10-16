@@ -89,18 +89,18 @@ export async function POST(req) {
         );
       }
       account.email = normalizedEmail;
-    } else {
-      const passwordRegex =
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-      if (!passwordRegex.test(password)) {
+    } else if (account.password) {
+      const passwordIsValid = await bcrypt.compare(password, account.password);
+      if (!passwordIsValid) {
         return Response.json(
-          {
-            success: false,
-            message: "رمز باید حداقل ۸ کاراکتر و شامل حرف بزرگ، حرف کوچک، عدد و نماد باشد",
-          },
+          { success: false, message: "رمز عبور فعلی صحیح نیست" },
           { status: 400 },
         );
       }
+      account.email = normalizedEmail;
+    } else {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+      if (!passwordRegex.test(password)) return Response.json({ success: false, message: "رمز باید حداقل ۸ کاراکتر و شامل حرف بزرگ، حرف کوچک، عدد و نماد باشد" }, { status: 400 });
       account.email = normalizedEmail;
       account.password = await bcrypt.hash(password, 12);
     }

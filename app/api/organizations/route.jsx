@@ -4,8 +4,37 @@ import Ticket from "@/models/tickets";
 import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
 import { isValidObjectId } from "mongoose";
+import bcrypt from "bcrypt";
+import { randomBytes } from "crypto";
 
 const phonePattern = /^09\d{9}$/;
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+function organizationNameToken(name) {
+  const latinToken = name
+    .normalize("NFKD")
+    .replace(/[^A-Za-z0-9]/g, "")
+    .slice(0, 4)
+    .toUpperCase();
+  if (latinToken.length >= 2) return latinToken.padEnd(4, "X");
+
+  let hash = 0;
+  for (const character of name) hash = (hash * 31 + character.codePointAt(0)) % 1679616;
+  return hash.toString(36).toUpperCase().padStart(4, "0").slice(-4);
+}
+
+async function generateOrganizationCode(name) {
+  const now = new Date();
+  const date = `${String(now.getUTCFullYear()).slice(-2)}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
+  const nameToken = organizationNameToken(name);
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const suffix = randomBytes(2).toString("hex").toUpperCase();
+    const code = `ORG-${nameToken}-${date}-${suffix}`;
+    if (!(await Organization.exists({ code }))) return code;
+  }
+  throw new Error("ORGANIZATION_CODE_GENERATION_FAILED");
+}
 
 function cleanEquipment(items) {
   if (!Array.isArray(items)) return [];
@@ -44,7 +73,7 @@ export async function GET() {
 
     const [organizations, customers] = await Promise.all([
       Organization.find()
-        .populate("manager", "name phone lastLoginAt")
+        .populate("manager", "name phone email lastLoginAt")
         .populate("members", "name phone lastLoginAt")
         .sort({ createdAt: -1 })
         .lean(),
@@ -76,25 +105,56 @@ export async function POST(req) {
     if (!(await requireAdmin())) return Response.json({ success: false, message: "Forbidden" }, { status: 403 });
     const body = await req.json();
     const name = String(body.name || "").trim();
-    const code = String(body.code || "").trim().toUpperCase();
     const managerName = String(body.managerName || "").trim();
     const managerPhone = String(body.managerPhone || "").trim();
+    const managerEmail = String(body.managerEmail || "").trim().toLowerCase();
+    const managerPassword = String(body.managerPassword || "");
     const memberIds = [...new Set(Array.isArray(body.memberIds) ? body.memberIds.filter(isValidObjectId) : [])];
-    if (!name || !code || !managerName || !phonePattern.test(managerPhone)) {
-      return Response.json({ success: false, message: "نام، کد، نام مدیر و شماره موبایل معتبر الزامی است" }, { status: 400 });
+    if (!name || !managerName || !phonePattern.test(managerPhone)) {
+      return Response.json({ success: false, message: "نام سازمان، نام مدیر و شماره موبایل معتبر الزامی است" }, { status: 400 });
     }
-    if (await Organization.exists({ code })) return Response.json({ success: false, message: "کد سازمان تکراری است" }, { status: 409 });
+    if (managerEmail && !emailPattern.test(managerEmail)) {
+      return Response.json({ success: false, message: "ایمیل مدیر سازمان معتبر نیست" }, { status: 400 });
+    }
+    if (!passwordPattern.test(managerPassword)) {
+      return Response.json({ success: false, message: "رمز باید حداقل ۸ کاراکتر و شامل حرف بزرگ، حرف کوچک، عدد و نماد باشد" }, { status: 400 });
+    }
+    if (managerEmail && await User.exists({ email: managerEmail, phone: { $ne: managerPhone } })) {
+      return Response.json({ success: false, message: "این ایمیل قبلاً برای کاربر دیگری ثبت شده است" }, { status: 409 });
+    }
 
-    let manager = await User.findOne({ phone: managerPhone });
+    let manager = await User.findOne({ phone: managerPhone }).select("+password");
     if (manager && !["customer", "organization_manager"].includes(manager.role)) {
       return Response.json({ success: false, message: "این شماره متعلق به کاربری با نقش غیرمجاز است" }, { status: 409 });
     }
     if (manager?.organization) return Response.json({ success: false, message: "این مدیر قبلاً به سازمان دیگری متصل شده است" }, { status: 409 });
-    if (!manager) manager = await User.create({ name: managerName, phone: managerPhone, role: "organization_manager", isVerify: true });
-    else { manager.name = managerName; manager.role = "organization_manager"; manager.isVerify = true; await manager.save(); }
+    if (manager && memberIds.includes(manager._id.toString())) {
+      return Response.json({ success: false, message: "مدیر سازمان را نمی‌توان هم‌زمان به‌عنوان کارمند انتخاب کرد" }, { status: 400 });
+    }
 
     const members = await User.find({ _id: { $in: memberIds }, role: "customer", organization: null }).select("_id");
     if (members.length !== memberIds.length) return Response.json({ success: false, message: "یک یا چند کارمند قبلاً عضو سازمان دیگری هستند" }, { status: 409 });
+
+    const code = await generateOrganizationCode(name);
+    const hashedPassword = await bcrypt.hash(managerPassword, 12);
+    if (!manager) {
+      manager = await User.create({
+        name: managerName,
+        phone: managerPhone,
+        ...(managerEmail ? { email: managerEmail } : {}),
+        password: hashedPassword,
+        role: "organization_manager",
+        isVerify: true,
+      });
+    } else {
+      manager.name = managerName;
+      manager.role = "organization_manager";
+      manager.isVerify = true;
+      manager.password = hashedPassword;
+      if (managerEmail) manager.email = managerEmail;
+      await manager.save();
+    }
+
     const organization = await Organization.create({
       name,
       code,
@@ -110,7 +170,7 @@ export async function POST(req) {
     return Response.json({ success: true, message: "پرتال سازمان با موفقیت ساخته شد", organization }, { status: 201 });
   } catch (error) {
     console.error("ORGANIZATIONS POST ERROR", error);
-    return Response.json({ success: false, message: error?.code === 11000 ? "مدیر یا کد سازمان تکراری است" : "ساخت سازمان ناموفق بود" }, { status: 500 });
+    return Response.json({ success: false, message: error?.code === 11000 ? "شماره، ایمیل مدیر یا کد سازمان تکراری است" : "ساخت سازمان ناموفق بود" }, { status: 500 });
   }
 }
 

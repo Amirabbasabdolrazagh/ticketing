@@ -185,7 +185,7 @@ export default function SideBar() {
           },
         ]
       : []),
-    ...(["admin", "agent", "passive_agent", "active_agent", "customer"].includes(userRole) ? [{
+    ...(["admin", "agent", "passive_agent", "active_agent", "customer", "organization_manager"].includes(userRole) ? [{
         label: "تنظیمات",
         description: "حساب و ترجیحات",
         href: `/${userRole}/setting`,
@@ -232,7 +232,7 @@ export default function SideBar() {
               ].includes(item.href),
             )
           : userRole === "organization_manager"
-            ? menuItems.filter((item) => item.href === "/organization_manager/dashboard")
+            ? menuItems.filter((item) => ["/organization_manager/dashboard", "/organization_manager/setting"].includes(item.href))
           : [];
 
   const moreMenuItems =

@@ -134,7 +134,7 @@ export async function PATCH(req, { params }) {
           },
           { status: 200 },
         );
-      } else if (user.role === "customer" && user._id.toString() === userId) {
+      } else if (["customer", "organization_manager"].includes(user.role) && user._id.toString() === userId) {
         const userInfo = await User.findById(userId);
         if (!userInfo) {
           return Response.json(

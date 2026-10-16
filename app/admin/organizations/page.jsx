@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 const emptyForm = {
-  name: "", code: "", managerName: "", managerPhone: "", memberIds: [], equipmentText: "",
+  name: "", managerName: "", managerPhone: "", managerEmail: "", managerPassword: "", memberIds: [], equipmentText: "",
   supportContract: { title: "قرارداد پشتیبانی", level: "standard", status: "active", startAt: "", endAt: "", monthlyHours: "", notes: "" },
 };
 
@@ -46,9 +46,10 @@ export default function OrganizationsPage() {
     setEditingId(organization._id);
     setForm({
       name: organization.name,
-      code: organization.code,
       managerName: organization.manager?.name || "",
       managerPhone: organization.manager?.phone || "",
+      managerEmail: organization.manager?.email || "",
+      managerPassword: "",
       memberIds: organization.members.map((member) => member._id),
       equipmentText: organization.equipment.map((item) => [item.name, item.type, item.serial].filter(Boolean).join(" | ")).join("\n"),
       supportContract: {
@@ -116,12 +117,14 @@ export default function OrganizationsPage() {
       ) : <div className="glass-panel grid min-h-52 place-items-center p-8 text-center"><div><Building2 className="mx-auto size-10 text-slate-300" /><p className="mt-3 font-black text-slate-600">هنوز سازمانی تعریف نشده است.</p></div></div>}
 
       {open && <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/45 p-3 backdrop-blur-sm"><div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] bg-white p-5 shadow-2xl sm:p-7">
-        <div className="flex items-start justify-between"><div><h2 className="text-xl font-black text-slate-950">{editingId ? "ویرایش سازمان" : "ساخت پرتال سازمان"}</h2><p className="mt-1 text-xs text-slate-500">مدیر با شماره ثبت‌شده می‌تواند از صفحه ورود وارد پرتال شود.</p></div><button onClick={() => setOpen(false)} className="grid size-10 place-items-center rounded-xl bg-slate-100"><X className="size-5" /></button></div>
+        <div className="flex items-start justify-between"><div><h2 className="text-xl font-black text-slate-950">{editingId ? "ویرایش سازمان" : "ساخت پرتال سازمان"}</h2><p className="mt-1 text-xs text-slate-500">کد سازمان خودکار ساخته می‌شود و مدیر می‌تواند با شماره موبایل یا ایمیل وارد شود.</p></div><button onClick={() => setOpen(false)} className="grid size-10 place-items-center rounded-xl bg-slate-100"><X className="size-5" /></button></div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Field label="نام سازمان"><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="مثلاً شرکت نمونه" /></Field>
-          <Field label="کد سازمان"><input disabled={editingId} dir="ltr" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} placeholder="ORG-001" /></Field>
           <Field label="نام مدیر سازمان"><input disabled={editingId} value={form.managerName} onChange={(e) => setForm({ ...form, managerName: e.target.value })} /></Field>
           <Field label="شماره موبایل مدیر"><input disabled={editingId} dir="ltr" inputMode="numeric" value={form.managerPhone} onChange={(e) => setForm({ ...form, managerPhone: e.target.value.replace(/\D/g, "").slice(0, 11) })} placeholder="09123456789" /></Field>
+          <Field label="ایمیل مدیر (اختیاری)"><input disabled={editingId} dir="ltr" type="email" value={form.managerEmail} onChange={(e) => setForm({ ...form, managerEmail: e.target.value })} placeholder="manager@example.com" /></Field>
+          {!editingId && <Field label="رمز عبور مدیر"><input dir="ltr" type="password" autoComplete="new-password" value={form.managerPassword} onChange={(e) => setForm({ ...form, managerPassword: e.target.value })} placeholder="حداقل ۸ کاراکتر امن" /></Field>}
+          {!editingId && <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs leading-6 text-blue-800 sm:col-span-2">کد یکتای سازمان پس از ثبت، بر اساس نام سازمان، تاریخ ایجاد و یک شناسه امن ساخته می‌شود. اتصال مدیر به بله یا تلگرام اختیاری است.</div>}
         </div>
         <h3 className="mt-6 flex items-center gap-2 font-black text-slate-900"><UsersRound className="size-5 text-blue-600" /> کارکنان سازمان</h3>
         <div className="mt-3 grid max-h-48 gap-2 overflow-y-auto rounded-2xl border border-slate-200 p-3 sm:grid-cols-2">{availableCustomers.length ? availableCustomers.map((customer) => <label key={customer._id} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 ${form.memberIds.includes(customer._id) ? "border-blue-300 bg-blue-50" : "border-slate-100"}`}><input type="checkbox" checked={form.memberIds.includes(customer._id)} onChange={() => toggleMember(customer._id)} /><span><b className="block text-xs text-slate-800">{customer.name}</b><small dir="ltr" className="text-slate-400">{customer.phone}</small></span></label>) : <p className="p-4 text-xs text-slate-400">مشتری آزاد برای افزودن وجود ندارد.</p>}</div>
