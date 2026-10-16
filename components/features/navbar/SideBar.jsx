@@ -15,7 +15,6 @@ import {
   LayoutDashboard,
   Menu,
   MessageCircle,
-  PhoneCall,
   Settings2,
   Sparkles,
   TicketCheck,
@@ -139,13 +138,6 @@ export default function SideBar() {
       href: "/organization_manager/onsite-services",
       icon: CalendarCheck2,
       active: pathname.startsWith("/organization_manager/onsite-services"),
-    }] : []),
-    ...(userRole === "organization_manager" && organizationFeatures.secureCall ? [{
-      label: "تماس امن",
-      description: "ارتباط تلفنی سازمانی با پشتیبانی",
-      href: "/organization_manager/secure-call",
-      icon: PhoneCall,
-      active: pathname.startsWith("/organization_manager/secure-call"),
     }] : []),
     ...(userRole === "organization_manager" ? [{
       label: "قرارداد من",
@@ -287,7 +279,7 @@ export default function SideBar() {
               ].includes(item.href),
             )
           : userRole === "organization_manager"
-            ? menuItems.filter((item) => ["/organization_manager/dashboard", "/organization_manager/onsite-services", "/organization_manager/secure-call", "/organization_manager/contract", "/organization_manager/setting"].includes(item.href))
+            ? menuItems.filter((item) => ["/organization_manager/dashboard", "/organization_manager/onsite-services", "/organization_manager/contract", "/organization_manager/setting"].includes(item.href))
           : [];
 
   const moreMenuItems =

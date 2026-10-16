@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { Activity, Building2, CalendarClock, CheckCircle2, ChevronLeft, CircleAlert, Cpu, FileClock, Gauge, PackageCheck, ShieldCheck, Star, TicketCheck, UsersRound, X } from "lucide-react";
+import { Activity, Building2, CalendarClock, CheckCircle2, ChevronLeft, CircleAlert, Cpu, FileClock, Gauge, PackageCheck, PhoneCall, ShieldCheck, Star, TicketCheck, UsersRound, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 const statusLabels = { open: "باز", "in-progress": "در حال رسیدگی", resolved: "حل‌شده", closed: "بسته‌شده" };
@@ -9,6 +9,7 @@ const statusStyles = { open: "bg-blue-100 text-blue-700", "in-progress": "bg-vio
 const contractLevel = { basic: "پایه", standard: "استاندارد", premium: "ویژه" };
 const contractStatus = { active: "فعال", expiring: "رو به پایان", expired: "منقضی", draft: "پیش‌نویس" };
 const formatDate = (value) => value ? new Date(value).toLocaleDateString("fa-IR") : "تعیین نشده";
+const formatDateTime = (value) => value ? new Date(value).toLocaleString("fa-IR", { dateStyle: "short", timeStyle: "short" }) : "—";
 
 export default function OrganizationDashboard() {
   const [data, setData] = useState(null);
@@ -25,7 +26,7 @@ export default function OrganizationDashboard() {
   if (error) return <section className="app-page"><div className="glass-panel grid min-h-72 place-items-center p-8 text-center"><div><CircleAlert className="mx-auto size-12 text-rose-500" /><h1 className="mt-4 text-lg font-black text-slate-900">پرتال سازمان در دسترس نیست</h1><p className="mt-2 text-sm text-slate-500">{error}</p></div></div></section>;
   if (!data) return <section className="app-page"><div className="glass-panel grid min-h-72 place-items-center text-sm font-bold text-slate-400">در حال آماده‌سازی نمای مدیریتی سازمان…</div></section>;
 
-  const { organization, summary, status, monthly, employeeStats, recurringIssues, recentTickets, serviceHistory } = data;
+  const { organization, summary, status, monthly, employeeStats, recentTickets, serviceHistory } = data;
   const totalStatus = Math.max(summary.totalTickets, 1);
   const donut = `conic-gradient(#2563eb 0 ${(status.open / totalStatus) * 100}%, #7c3aed ${(status.open / totalStatus) * 100}% ${((status.open + status.inProgress) / totalStatus) * 100}%, #10b981 ${((status.open + status.inProgress) / totalStatus) * 100}% ${((status.open + status.inProgress + status.resolved) / totalStatus) * 100}%, #64748b ${((status.open + status.inProgress + status.resolved) / totalStatus) * 100}% 100%)`;
 
@@ -71,10 +72,7 @@ export default function OrganizationDashboard() {
         })}</div>
       </article>
 
-      <div className="grid gap-5 xl:grid-cols-12">
-        <article className="glass-panel p-5 xl:col-span-7"><h2 className="flex items-center gap-2 font-black text-slate-950"><FileClock className="size-5 text-blue-600" /> آخرین درخواست‌های کارکنان</h2><div className="mt-4 space-y-2">{recentTickets.length ? recentTickets.map((ticket) => <div key={ticket.id} className="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-white/70 p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><b className="block truncate text-xs text-slate-800">{ticket.title}</b><span className="mt-1 block text-[10px] text-slate-500">{ticket.employee} · {ticket.service}</span></div><span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-black ${statusStyles[ticket.status]}`}>{statusLabels[ticket.status]}</span></div>) : <Empty text="هنوز تیکتی ثبت نشده است." />}</div></article>
-        <article className="glass-panel p-5 xl:col-span-5"><h2 className="flex items-center gap-2 font-black text-slate-950"><CircleAlert className="size-5 text-amber-600" /> موضوعات پرتکرار</h2><p className="mt-1 text-xs text-slate-500">دسته‌های پرتکرار درخواست کارکنان</p><div className="mt-5 space-y-3">{recurringIssues.length ? recurringIssues.map((issue) => <div key={issue.label}><div className="flex justify-between text-xs"><b className="text-slate-700">{issue.label}</b><span className="text-slate-500">{issue.count.toLocaleString("fa-IR")} مورد</span></div><div className="mt-2 h-2 rounded-full bg-amber-50"><div className="h-full rounded-full bg-gradient-to-l from-amber-500 to-orange-300" style={{ width: `${Math.max(8, (issue.count / recurringIssues[0].count) * 100)}%` }} /></div></div>) : <Empty text="داده کافی برای تشخیص الگو وجود ندارد." />}</div></article>
-      </div>
+      <article className="glass-panel p-5"><h2 className="flex items-center gap-2 font-black text-slate-950"><FileClock className="size-5 text-blue-600" /> آخرین درخواست‌های کارکنان</h2><div className="mt-4 grid gap-3 lg:grid-cols-2">{recentTickets.length ? recentTickets.map((ticket) => <div key={ticket.id} className="rounded-2xl border border-slate-100 bg-white/70 p-4"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><b className="block truncate text-xs text-slate-800">{ticket.title}</b><span className="mt-1 block text-[10px] text-slate-500">{ticket.employee} · {ticket.service}</span></div><span className={`w-fit shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${statusStyles[ticket.status]}`}>{statusLabels[ticket.status]}</span></div>{ticket.secureCall?.used && <div className="mt-3 rounded-xl border border-violet-100 bg-violet-50 p-3"><span className="flex items-center gap-2 text-[10px] font-black text-violet-700"><PhoneCall className="size-3.5" /> گزارش تماس امن</span><div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-600">{ticket.secureCall.employeeCalledAt && <span>تماس کارمند: {formatDateTime(ticket.secureCall.employeeCalledAt)}</span>}{ticket.secureCall.supportCalledAt && <span>تماس پشتیبان: {formatDateTime(ticket.secureCall.supportCalledAt)}</span>}</div></div>}</div>) : <Empty text="هنوز تیکتی ثبت نشده است." />}</div></article>
 
       <div className="grid gap-5 xl:grid-cols-2">
         <article className="glass-panel p-5"><h2 className="flex items-center gap-2 font-black text-slate-950"><ShieldCheck className="size-5 text-emerald-600" /> قرارداد پشتیبانی</h2><div className="mt-5 grid grid-cols-3 gap-3"><ContractItem label="نوع قرارداد" value={contractLevel[organization.contract?.level]} /><ContractItem label="شروع" value={formatDate(organization.contract?.startAt)} /><ContractItem label="پایان" value={formatDate(organization.contract?.endAt)} /></div></article>

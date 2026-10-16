@@ -80,12 +80,6 @@ export async function GET() {
       };
     }).sort((a, b) => b.total - a.total);
 
-    const issueMap = new Map();
-    tickets.forEach((ticket) => {
-      const key = ticket.project?.name || ticket.title;
-      issueMap.set(key, (issueMap.get(key) || 0) + 1);
-    });
-    const recurringIssues = [...issueMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([label, count]) => ({ label, count }));
     const status = {
       open: tickets.filter((ticket) => ticket.status === "open").length,
       inProgress: tickets.filter((ticket) => ticket.status === "in-progress").length,
@@ -104,12 +98,17 @@ export async function GET() {
       status,
       monthly,
       employeeStats,
-      recurringIssues,
       recentTickets: tickets.slice(0, 8).map((ticket) => ({
         id: ticket._id.toString(), ticketNumber: ticket.ticketNumber, title: ticket.title,
         employee: ticket.creator?.name || "نامشخص", agent: ticket.assignedTo?.name || "تخصیص‌نیافته",
         service: ticket.project?.name || "سایر", status: ticket.status, priority: ticket.priority,
         createdAt: ticket.createdAt, updatedAt: ticket.updatedAt,
+        secureCall: {
+          used: Boolean(ticket.lastPhoneCallAt || ticket.lastCustomerPhoneCallAt),
+          supportCalledAt: ticket.lastPhoneCallAt,
+          employeeCalledAt: ticket.lastCustomerPhoneCallAt,
+          callbackRequestedAt: ticket.callbackRequestedAt,
+        },
       })),
       serviceHistory: tickets.filter((ticket) => ["resolved", "closed"].includes(ticket.status)).slice(0, 8).map((ticket) => ({
         id: ticket._id.toString(), title: ticket.title, employee: ticket.creator?.name || "نامشخص",

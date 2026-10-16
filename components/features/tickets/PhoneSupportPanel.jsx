@@ -62,6 +62,7 @@ export default function PhoneSupportPanel({ ticketId, role, className = "" }) {
     </div>
 
     {loading ? <div className="mt-4 flex items-center gap-2 text-sm text-slate-500"><LoaderCircle className="animate-spin" size={16} />در حال بررسی تماس…</div> : isCustomer ? <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
+      {!data?.isPhoneFeatureEnabled && <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-900">تماس امن در قرارداد فعلی سازمان شما فعال نیست. مدیر سازمان می‌تواند وضعیت این امکان را در بخش قرارداد مشاهده کند.</p>}
       <p className="text-sm leading-7 text-slate-700">برای تماس مستقیم، ابتدا تلفن ثبت‌شدهٔ شما زنگ می‌خورد و پس از پاسخ به پشتیبان تیکت وصل می‌شوید. در تماس‌های بعدی، همان آخرین پشتیبان در اولویت است و شماره شما نمایش داده نمی‌شود.</p>
       {!data?.hasLastPhoneSupport && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-900">داخلی پیش‌فرض پشتیبانی هنوز روی سرور تنظیم نشده است.</p>}
       <div className="mt-4 flex flex-wrap gap-3">
