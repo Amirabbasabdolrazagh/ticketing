@@ -103,6 +103,7 @@ export default function WebPhone() {
   const registererRef = useRef(null);
   const sessionRef = useRef(null);
   const callIdRef = useRef("");
+  const autoConnectAttemptedRef = useRef(false);
 
   const load = useCallback(async () => {
     let id = localStorage.getItem("itrasam-phone-device");
@@ -153,7 +154,7 @@ export default function WebPhone() {
     });
   }, [sendEvent]);
 
-  const connectPhone = async () => {
+  const connectPhone = useCallback(async () => {
     if (!credentialRef.current || !data?.settings?.wssUrl || !data?.settings?.sipDomain) return setError("دستگاه یا تنظیمات مرکز تماس هنوز آماده نیست");
     try {
       setConnection("connecting"); setError("");
@@ -169,7 +170,14 @@ export default function WebPhone() {
       await ua.start(); await registerer.register();
       userAgentRef.current = ua; registererRef.current = registerer; credentialRef.current = null; setConnection("online"); setNotice("تلفن سازمانی آماده است");
     } catch (e) { setConnection("offline"); setError(`اتصال تلفن ناموفق بود: ${e.message}`); }
-  };
+  }, [bindSession, data]);
+
+  useEffect(() => {
+    if (data?.device?.status !== "active" || !credentialRef.current || userAgentRef.current || connection !== "offline" || autoConnectAttemptedRef.current) return;
+    autoConnectAttemptedRef.current = true;
+    const timer = window.setTimeout(connectPhone, 350);
+    return () => window.clearTimeout(timer);
+  }, [connectPhone, connection, data?.device?.status]);
 
   const answer = async () => { try { await sessionRef.current?.accept(); } catch (e) { setError(e.message); } };
   const end = async () => {
@@ -206,14 +214,18 @@ export default function WebPhone() {
     catch (e) { setError(e.message); }
   };
   const approveDevice = async (device) => {
-    const sipUsername = prompt("نام کاربری SIP اختصاصی این دستگاه را وارد کنید", device.user?.pbxExtension || "");
-    if (!sipUsername) return;
-    const sipSecret = prompt("رمز SIP قوی و اختصاصی این دستگاه را وارد کنید");
-    if (!sipSecret) return;
-    try { await api("/api/phone/devices", { method: "PATCH", body: JSON.stringify({ deviceId: device._id, action: "approve", sipUsername, sipSecret }) }); setNotice("دستگاه فعال شد"); load(); }
+    const issabelPassword = prompt("برای ساخت خودکار داخلی امن این دستگاه، رمز SSH کاربر root ایزابل را وارد کنید. رمز ذخیره نمی‌شود.");
+    if (!issabelPassword) return;
+    try { await api("/api/phone/devices", { method: "PATCH", body: JSON.stringify({ deviceId: device._id, action: "approve", issabelPassword }) }); setNotice("داخلی امن دستگاه روی ایزابل ساخته و دستگاه فعال شد"); load(); }
     catch (e) { setError(e.message); }
   };
-  const revokeDevice = async (device) => { if (!confirm("دسترسی این دستگاه قطع شود؟")) return; try { await api("/api/phone/devices", { method: "PATCH", body: JSON.stringify({ deviceId: device._id, action: "revoke" }) }); load(); } catch (e) { setError(e.message); } };
+  const revokeDevice = async (device) => {
+    if (!confirm("دسترسی این دستگاه از سایت و ایزابل قطع شود؟")) return;
+    const issabelPassword = prompt("برای حذف داخلی این دستگاه از ایزابل، رمز SSH کاربر root را وارد کنید. رمز ذخیره نمی‌شود.");
+    if (!issabelPassword) return;
+    try { await api("/api/phone/devices", { method: "PATCH", body: JSON.stringify({ deviceId: device._id, action: "revoke", issabelPassword }) }); setNotice("دسترسی دستگاه به‌طور کامل قطع شد"); load(); }
+    catch (e) { setError(e.message); }
+  };
   const saveSettings = async () => { try { await api("/api/phone/settings", { method: "PATCH", body: JSON.stringify(settings) }); setNotice("تنظیمات تلفن ذخیره شد"); load(); } catch (e) { setError(e.message); } };
   const discoverIssabel = async () => {
     if (!provisionForm.host || !provisionForm.password) return setError("IP و رمز مدیریتی ایزابل را وارد کنید");
@@ -227,6 +239,19 @@ export default function WebPhone() {
 
   const contacts = useMemo(() => (data?.contacts || []).filter((item) => `${item.name} ${item.ticketTitle} ${item.ticketNumber}`.toLowerCase().includes(query.toLowerCase())), [data?.contacts, query]);
   const chartMax = Math.max(1, ...(adminData?.chart || []).map((item) => item.total));
+  const connectionLabel = connection === "online"
+    ? "آماده پاسخ‌گویی"
+    : connection === "connecting"
+      ? "در حال اتصال"
+      : !data?.user?.extension && data?.user?.role !== "admin"
+        ? "داخلی تعریف نشده"
+        : !data?.device
+          ? "دستگاه ثبت نشده"
+          : data.device.status === "pending"
+            ? "در انتظار تأیید مدیر"
+            : data.device.status === "revoked"
+              ? "دسترسی لغو شده"
+              : "اتصال برقرار نیست";
   const roleHome = ["passive_agent", "active_agent"].includes(data?.user?.role)
     ? `/${data.user.role}`
     : `/${data?.user?.role || "agent"}/dashboard`;
@@ -244,7 +269,7 @@ export default function WebPhone() {
     </aside>
 
     <section className={styles.content}>
-      <header className={styles.topbar}><div><small>Phone.itrasam.com</small><h1>{tab === "phone" ? "تلفن تحت وب" : tab === "contacts" ? "دفترچه مشتریان" : tab === "history" ? "گزارش تماس‌ها" : tab === "dashboard" ? "داشبورد هوشمند تماس" : tab === "devices" ? "مدیریت دستگاه‌ها" : "تنظیمات مرکز تماس"}</h1></div><div className={styles.topbarActions}><a className={styles.backToSite} href={`${supportBaseUrl}${roleHome}`}><ArrowLeft size={18}/><span>بازگشت به سامانه</span></a><div className={styles.presence}><span className={connection === "online" ? styles.onlineDot : styles.offlineDot}/>{connection === "online" ? "آماده پاسخ‌گویی" : connection === "connecting" ? "در حال اتصال" : "آفلاین"}<button onClick={load} title="به‌روزرسانی وضعیت"><RefreshCw size={17}/></button></div></div></header>
+      <header className={styles.topbar}><div><small>Phone.itrasam.com</small><h1>{tab === "phone" ? "تلفن تحت وب" : tab === "contacts" ? "دفترچه مشتریان" : tab === "history" ? "گزارش تماس‌ها" : tab === "dashboard" ? "داشبورد هوشمند تماس" : tab === "devices" ? "مدیریت دستگاه‌ها" : "تنظیمات مرکز تماس"}</h1></div><div className={styles.topbarActions}><a className={styles.backToSite} href={`${supportBaseUrl}${roleHome}`}><ArrowLeft size={18}/><span>بازگشت به سامانه</span></a><div className={styles.presence}><span className={connection === "online" ? styles.onlineDot : styles.offlineDot}/>{connectionLabel}<button onClick={load} title="به‌روزرسانی وضعیت"><RefreshCw size={17}/></button></div></div></header>
       {(notice || error) && <div className={`${styles.notice} ${error ? styles.noticeError : ""}`}><span>{error || notice}</span><button onClick={() => {setNotice("");setError("");}}><X size={18}/></button></div>}
 
       {tab === "phone" && <>
@@ -266,7 +291,7 @@ export default function WebPhone() {
 
       {tab === "dashboard" && adminData && <><section className={styles.metrics}><Metric icon={PhoneCall} label="تماس ۳۰ روز" value={faNumber.format(adminData.metrics.total)} tone="blue"/><Metric icon={Activity} label="نرخ پاسخ" value={`${faNumber.format(adminData.metrics.answeredRate)}٪`} tone="green"/><Metric icon={PhoneOff} label="بی‌پاسخ" value={faNumber.format(adminData.metrics.missed)} tone="red"/><Metric icon={Star} label="رضایت" value={adminData.metrics.satisfaction ? faNumber.format(adminData.metrics.satisfaction.toFixed(1)) : "—"} tone="violet"/></section><section className={styles.adminGrid}><article className={styles.chart}><header><h2>روند تماس‌های ۱۴ روز اخیر</h2><p>مقایسه کل تماس و تماس پاسخ‌داده‌شده</p></header><div className={styles.bars}>{adminData.chart.map((item) => <div key={item.date}><span style={{height:`${Math.max(5,(item.total/chartMax)*100)}%`}}><i style={{height:`${item.total ? (item.answered/item.total)*100 : 0}%`}}/></span><small>{new Date(item.date).toLocaleDateString("fa-IR",{day:"numeric"})}</small></div>)}</div><div className={styles.legend}><span><i className={styles.blueKey}/>کل تماس</span><span><i className={styles.greenKey}/>پاسخ‌داده‌شده</span></div></article><article className={styles.insight}><ShieldCheck/><h2>کنترل کیفیت مکالمه</h2><p>{faNumber.format(adminData.metrics.recordings)} مکالمه دارای فایل ضبط‌شده است. گزارش ساختاریافته، نتیجه و رضایت مشتری برای هر تماس در سوابق قابل بررسی است.</p><div><span>میانگین زمان تماس</span><b>{seconds(adminData.metrics.averageDuration)}</b></div><div><span>دستگاه فعال</span><b>{faNumber.format(adminData.devices.filter((item)=>item.status==="active").length)}</b></div></article></section></>}
 
-      {tab === "devices" && <section className={styles.panel}><div className={styles.panelHead}><div><h2>دستگاه‌های تلفن</h2><p>برای هر مرورگر credential جدا ساخته و همان دستگاه مستقل لغو می‌شود.</p></div></div><div className={styles.deviceList}>{devices.map((device) => <article key={device._id}><Smartphone/><div><h3>{device.label}</h3><p>{device.user?.name} · داخلی {device.user?.pbxExtension || "—"}</p><small>{device.userAgent || "مشخصات مرورگر ثبت نشده"}</small></div><span className={styles.statusPill}>{device.status}</span>{device.status === "pending" ? <button className={styles.approve} onClick={() => approveDevice(device)}>تأیید و تخصیص</button> : device.status === "active" ? <button className={styles.danger} onClick={() => revokeDevice(device)}>قطع دسترسی</button> : null}</article>)}</div></section>}
+      {tab === "devices" && <section className={styles.panel}><div className={styles.panelHead}><div><h2>دستگاه‌های تلفن</h2><p>پشتیبان ابتدا دستگاهش را ثبت می‌کند؛ هنگام تأیید، سامانه با رمز موقت مدیر یک داخلی WebRTC و رمز اختصاصی می‌سازد. اطلاعات SIP دستی وارد نمی‌شود و رمز SSH نیز ذخیره نخواهد شد.</p></div></div><div className={styles.deviceList}>{devices.length ? devices.map((device) => <article key={device._id}><Smartphone/><div><h3>{device.label}</h3><p>{device.user?.name} · داخلی اصلی {device.user?.pbxExtension || "تعریف نشده"}</p><small>{device.userAgent || "مشخصات مرورگر ثبت نشده"}</small></div><span className={styles.statusPill}>{device.status === "pending" ? "در انتظار تأیید" : device.status === "active" ? "فعال" : "لغوشده"}</span>{device.status === "pending" ? <button className={styles.approve} onClick={() => approveDevice(device)}>ساخت خودکار و تأیید</button> : device.status === "active" ? <button className={styles.danger} onClick={() => revokeDevice(device)}>قطع دسترسی</button> : null}</article>) : <div className={styles.emptyState}><Smartphone/><p>هنوز دستگاهی ثبت نشده است. پشتیبان باید وارد تلفن تحت وب شود و «ثبت این دستگاه» را بزند.</p></div>}</div></section>}
 
       {tab === "settings" && settings && <section className={styles.panel}><div className={styles.panelHead}><div><h2>راه‌اندازی خودکار ایزابل</h2><p>سامانه قابلیت‌های Asterisk را شناسایی می‌کند؛ مدیر نیازی به دانستن WSS، SIP، Proxy یا TURN ندارد.</p></div><span className={`${styles.setupStatus} ${settings.provisioningStatus === "ready" ? styles.setupReady : ""}`}>{settings.provisioningStatus === "ready" ? "آماده بهره‌برداری" : settings.provisioningStatus === "action_required" ? "نیازمند تکمیل زیرساخت" : "بررسی نشده"}</span></div><div className={styles.autoSetup}><div className={styles.setupIntro}><Server/><div><b>اتصال امن به سرور ایزابل</b><p>رمز فقط هنگام بررسی در حافظه استفاده می‌شود و در پایگاه‌داده ذخیره نمی‌شود.</p></div></div><div className={styles.connectionFields}><label><span>IP داخلی ایزابل</span><input dir="ltr" inputMode="decimal" value={provisionForm.host} onChange={(e)=>setProvisionForm({...provisionForm,host:e.target.value})} placeholder="192.168.3.5"/></label><label><span>رمز مدیریتی ایزابل</span><div className={styles.passwordField}><LockKeyhole size={18}/><input dir="ltr" type="password" autoComplete="new-password" value={provisionForm.password} onChange={(e)=>setProvisionForm({...provisionForm,password:e.target.value})} placeholder="••••••••••••"/></div></label><button className={styles.primary} disabled={provisioning} onClick={discoverIssabel}><RefreshCw size={18}/>{provisioning ? "در حال شناسایی…" : "شناسایی و تنظیم خودکار"}</button></div>{settings.detectedAt && <div className={styles.discoveryResult}><div><small>نسخه شناسایی‌شده</small><b>{settings.detectedAsteriskVersion || "Asterisk"}</b></div><div><small>AMI</small><b>{settings.detectedCapabilities?.amiEnabled ? "فعال" : "نیازمند فعال‌سازی"}</b></div><div><small>WSS/HTTPS</small><b>{settings.detectedCapabilities?.httpsEnabled && settings.detectedCapabilities?.websocketEnabled ? "فعال" : "نیازمند فعال‌سازی"}</b></div><div><small>PJSIP</small><b>{settings.detectedCapabilities?.pjsipEnabled ? "فعال" : "نیازمند فعال‌سازی"}</b></div></div>}</div><div className={styles.settingsForm}><label><span>مدت نگهداری ضبط (روز)</span><input type="number" value={settings.retentionDays || 365} onChange={(e)=>setSettings({...settings,retentionDays:e.target.value})}/></label><label className={styles.check}><input type="checkbox" checked={settings.recordingEnabled !== false} onChange={(e)=>setSettings({...settings,recordingEnabled:e.target.checked})}/><span>ضبط مکالمات فعال باشد</span></label><label className={styles.check}><input type="checkbox" checked={settings.allowHold !== false} onChange={(e)=>setSettings({...settings,allowHold:e.target.checked})}/><span>نگه‌داشتن تماس فعال باشد</span></label><label className={styles.check}><input type="checkbox" checked={settings.allowTransfer !== false} onChange={(e)=>setSettings({...settings,allowTransfer:e.target.checked})}/><span>انتقال تماس فعال باشد</span></label><label className={styles.full}><span>متن اطلاع‌رسانی ضبط</span><textarea value={settings.recordingConsentText || ""} onChange={(e)=>setSettings({...settings,recordingConsentText:e.target.value})}/></label></div><button className={styles.primary} onClick={saveSettings}><Check size={18}/>ذخیره سیاست‌های تماس</button></section>}
     </section>

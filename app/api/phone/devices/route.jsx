@@ -3,9 +3,11 @@ import { isValidObjectId } from "mongoose";
 import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
 import PhoneDevice from "@/models/phoneDevices";
+import PhoneSettings from "@/models/phoneSettings";
 import User from "@/models/users";
 import { canUsePhone } from "@/lib/phoneAccess";
 import { encryptPhoneSecret } from "@/lib/phoneCrypto";
+import { provisionWebRtcDevice } from "@/lib/issabelDiscovery";
 
 export async function GET() {
   await ConnectDb();
@@ -49,24 +51,31 @@ export async function PATCH(req) {
     if (!isValidObjectId(body.deviceId)) return Response.json({ success: false, message: "دستگاه معتبر نیست" }, { status: 400 });
     const device = await PhoneDevice.findById(body.deviceId).select("+secretCiphertext +secretIv +secretTag");
     if (!device) return Response.json({ success: false, message: "دستگاه پیدا نشد" }, { status: 404 });
+    const settings = await PhoneSettings.findOne({ key: "default" }).select("issabelHost provisioningStatus").lean();
+    const issabelPassword = String(body.issabelPassword || "");
+    if (!settings?.issabelHost) return Response.json({ success: false, message: "ابتدا ایزابل را در تنظیمات تلفن شناسایی کنید" }, { status: 409 });
+    if (issabelPassword.length < 8) return Response.json({ success: false, message: "رمز SSH ایزابل برای این عملیات لازم است" }, { status: 400 });
+    const owner = await User.findById(device.user).select("name pbxExtension").lean();
     if (body.action === "revoke") {
+      if (device.sipUsername) await provisionWebRtcDevice({ host: settings.issabelHost, password: issabelPassword, username: device.sipUsername, secret: "", remove: true });
       device.status = "revoked";
       device.revokedAt = new Date();
       device.secretCiphertext = ""; device.secretIv = ""; device.secretTag = "";
     } else if (body.action === "approve") {
-      const sipUsername = String(body.sipUsername || "").trim();
-      const sipSecret = String(body.sipSecret || "");
-      if (!sipUsername || sipSecret.length < 12) return Response.json({ success: false, message: "نام کاربری SIP و رمز حداقل ۱۲ کاراکتری الزامی است" }, { status: 400 });
+      if (!owner?.pbxExtension || !/^\d{2,8}$/.test(owner.pbxExtension)) return Response.json({ success: false, message: "ابتدا داخلی پشتیبان را در حساب کاربری او تعریف کنید" }, { status: 422 });
+      const suffix = crypto.createHash("sha256").update(device.deviceId).digest("hex").slice(0, 8);
+      const sipUsername = `web-${owner.pbxExtension}-${suffix}`;
+      const sipSecret = crypto.randomBytes(24).toString("base64url");
+      await provisionWebRtcDevice({ host: settings.issabelHost, password: issabelPassword, username: sipUsername, secret: sipSecret });
       const encrypted = encryptPhoneSecret(sipSecret);
       device.sipUsername = sipUsername;
       device.secretCiphertext = encrypted.ciphertext; device.secretIv = encrypted.iv; device.secretTag = encrypted.tag;
       device.status = "active"; device.approvedBy = admin._id; device.approvedAt = new Date(); device.revokedAt = null;
     } else return Response.json({ success: false, message: "عملیات معتبر نیست" }, { status: 400 });
     await device.save();
-    const owner = await User.findById(device.user).select("name").lean();
-    return Response.json({ success: true, message: body.action === "approve" ? `دستگاه ${owner?.name || "پشتیبان"} فعال شد` : "دسترسی دستگاه قطع شد" });
+    return Response.json({ success: true, message: body.action === "approve" ? `دستگاه ${owner?.name || "پشتیبان"} با داخلی WebRTC اختصاصی فعال شد` : "دسترسی دستگاه از سایت و ایزابل قطع شد" });
   } catch (error) {
     console.error("PHONE DEVICE PATCH ERROR", error);
-    return Response.json({ success: false, message: "به‌روزرسانی دستگاه ناموفق بود" }, { status: 500 });
+    return Response.json({ success: false, message: error.message || "به‌روزرسانی دستگاه ناموفق بود" }, { status: 500 });
   }
 }
