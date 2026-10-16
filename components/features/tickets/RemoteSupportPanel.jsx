@@ -109,7 +109,7 @@ export default function RemoteSupportPanel({ ticketId, role, className = "" }) {
       {session?.requestNote && <p className="mt-4 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 text-sm leading-7 text-slate-700">{session.requestNote}</p>}
       {session?.expiresAt && activeStatuses.includes(session.status) && <p className="mt-3 text-xs text-slate-500">مهلت این درخواست: {new Date(session.expiresAt).toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" })}</p>}
 
-      {!isStaff && <details className="mt-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 dark:border-blue-400/20 dark:from-blue-500/10 dark:to-transparent">
+      {!isStaff && <details className="mt-4 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4">
         <summary className="cursor-pointer list-none">
         <div className="flex items-start gap-3">
           <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-blue-600 text-white"><Download size={18} /></div>

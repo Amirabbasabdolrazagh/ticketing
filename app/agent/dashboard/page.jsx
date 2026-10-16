@@ -152,7 +152,7 @@ export default function AgentDashborad() {
 
         <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
           {/* recent tickets */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-8">
+          <div className="dashboard-panel glass-panel order-1 col-span-1 min-w-0 p-5 lg:col-span-12">
             <div className="flex justify-between w-full ">
               <Label className={"text-md"}>جدید ترین تیکت ها</Label>
               <Link href={"/agent/tickets"} className="flex text-blue-400">
@@ -184,7 +184,7 @@ export default function AgentDashborad() {
             </div>
           </div>
           {/* quick overview */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-4">
+          <div className="dashboard-panel glass-panel order-2 col-span-1 min-w-0 p-5 lg:col-span-6">
             <div className="flex justify-between w-full ">
               <Label className={"text-md"}>نمای کلی</Label>
             </div>
@@ -225,7 +225,7 @@ export default function AgentDashborad() {
             </div>
           </div>
           {/* high priority ticketc */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-5 lg:col-span-8">
+          <div className="dashboard-panel glass-panel order-4 col-span-1 min-w-0 p-5 lg:col-span-12">
             <div className="flex justify-between w-full ">
               <div className="flex gap-2">
                 <IoIosWarning size={20} color="red" />
@@ -272,7 +272,7 @@ export default function AgentDashborad() {
               </Table>
             </div>
           </div>
-          <div className="col-span-1 min-w-0 lg:col-span-4">
+          <div className="order-3 col-span-1 min-w-0 lg:col-span-6">
             <TicketStatusOverview data={chartData} />
           </div>
         </div>

@@ -173,7 +173,8 @@ export default function AdminDashborad() {
           </div>
         </div>
 
-        <div className="glass-panel overflow-hidden p-4 sm:p-5">
+        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
+        <div className="glass-panel order-4 col-span-1 overflow-hidden p-4 sm:p-5 lg:col-span-12">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <Label className="text-base font-black">وضعیت مشاهده تیکت‌ها توسط پشتیبان</Label>
@@ -240,9 +241,8 @@ export default function AdminDashborad() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
           {/* recent tickets */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-8">
+          <div className="dashboard-panel glass-panel order-1 col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-12">
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Label className="text-md">تازه ترین ها</Label>
 
@@ -285,7 +285,7 @@ export default function AdminDashborad() {
           </div>
 
           {/* quick overview */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-4">
+          <div className="dashboard-panel glass-panel order-2 col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-6">
             <div className="flex w-full items-center justify-between">
               <Label className="text-md">نمای کلی</Label>
             </div>
@@ -357,7 +357,7 @@ export default function AdminDashborad() {
           </div>
 
           {/* high priority tickets */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-8">
+          <div className="dashboard-panel glass-panel order-5 col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-12">
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex min-w-0 gap-2">
                 <IoIosWarning
@@ -425,12 +425,12 @@ export default function AdminDashborad() {
             </div>
           </div>
 
-          <div className="col-span-1 min-w-0 lg:col-span-4">
+          <div className="order-3 col-span-1 min-w-0 lg:col-span-6">
             <TicketStatusOverview data={chartData} />
           </div>
 
           {/* Customer rejected resolution */}
-          <div className="dashboard-panel glass-panel col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-8">
+          <div className="dashboard-panel glass-panel order-6 col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-12">
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex min-w-0 gap-2">
                 <MdNotificationImportant

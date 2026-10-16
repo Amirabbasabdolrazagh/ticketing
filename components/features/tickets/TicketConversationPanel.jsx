@@ -16,7 +16,7 @@ export default function TicketConversationPanel({ messages = [], children }) {
             <p className="mt-0.5 text-xs text-muted-foreground">تمام پیام‌های مشتری و تیم پشتیبانی در یک مسیر</p>
           </div>
         </div>
-        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 dark:bg-blue-500/15 dark:text-blue-200">
+        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700">
           {messages.length.toLocaleString("fa-IR")} پیام
         </span>
       </header>

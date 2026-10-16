@@ -19,10 +19,3 @@
   .project-workflow-table td:first-child,
   .project-workflow-table td:last-child { grid-column: auto; }
 }
-
-.dark .project-workflow-table thead { background: rgb(30 41 59 / .94) !important; color: #cbd5e1; }
-.dark .project-workflow-table tbody { border-color: rgb(71 85 105 / .5); }
-.dark .project-workflow-table tr { border-color: rgb(71 85 105 / .55); }
-.dark .project-workflow-table .project-workflow-row { background: rgb(15 23 42 / .55) !important; }
-.dark .project-workflow-table .project-workflow-row:hover { background: rgb(30 58 138 / .22) !important; }
-.dark .project-workflow-table td::before { color: #94a3b8; }

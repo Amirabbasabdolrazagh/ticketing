@@ -221,16 +221,16 @@ export default function LiveChat() {
   return (
     <>
       {popup && (
-        <button type="button" onClick={openPopupConversation} className="fixed left-5 top-5 z-[100] w-80 rounded-xl border border-blue-200 bg-white p-4 text-right shadow-xl dark:border-blue-400/20 dark:bg-slate-900">
+        <button type="button" onClick={openPopupConversation} className="fixed left-5 top-5 z-[100] w-80 rounded-xl border border-blue-200 bg-white p-4 text-right shadow-xl">
           <p className="mb-1 text-sm font-bold">پیام جدید از {popup.senderName}</p>
           <p className="line-clamp-2 text-sm text-gray-600">{popup.text}</p>
         </button>
       )}
 
       {isOpen && (
-        <section className="fixed bottom-28 left-5 z-[90] flex h-[min(32rem,calc(100dvh-8.5rem))] w-[42rem] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border bg-white text-foreground shadow-2xl dark:bg-slate-900 lg:bottom-20 lg:h-[32rem]">
+        <section className="fixed bottom-28 left-5 z-[90] flex h-[min(32rem,calc(100dvh-8.5rem))] w-[42rem] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border bg-white text-foreground shadow-2xl lg:bottom-20 lg:h-[32rem]">
           <aside className={`${selectedContact ? "hidden sm:flex" : "flex"} w-full flex-col border-l sm:w-56`}>
-            <div className="flex items-center gap-2 border-b bg-gray-50 px-4 py-4 dark:bg-slate-800">
+            <div className="flex items-center gap-2 border-b bg-gray-50 px-4 py-4">
               <Users className="size-5 text-blue-600" />
               <p className="font-bold">{currentUser?.role === "admin" ? "پشتیبان‌ها" : "ادمین‌ها"}</p>
             </div>
@@ -239,7 +239,7 @@ export default function LiveChat() {
               {contacts.map((contact) => {
                 const status = getPresenceStatus(contact.userId, presences, now);
                 return (
-                  <button key={contact.userId} type="button" onClick={() => selectContact(contact)} className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-right hover:bg-blue-50 dark:hover:bg-blue-500/10 ${selectedContact?.userId === contact.userId ? "bg-blue-50 dark:bg-blue-500/10" : ""}`}>
+                  <button key={contact.userId} type="button" onClick={() => selectContact(contact)} className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-right hover:bg-blue-50 ${selectedContact?.userId === contact.userId ? "bg-blue-50" : ""}`}>
                     <span className={`size-3 shrink-0 rounded-full ${status.color}`} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{contact.name}</span>
@@ -264,18 +264,18 @@ export default function LiveChat() {
               <button type="button" onClick={() => setIsOpen(false)} aria-label="بستن چت"><X className="size-5" /></button>
             </header>
 
-            <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-3 dark:bg-slate-950/60">
+            <div className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-3">
               {!selectedContact && <p className="mt-16 text-center text-sm text-gray-400">از فهرست یک نفر را انتخاب کنید</p>}
               {selectedContact && uniqueActiveMessages.length === 0 && <p className="mt-16 text-center text-sm text-gray-400">هنوز پیامی ردوبدل نشده است</p>}
               {uniqueActiveMessages.map((message) => {
                 const isMine = message.senderId === currentUser?.id;
-                return <div key={message.id} className={`flex ${isMine ? "justify-start" : "justify-end"}`}><div dir="rtl" className={`max-w-[82%] rounded-xl px-3 py-2 text-right text-sm ${isMine ? "bg-blue-600 text-white" : "border bg-white dark:bg-slate-800"}`}><p className="whitespace-pre-wrap break-words">{message.text}</p><p className={`mt-1 text-[10px] ${isMine ? "text-blue-100" : "text-gray-400"}`}>{new Date(message.sentAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</p></div></div>;
+                return <div key={message.id} className={`flex ${isMine ? "justify-start" : "justify-end"}`}><div dir="rtl" className={`max-w-[82%] rounded-xl px-3 py-2 text-right text-sm ${isMine ? "bg-blue-600 text-white" : "border bg-white"}`}><p className="whitespace-pre-wrap break-words">{message.text}</p><p className={`mt-1 text-[10px] ${isMine ? "text-blue-100" : "text-gray-400"}`}>{new Date(message.sentAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</p></div></div>;
               })}
               <div ref={endRef} />
             </div>
 
             <form onSubmit={sendMessage} className="flex gap-2 border-t p-3">
-              <input dir="rtl" value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} disabled={!selectedContact} placeholder={selectedContact ? "پیام خود را بنویسید..." : "ابتدا یک مخاطب انتخاب کنید"} className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-right text-sm outline-none focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-slate-800" />
+              <input dir="rtl" value={text} onChange={(event) => setText(event.target.value)} maxLength={1000} disabled={!selectedContact} placeholder={selectedContact ? "پیام خود را بنویسید..." : "ابتدا یک مخاطب انتخاب کنید"} className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-right text-sm outline-none focus:border-blue-500 disabled:bg-gray-100" />
               <Button type="submit" size="icon" disabled={!text.trim() || !selectedContact || isSending || !isConnected}><Send className="size-4" /></Button>
             </form>
           </div>
