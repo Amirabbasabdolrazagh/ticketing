@@ -3,7 +3,7 @@ import ConnectDb from "@/utils/connectDB";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_LIFETIME, ACCESS_TOKEN_MAX_AGE } from "@/lib/accessTokenLifetime";
 import jwt from "jsonwebtoken";
-import { isProfileComplete } from "@/utils/profileCompletion";
+import { isUserProfileComplete } from "@/utils/profileCompletion";
 export async function POST(req) {
   try {
     await ConnectDb();
@@ -30,7 +30,7 @@ export async function POST(req) {
     if (user.otp.code !== code) {
       return Response.json({ success: false, message: "invalid otp code" },{ status: 400 },);
     }
-    const profileComplete = isProfileComplete(user.name);
+    const profileComplete = isUserProfileComplete(user);
     const accessPayload = {
       userId: user._id.toString(),
       phone: user.phone,

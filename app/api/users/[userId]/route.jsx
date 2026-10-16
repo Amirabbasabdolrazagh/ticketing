@@ -7,11 +7,12 @@ import jwt from "jsonwebtoken";
 import { ACCESS_TOKEN_LIFETIME, ACCESS_TOKEN_MAX_AGE } from "@/lib/accessTokenLifetime";
 import {
   isProfileComplete,
+  isUserProfileComplete,
   normalizeFullName,
 } from "@/utils/profileCompletion";
 
 async function refreshUserSession(userInfo) {
-  const profileComplete = isProfileComplete(userInfo.name);
+  const profileComplete = isUserProfileComplete(userInfo);
   const payload = {
     userId: userInfo._id.toString(),
     phone: userInfo.phone,
@@ -124,7 +125,7 @@ export async function PATCH(req, { params }) {
         await userInfo.save();
         const profileComplete = isSelfUpdate
           ? await refreshUserSession(userInfo)
-          : isProfileComplete(userInfo.name);
+          : isUserProfileComplete(userInfo);
         response = Response.json(
           {
             success: true,

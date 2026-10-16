@@ -45,7 +45,7 @@ export async function proxy(req) {
   }
 
   const settingsPath = `/${role}/setting`;
-  if (profileComplete === false && pathname !== settingsPath) {
+  if (profileComplete === false && role !== "organization_manager" && pathname !== settingsPath) {
     const response = NextResponse.redirect(new URL(settingsPath, req.url));
     if (newAccessToken) {
       response.cookies.set("accessToken", newAccessToken, {

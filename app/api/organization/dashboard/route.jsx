@@ -16,7 +16,10 @@ export async function GET() {
       return Response.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
 
-    const organization = await Organization.findOne({ manager: user._id, isActive: true })
+    const organization = await Organization.findOne({
+      isActive: true,
+      $or: [{ manager: user._id }, { _id: user.organization }],
+    })
       .populate("manager", "name")
       .populate("members", "name lastLoginAt createdAt")
       .lean();

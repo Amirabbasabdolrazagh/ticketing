@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import ConnectDb from "./connectDB";
 import User from "@/models/users";
-import { isProfileComplete } from "@/utils/profileCompletion";
+import { isUserProfileComplete } from "@/utils/profileCompletion";
 import { ACCESS_TOKEN_LIFETIME } from "@/lib/accessTokenLifetime";
 export default async function refreshAccessToken(refreshToken) {
   try {
@@ -18,7 +18,7 @@ export default async function refreshAccessToken(refreshToken) {
           userId: user._id.toString(),
           phone: user.phone,
           role: user.role,
-          profileComplete: isProfileComplete(user.name),
+          profileComplete: isUserProfileComplete(user),
         },
         process.env.ACCESS_TOKEN_SECRET,
         {

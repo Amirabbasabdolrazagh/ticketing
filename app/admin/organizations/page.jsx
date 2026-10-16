@@ -1,22 +1,19 @@
 "use client";
 
 import axios from "axios";
-import { Building2, CalendarDays, Cpu, Edit3, Plus, ShieldCheck, TicketCheck, UsersRound, X } from "lucide-react";
+import { Building2, Cpu, Edit3, HardDrive, Plus, ShieldCheck, TicketCheck, Trash2, UsersRound, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { formatJalaliInput, formatJalaliTyping } from "@/utils/jalaliDate";
 
 const emptyForm = {
-  name: "", managerName: "", managerPhone: "", managerEmail: "", managerPassword: "", memberIds: [], equipmentText: "",
-  supportContract: { title: "قرارداد پشتیبانی", level: "standard", status: "active", startAt: "", endAt: "", monthlyHours: "", notes: "" },
+  name: "", managerName: "", managerPhone: "", managerEmail: "", managerPassword: "", memberIds: [],
+  equipment: [{ name: "", type: "", serial: "", status: "active" }],
+  supportContract: { title: "قرارداد پشتیبانی", level: "standard", status: "active", startAt: "", endAt: "", notes: "" },
 };
 
 const contractLabels = { basic: "پایه", standard: "استاندارد", premium: "ویژه" };
 const contractStatus = { active: "فعال", expiring: "رو به پایان", expired: "منقضی", draft: "پیش‌نویس" };
-
-const parseEquipment = (text) => text.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
-  const [name, type = "", serial = ""] = line.split("|").map((item) => item.trim());
-  return { name, type, serial, status: "active" };
-});
 
 export default function OrganizationsPage() {
   const [organizations, setOrganizations] = useState([]);
@@ -51,24 +48,28 @@ export default function OrganizationsPage() {
       managerEmail: organization.manager?.email || "",
       managerPassword: "",
       memberIds: organization.members.map((member) => member._id),
-      equipmentText: organization.equipment.map((item) => [item.name, item.type, item.serial].filter(Boolean).join(" | ")).join("\n"),
+      equipment: organization.equipment.length
+        ? organization.equipment.map((item) => ({ name: item.name || "", type: item.type || "", serial: item.serial || "", status: item.status || "active" }))
+        : [{ name: "", type: "", serial: "", status: "active" }],
       supportContract: {
         title: organization.supportContract?.title || "قرارداد پشتیبانی",
         level: organization.supportContract?.level || "standard",
         status: organization.supportContract?.status || "active",
-        startAt: organization.supportContract?.startAt?.slice(0, 10) || "",
-        endAt: organization.supportContract?.endAt?.slice(0, 10) || "",
-        monthlyHours: organization.supportContract?.monthlyHours || "",
+        startAt: formatJalaliInput(organization.supportContract?.startAt),
+        endAt: formatJalaliInput(organization.supportContract?.endAt),
         notes: organization.supportContract?.notes || "",
       },
     });
     setOpen(true);
   };
   const toggleMember = (id) => setForm((current) => ({ ...current, memberIds: current.memberIds.includes(id) ? current.memberIds.filter((item) => item !== id) : [...current.memberIds, id] }));
+  const updateEquipment = (index, key, value) => setForm((current) => ({ ...current, equipment: current.equipment.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item) }));
+  const addEquipment = () => setForm((current) => ({ ...current, equipment: [...current.equipment, { name: "", type: "", serial: "", status: "active" }] }));
+  const removeEquipment = (index) => setForm((current) => ({ ...current, equipment: current.equipment.length === 1 ? [{ name: "", type: "", serial: "", status: "active" }] : current.equipment.filter((_, itemIndex) => itemIndex !== index) }));
   const submit = async () => {
     setSaving(true);
     try {
-      const payload = { ...form, organizationId: editingId, equipment: parseEquipment(form.equipmentText) };
+      const payload = { ...form, organizationId: editingId, equipment: form.equipment.filter((item) => item.name.trim()) };
       const { data } = editingId ? await axios.patch("/api/organizations", payload) : await axios.post("/api/organizations", payload);
       if (data.success) { toast.success(data.message); setOpen(false); await load(); }
     } catch (error) { toast.error(error.response?.data?.message || "ذخیره سازمان ناموفق بود"); }
@@ -131,11 +132,25 @@ export default function OrganizationsPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="سطح قرارداد"><select value={form.supportContract.level} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, level: e.target.value } })}><option value="basic">پایه</option><option value="standard">استاندارد</option><option value="premium">ویژه</option></select></Field>
           <Field label="وضعیت قرارداد"><select value={form.supportContract.status} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, status: e.target.value } })}><option value="active">فعال</option><option value="expiring">رو به پایان</option><option value="expired">منقضی</option><option value="draft">پیش‌نویس</option></select></Field>
-          <Field label="شروع قرارداد"><input type="date" value={form.supportContract.startAt} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, startAt: e.target.value } })} /></Field>
-          <Field label="پایان قرارداد"><input type="date" value={form.supportContract.endAt} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, endAt: e.target.value } })} /></Field>
-          <Field label="ساعت پشتیبانی ماهانه"><input type="number" min="0" value={form.supportContract.monthlyHours} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, monthlyHours: e.target.value } })} /></Field>
-          <div className="sm:col-span-2 lg:col-span-3"><Field label="تجهیزات؛ هر خط: نام | نوع | سریال"><textarea rows="4" value={form.equipmentText} onChange={(e) => setForm({ ...form, equipmentText: e.target.value })} placeholder="سرور حسابداری | Server | SRV-001" /></Field></div>
+          <Field label="شروع قرارداد (شمسی)"><input dir="ltr" inputMode="numeric" value={form.supportContract.startAt} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, startAt: formatJalaliTyping(e.target.value) } })} placeholder="1405/07/24" /></Field>
+          <Field label="پایان قرارداد (شمسی)"><input dir="ltr" inputMode="numeric" value={form.supportContract.endAt} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, endAt: formatJalaliTyping(e.target.value) } })} placeholder="1406/07/24" /></Field>
         </div>
+        <section className="mt-6 overflow-hidden rounded-3xl border border-cyan-100 bg-gradient-to-br from-cyan-50/80 via-white to-blue-50/60">
+          <div className="flex flex-col gap-3 border-b border-cyan-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-cyan-600 text-white shadow-lg shadow-cyan-200"><HardDrive className="size-5" /></span><div><h3 className="font-black text-slate-900">تجهیزات سازمان</h3><p className="mt-1 text-[11px] text-slate-500">هر تجهیز را در یک کارت جداگانه ثبت کنید.</p></div></div>
+            <button type="button" onClick={addEquipment} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 text-xs font-black text-white"><Plus className="size-4" /> افزودن تجهیز</button>
+          </div>
+          <div className="grid gap-3 p-4 sm:grid-cols-2">
+            {form.equipment.map((item, index) => <article key={index} className="relative rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+              <div className="mb-4 flex items-center justify-between"><span className="rounded-full bg-cyan-50 px-3 py-1 text-[10px] font-black text-cyan-700">تجهیز {(index + 1).toLocaleString("fa-IR")}</span><button type="button" onClick={() => removeEquipment(index)} className="grid size-8 place-items-center rounded-xl bg-rose-50 text-rose-600" aria-label="حذف تجهیز"><Trash2 className="size-4" /></button></div>
+              <div className="grid gap-3">
+                <Field label="نام تجهیز"><input value={item.name} onChange={(e) => updateEquipment(index, "name", e.target.value)} placeholder="مثلاً سرور حسابداری" /></Field>
+                <div className="grid gap-3 sm:grid-cols-2"><Field label="نوع تجهیز"><input value={item.type} onChange={(e) => updateEquipment(index, "type", e.target.value)} placeholder="Server" /></Field><Field label="شماره سریال"><input dir="ltr" value={item.serial} onChange={(e) => updateEquipment(index, "serial", e.target.value)} placeholder="SRV-001" /></Field></div>
+                <Field label="وضعیت"><select value={item.status} onChange={(e) => updateEquipment(index, "status", e.target.value)}><option value="active">فعال</option><option value="repair">در تعمیر</option><option value="retired">از رده خارج</option></select></Field>
+              </div>
+            </article>)}
+          </div>
+        </section>
         <div className="mt-7 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row"><button onClick={() => setOpen(false)} className="rounded-2xl border border-slate-200 px-5 py-3 font-bold">انصراف</button><button disabled={saving} onClick={submit} className="flex-1 rounded-2xl bg-blue-600 px-5 py-3 font-black text-white shadow-lg disabled:opacity-60">{saving ? "در حال ذخیره…" : editingId ? "ذخیره تغییرات" : "ساخت پرتال سازمان"}</button></div>
       </div></div>}
     </section>

@@ -3,7 +3,7 @@ import ConnectDb from "@/utils/connectDB";
 import bcrypt from "bcrypt";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
-import { isProfileComplete } from "@/utils/profileCompletion";
+import { isUserProfileComplete } from "@/utils/profileCompletion";
 import { ACCESS_TOKEN_LIFETIME, ACCESS_TOKEN_MAX_AGE } from "@/lib/accessTokenLifetime";
 export async function POST(req) {
   try {
@@ -62,7 +62,7 @@ export async function POST(req) {
     }
     // Generate new tokens
 
-    const profileComplete = isProfileComplete(user.name);
+    const profileComplete = isUserProfileComplete(user);
     const accessPayload = {
       userId: user._id.toString(),
 

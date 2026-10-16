@@ -6,6 +6,7 @@ import ConnectDb from "@/utils/connectDB";
 import { isValidObjectId } from "mongoose";
 import bcrypt from "bcrypt";
 import { randomBytes } from "crypto";
+import { parseJalaliDate } from "@/utils/jalaliDate";
 
 const phonePattern = /^09\d{9}$/;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,13 +51,19 @@ function cleanEquipment(items) {
 }
 
 function cleanContract(contract = {}) {
+  const parseContractDate = (value) => {
+    if (!value) return null;
+    const jalaliDate = parseJalaliDate(value);
+    if (jalaliDate) return jalaliDate;
+    const legacyDate = new Date(value);
+    return Number.isNaN(legacyDate.getTime()) ? null : legacyDate;
+  };
   return {
     title: String(contract.title || "قرارداد پشتیبانی").trim(),
     level: ["basic", "standard", "premium"].includes(contract.level) ? contract.level : "standard",
     status: ["active", "expiring", "expired", "draft"].includes(contract.status) ? contract.status : "active",
-    startAt: contract.startAt || null,
-    endAt: contract.endAt || null,
-    monthlyHours: Math.max(0, Number(contract.monthlyHours) || 0),
+    startAt: parseContractDate(contract.startAt),
+    endAt: parseContractDate(contract.endAt),
     notes: String(contract.notes || "").trim(),
   };
 }
@@ -110,6 +117,7 @@ export async function POST(req) {
     const managerEmail = String(body.managerEmail || "").trim().toLowerCase();
     const managerPassword = String(body.managerPassword || "");
     const memberIds = [...new Set(Array.isArray(body.memberIds) ? body.memberIds.filter(isValidObjectId) : [])];
+    const supportContract = cleanContract(body.supportContract);
     if (!name || !managerName || !phonePattern.test(managerPhone)) {
       return Response.json({ success: false, message: "نام سازمان، نام مدیر و شماره موبایل معتبر الزامی است" }, { status: 400 });
     }
@@ -118,6 +126,12 @@ export async function POST(req) {
     }
     if (!passwordPattern.test(managerPassword)) {
       return Response.json({ success: false, message: "رمز باید حداقل ۸ کاراکتر و شامل حرف بزرگ، حرف کوچک، عدد و نماد باشد" }, { status: 400 });
+    }
+    if ((body.supportContract?.startAt && !supportContract.startAt) || (body.supportContract?.endAt && !supportContract.endAt)) {
+      return Response.json({ success: false, message: "تاریخ قرارداد را به‌صورت شمسی و با الگوی ۱۴۰۵/۰۷/۲۴ وارد کنید" }, { status: 400 });
+    }
+    if (supportContract.startAt && supportContract.endAt && supportContract.endAt < supportContract.startAt) {
+      return Response.json({ success: false, message: "تاریخ پایان قرارداد نمی‌تواند قبل از تاریخ شروع باشد" }, { status: 400 });
     }
     if (managerEmail && await User.exists({ email: managerEmail, phone: { $ne: managerPhone } })) {
       return Response.json({ success: false, message: "این ایمیل قبلاً برای کاربر دیگری ثبت شده است" }, { status: 409 });
@@ -160,7 +174,7 @@ export async function POST(req) {
       code,
       manager: manager._id,
       members: members.map((member) => member._id),
-      supportContract: cleanContract(body.supportContract),
+      supportContract,
       equipment: cleanEquipment(body.equipment),
     });
     manager.organization = organization._id;
@@ -182,6 +196,13 @@ export async function PATCH(req) {
     if (!isValidObjectId(body.organizationId)) return Response.json({ success: false, message: "شناسه سازمان نامعتبر است" }, { status: 400 });
     const organization = await Organization.findById(body.organizationId);
     if (!organization) return Response.json({ success: false, message: "سازمان پیدا نشد" }, { status: 404 });
+    const supportContract = cleanContract(body.supportContract);
+    if ((body.supportContract?.startAt && !supportContract.startAt) || (body.supportContract?.endAt && !supportContract.endAt)) {
+      return Response.json({ success: false, message: "تاریخ قرارداد را به‌صورت شمسی و با الگوی ۱۴۰۵/۰۷/۲۴ وارد کنید" }, { status: 400 });
+    }
+    if (supportContract.startAt && supportContract.endAt && supportContract.endAt < supportContract.startAt) {
+      return Response.json({ success: false, message: "تاریخ پایان قرارداد نمی‌تواند قبل از تاریخ شروع باشد" }, { status: 400 });
+    }
 
     const memberIds = [...new Set(Array.isArray(body.memberIds) ? body.memberIds.filter(isValidObjectId) : [])];
     const members = await User.find({ _id: { $in: memberIds }, role: "customer", $or: [{ organization: null }, { organization: organization._id }] }).select("_id");
@@ -189,7 +210,7 @@ export async function PATCH(req) {
     const previousMembers = organization.members;
     organization.name = String(body.name || organization.name).trim();
     organization.members = members.map((member) => member._id);
-    organization.supportContract = cleanContract(body.supportContract);
+    organization.supportContract = supportContract;
     organization.equipment = cleanEquipment(body.equipment);
     organization.isActive = body.isActive !== false;
     await organization.save();

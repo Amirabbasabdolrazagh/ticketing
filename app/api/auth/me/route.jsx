@@ -1,5 +1,5 @@
 import getCurrentUser from "@/utils/auth";
-import { isProfileComplete } from "@/utils/profileCompletion";
+import { isUserProfileComplete } from "@/utils/profileCompletion";
 
 export async function GET() {
   try {
@@ -19,7 +19,7 @@ export async function GET() {
       isVerify: user.isVerify,
       lastLoginAt: user.lastLoginAt,
       createdAt: user.createdAt,
-      profileComplete: isProfileComplete(user.name),
+      profileComplete: isUserProfileComplete(user),
       telegramLinked: Boolean(user.telegramChatId),
       baleLinked: Boolean(user.baleChatId),
       messengerLinked: Boolean(user.telegramChatId || user.baleChatId),

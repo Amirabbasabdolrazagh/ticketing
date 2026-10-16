@@ -18,7 +18,6 @@ const organizationSchema = new Schema({
     status: { type: String, enum: ["active", "expiring", "expired", "draft"], default: "active" },
     startAt: { type: Date, default: null },
     endAt: { type: Date, default: null },
-    monthlyHours: { type: Number, min: 0, max: 10000, default: 0 },
     notes: { type: String, trim: true, maxlength: 1000, default: "" },
   },
   equipment: [equipmentSchema],
