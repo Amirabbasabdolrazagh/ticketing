@@ -2,6 +2,7 @@ import User from "@/models/users";
 import ConnectDb from "@/utils/connectDB";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_LIFETIME, ACCESS_TOKEN_MAX_AGE } from "@/lib/accessTokenLifetime";
+import { authCookieOptions } from "@/lib/authCookieOptions";
 import jwt from "jsonwebtoken";
 import { isUserProfileComplete } from "@/utils/profileCompletion";
 export async function POST(req) {
@@ -58,21 +59,9 @@ export async function POST(req) {
     await user.save();
 
     const cookieStore = await cookies();
-    cookieStore.set("accessToken", accessToken, {
-      httpOnly: true,
-      path: "/",
-      maxAge: ACCESS_TOKEN_MAX_AGE,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
+    cookieStore.set("accessToken", accessToken, authCookieOptions({ maxAge: ACCESS_TOKEN_MAX_AGE }));
 
-    cookieStore.set("refreshToken", refreshToken, {
-      httpOnly: true,
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60,
-      sameSite: "strict",
-      secure: process.env.NODE_ENV === "production",
-    });
+    cookieStore.set("refreshToken", refreshToken, authCookieOptions({ maxAge: 7 * 24 * 60 * 60 }));
 
     return Response.json(
       {

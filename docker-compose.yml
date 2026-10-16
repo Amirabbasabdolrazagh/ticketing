@@ -16,10 +16,39 @@ services:
     volumes:
       - ./storage/ticket-attachments:/app/storage/ticket-attachments
       - ./storage/project-assessments:/app/storage/project-assessments
+      - ./storage/call-recordings:/app/storage/call-recordings
     security_opt:
       - no-new-privileges:true
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  phone:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: itrasam-phone
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOSTNAME: 0.0.0.0
+      PHONE_APP_MODE: "1"
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - ./storage/ticket-attachments:/app/storage/ticket-attachments
+      - ./storage/project-assessments:/app/storage/project-assessments
+      - ./storage/call-recordings:/app/storage/call-recordings
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/phone || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5

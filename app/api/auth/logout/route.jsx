@@ -2,6 +2,7 @@ import User from "@/models/users";
 import ConnectDB from "@/utils/connectDB";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import { clearAuthCookie } from "@/lib/authCookieOptions";
 export async function POST() {
   try {
     await ConnectDB();
@@ -20,20 +21,16 @@ export async function POST() {
       $unset: { refreshToken: "" },
     });
     if (!user) {
-      cookieStore.delete("refreshToken");
-      cookieStore.delete("accessToken");
+      clearAuthCookie(cookieStore, "refreshToken");
+      clearAuthCookie(cookieStore, "accessToken");
 
       return Response.json(
         { success: false, message: "user not found" },
         { status: 404 },
       );
     }
-    cookieStore.delete("refreshToken", {
-      path: "/",
-    });
-    cookieStore.delete("accessToken", {
-      path: "/",
-    });
+    clearAuthCookie(cookieStore, "refreshToken");
+    clearAuthCookie(cookieStore, "accessToken");
 
     return Response.json(
       { success: true, message: "Logged out successfully" },

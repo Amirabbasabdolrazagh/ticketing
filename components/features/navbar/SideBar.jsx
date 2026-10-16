@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   Menu,
   MessageCircle,
+  PhoneCall,
   Settings2,
   Sparkles,
   TicketCheck,
@@ -132,6 +133,13 @@ export default function SideBar() {
       icon: TicketCheck,
       active: pathname.startsWith(`/${userRole}/tickets`),
     }] : []),
+    ...(["admin", "agent", "passive_agent", "active_agent"].includes(userRole) ? [{
+      label: "تلفن سازمانی",
+      description: "تماس امن و گزارش مکالمات",
+      href: process.env.NEXT_PUBLIC_PHONE_URL || "/phone",
+      icon: PhoneCall,
+      active: pathname.startsWith("/phone"),
+    }] : []),
     ...(userRole === "organization_manager" && organizationFeatures.onsiteService ? [{
       label: "خدمات حضوری",
       description: "درخواست اعزام و پیگیری مراجعه",
@@ -246,7 +254,7 @@ export default function SideBar() {
             "/admin/tickets",
             "/admin/monitoring",
             "/admin/notifications",
-          ].includes(item.href),
+          ].includes(item.href) || item.label === "تلفن سازمانی",
         )
       : userRole === "agent"
         ? menuItems.filter((item) =>
@@ -267,7 +275,7 @@ export default function SideBar() {
                 `/${userRole}/notifications`,
                 `/${userRole}/setting`,
                 `/${userRole}/onsite-services`,
-              ].includes(item.href),
+              ].includes(item.href) || item.label === "تلفن سازمانی",
             )
         : userRole === "customer"
           ? menuItems.filter((item) =>
@@ -297,7 +305,7 @@ export default function SideBar() {
           ].includes(item.href),
         )
       : userRole === "agent"
-        ? menuItems.filter((item) => ["/agent/setting"].includes(item.href))
+        ? menuItems.filter((item) => ["/agent/setting"].includes(item.href) || item.label === "تلفن سازمانی")
         : [];
 
   const isMoreMenuActive =

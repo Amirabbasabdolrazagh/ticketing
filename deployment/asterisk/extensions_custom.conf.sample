@@ -1,0 +1,12 @@
+[itrasam-inbound]
+exten => s,1,NoOp(ITRASAM secure inbound routing)
+ same => n,AGI(itrasam_inbound_router.py)
+ same => n,Set(CALLERID(name)=${ITRASAM_CUSTOMER_NAME})
+ same => n,GotoIf($["${ITRASAM_ROUTE_STATUS}"="matched"]?owner:fallback)
+ same => n(owner),Dial(SIP/${ITRASAM_EXTENSION},30,tT)
+ same => n,Goto(fallback)
+ same => n(fallback),Dial(SIP/102,30,tT)
+ same => n,Hangup()
+
+; مسیر ورودی DID شرکت در Issabel باید به context بالا هدایت شود.
+; برای WebRTC در صورت استفاده از PJSIP، SIP/ را با PJSIP/ جایگزین کنید.

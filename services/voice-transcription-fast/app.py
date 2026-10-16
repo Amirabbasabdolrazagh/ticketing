@@ -15,8 +15,9 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 MODEL_DIR = Path(os.getenv("VOICE_MODEL_DIR", "/models/shenava-koochik-v1"))
 MODEL_REVISION = "8ec9237"
 MODEL_BASE = f"https://huggingface.co/Reza2kn/Shenava-Koochik-v1.0-sherpa-onnx/resolve/{MODEL_REVISION}"
-MAX_AUDIO_SIZE = 15 * 1024 * 1024
-MAX_AUDIO_SECONDS = 90
+MAX_AUDIO_SIZE = 250 * 1024 * 1024
+MAX_AUDIO_SECONDS = 4 * 60 * 60
+CHUNK_SECONDS = 60
 recognizer = None
 
 
@@ -69,32 +70,44 @@ async def transcribe(audio: UploadFile = File(...)):
 
     content = await audio.read(MAX_AUDIO_SIZE + 1)
     if not content or len(content) > MAX_AUDIO_SIZE:
-        raise HTTPException(status_code=400, detail="فایل صوتی معتبر نیست یا بیش از ۱۵ مگابایت است.")
+        raise HTTPException(status_code=400, detail="فایل صوتی معتبر نیست یا بیش از ۲۵۰ مگابایت است.")
 
     started_at = time.monotonic()
     with tempfile.TemporaryDirectory() as temporary_dir:
         audio_path = Path(temporary_dir) / "voice"
         audio_path.write_bytes(content)
         try:
-            decoded = subprocess.run(
-                ["ffmpeg", "-v", "error", "-nostdin", "-i", str(audio_path), "-ac", "1", "-ar", "16000", "-f", "f32le", "-t", str(MAX_AUDIO_SECONDS + 1), "pipe:1"],
-                capture_output=True,
-                timeout=40,
-                check=True,
+            probe = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", str(audio_path)],
+                capture_output=True, text=True, timeout=30, check=True,
             )
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            duration = float(probe.stdout.strip())
+        except (ValueError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
             raise HTTPException(status_code=400, detail="فایل صوتی قابل خواندن نیست.") from error
+        if duration < 0.2 or duration > MAX_AUDIO_SECONDS:
+            raise HTTPException(status_code=400, detail="طول تماس باید بین ۰٫۲ ثانیه تا ۴ ساعت باشد.")
 
-    samples = np.frombuffer(decoded.stdout, dtype=np.float32)
-    duration = len(samples) / 16000
-    if duration < 0.2 or duration > MAX_AUDIO_SECONDS:
-        raise HTTPException(status_code=400, detail="طول صدا باید بین ۰٫۲ تا ۹۰ ثانیه باشد.")
+        segments = []
+        for start in range(0, int(duration) + 1, CHUNK_SECONDS):
+            try:
+                decoded = subprocess.run(
+                    ["ffmpeg", "-v", "error", "-nostdin", "-ss", str(start), "-i", str(audio_path), "-t", str(CHUNK_SECONDS), "-ac", "1", "-ar", "16000", "-f", "f32le", "pipe:1"],
+                    capture_output=True, timeout=90, check=True,
+                )
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+                raise HTTPException(status_code=400, detail="بخشی از فایل تماس قابل خواندن نیست.") from error
+            samples = np.frombuffer(decoded.stdout, dtype=np.float32)
+            if len(samples) < 3200:
+                continue
+            stream = recognizer.create_stream()
+            stream.accept_waveform(16000, samples)
+            recognizer.decode_stream(stream)
+            segment_text = stream.result.text.strip()
+            if segment_text:
+                segments.append({"start": start, "end": min(start + CHUNK_SECONDS, duration), "text": segment_text})
 
-    stream = recognizer.create_stream()
-    stream.accept_waveform(16000, samples)
-    recognizer.decode_stream(stream)
-    text = stream.result.text.strip()
+    text = "\n".join(segment["text"] for segment in segments).strip()
     print(f"voice_transcribed model=shenava-koochik-v1 audio_seconds={duration:.1f} processing_seconds={time.monotonic() - started_at:.1f}", flush=True)
     if not text:
         raise HTTPException(status_code=422, detail="متن قابل تشخیصی از صوت دریافت نشد.")
-    return {"text": text}
+    return {"text": text, "segments": segments, "duration": duration, "model": "shenava-koochik-v1"}

@@ -12,6 +12,7 @@ export async function proxy(req) {
   let role;
   let profileComplete;
   let newAccessToken = null;
+  const cookieDomain = process.env.AUTH_COOKIE_DOMAIN?.trim();
 
   // 1) Check access token
   if (accessToken) {
@@ -54,12 +55,18 @@ export async function proxy(req) {
         maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
       });
     }
     return response;
   }
 
   // 3) Role protection
+  if (pathname.startsWith("/phone") && !["admin", "agent", "passive_agent", "active_agent"].includes(role)) {
+    const response = NextResponse.redirect(new URL(`/${role}/dashboard`, req.url));
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production", ...(cookieDomain ? { domain: cookieDomain } : {}) });
+    return response;
+  }
   if (pathname.startsWith("/admin") && role !== "admin") {
     const response = NextResponse.redirect(new URL(`/${role}`, req.url));
 
@@ -70,6 +77,7 @@ export async function proxy(req) {
         maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
       });
     }
 
@@ -86,6 +94,7 @@ export async function proxy(req) {
         maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
       });
     }
 
@@ -102,6 +111,7 @@ export async function proxy(req) {
         maxAge: ACCESS_TOKEN_MAX_AGE,
         sameSite: "strict",
         secure: process.env.NODE_ENV === "production",
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
       });
     }
 
@@ -110,19 +120,19 @@ export async function proxy(req) {
 
   if (pathname.startsWith("/passive_agent") && role !== "passive_agent") {
     const response = NextResponse.redirect(new URL(`/${role}`, req.url));
-    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production", ...(cookieDomain ? { domain: cookieDomain } : {}) });
     return response;
   }
 
   if (pathname.startsWith("/active_agent") && role !== "active_agent") {
     const response = NextResponse.redirect(new URL(`/${role}`, req.url));
-    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production", ...(cookieDomain ? { domain: cookieDomain } : {}) });
     return response;
   }
 
   if (pathname.startsWith("/organization_manager") && role !== "organization_manager") {
     const response = NextResponse.redirect(new URL(`/${role}`, req.url));
-    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production", ...(cookieDomain ? { domain: cookieDomain } : {}) });
     return response;
   }
 
@@ -137,6 +147,7 @@ export async function proxy(req) {
       maxAge: ACCESS_TOKEN_MAX_AGE,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     });
   }
 
@@ -144,5 +155,5 @@ export async function proxy(req) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/agent/:path*", "/customer/:path*", "/passive_agent/:path*", "/active_agent/:path*", "/organization_manager/:path*"],
+  matcher: ["/admin/:path*", "/agent/:path*", "/customer/:path*", "/passive_agent/:path*", "/active_agent/:path*", "/organization_manager/:path*", "/phone/:path*"],
 };
