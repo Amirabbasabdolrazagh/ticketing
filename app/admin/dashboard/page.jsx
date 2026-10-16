@@ -285,7 +285,7 @@ export default function AdminDashborad() {
           </div>
 
           {/* quick overview */}
-          <div className="dashboard-panel glass-panel order-2 col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-6">
+          <div className="dashboard-summary-pair dashboard-panel glass-panel order-2 col-span-1 min-w-0 p-4 sm:p-5 lg:col-span-6">
             <div className="flex w-full items-center justify-between">
               <Label className="text-md">نمای کلی</Label>
             </div>
@@ -425,7 +425,7 @@ export default function AdminDashborad() {
             </div>
           </div>
 
-          <div className="order-3 col-span-1 min-w-0 lg:col-span-6">
+          <div className="dashboard-summary-pair order-3 col-span-1 min-w-0 lg:col-span-6">
             <TicketStatusOverview data={chartData} />
           </div>
 

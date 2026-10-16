@@ -439,6 +439,13 @@
     overflow: hidden;
   }
 
+  @media (min-width: 1024px) {
+    .dashboard-summary-pair {
+      align-self: stretch;
+      height: 100%;
+    }
+  }
+
   .services-table {
     table-layout: fixed;
   }
