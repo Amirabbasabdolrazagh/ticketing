@@ -58,7 +58,7 @@ export async function PATCH(req, { params }) {
         { status: 401 },
       );
     }
-    const allowedRole = authorization(user, ["admin", "agent", "passive_agent", "active_agent", "customer"]);
+    const allowedRole = authorization(user, ["admin", "agent", "passive_agent", "active_agent", "customer", "organization_manager"]);
     if (!allowedRole) {
       return Response.json(
         { success: false, message: "Forbbiden" },
@@ -102,7 +102,7 @@ export async function PATCH(req, { params }) {
           userInfo.phone = phone;
         }
         if (role !== undefined) {
-          if (["admin", "customer", "agent", "passive_agent", "active_agent"].includes(role)) {
+          if (["admin", "customer", "agent", "passive_agent", "active_agent", "organization_manager"].includes(role)) {
             userInfo.role = role;
           } else {
             return Response.json(

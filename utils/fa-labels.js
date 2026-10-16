@@ -20,6 +20,7 @@ export const roleLabels = {
   passive_agent: "پشتیبان پسیو",
   active_agent: "پشتیبان اکتیو",
   customer: "مشتری",
+  organization_manager: "مدیر سازمان",
 };
 
 export function faLabel(labels, value, fallback = "-") {

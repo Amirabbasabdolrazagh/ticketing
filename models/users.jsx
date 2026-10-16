@@ -41,8 +41,14 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "agent", "passive_agent", "active_agent", "customer"],
+      enum: ["admin", "agent", "passive_agent", "active_agent", "customer", "organization_manager"],
       default: "customer",
+    },
+    organization: {
+      type: Schema.Types.ObjectId,
+      ref: "Organization",
+      default: null,
+      index: true,
     },
     isVerify: {
       type: Boolean,

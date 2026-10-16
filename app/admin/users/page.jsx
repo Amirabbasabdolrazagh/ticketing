@@ -46,7 +46,7 @@ export default function UsersInfo() {
         <div className="glass-panel flex flex-wrap items-center justify-between gap-4 p-5 sm:p-7">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3"><FiUsers className="size-7 text-blue-600" /><h1 className="page-heading">مدیریت کاربران</h1><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">{allUser.length.toLocaleString("fa-IR")} کاربر</span></div>
-            <p className="mt-2 text-sm text-slate-500">ساخت و مدیریت ادمین، پشتیبان عمومی، پشتیبان پسیو، پشتیبان اکتیو و مشتری</p>
+            <p className="mt-2 text-sm text-slate-500">ساخت و مدیریت مدیر سیستم، مدیر سازمان، پشتیبان‌ها و مشتریان</p>
           </div>
           <button
             className="flex gap-2 hover:text-blue-600 "

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
   Activity,
   BellRing,
+  Building2,
   ClipboardList,
   FolderKanban,
   LayoutDashboard,
@@ -38,6 +39,7 @@ const roleLabels = {
   passive_agent: "پشتیبان پسیو",
   active_agent: "پشتیبان اکتیو",
   customer: "مشتری",
+  organization_manager: "مدیر سازمان",
 };
 
 export default function SideBar() {
@@ -60,7 +62,7 @@ export default function SideBar() {
   }, []);
 
   useEffect(() => {
-    if (!user?.role) return;
+    if (!user?.role || user.role === "organization_manager") return;
 
     const heartbeat = () =>
       axios.post("/api/live-chat/presence").catch(() => {});
@@ -78,7 +80,7 @@ export default function SideBar() {
   }, []);
 
   useEffect(() => {
-    if (!user?.role) return;
+    if (!user?.role || user.role === "organization_manager") return;
 
     async function getUnreadCount() {
       try {
@@ -106,9 +108,9 @@ export default function SideBar() {
 
   const userRole = user?.role;
   const menuItems = [
-    ...(["admin", "agent", "customer", "passive_agent", "active_agent"].includes(userRole) ? [{
+    ...(["admin", "agent", "customer", "passive_agent", "active_agent", "organization_manager"].includes(userRole) ? [{
       label: "داشبورد",
-      description: "نمای کلی فعالیت‌ها",
+      description: userRole === "organization_manager" ? "گزارش مدیریتی سازمان" : "نمای کلی فعالیت‌ها",
       href: ["passive_agent", "active_agent"].includes(userRole) ? `/${userRole}` : `/${userRole}/dashboard`,
       icon: LayoutDashboard,
       active: ["passive_agent", "active_agent"].includes(userRole) ? pathname === `/${userRole}` : pathname === `/${userRole}/dashboard`,
@@ -149,6 +151,13 @@ export default function SideBar() {
             active: pathname.startsWith("/admin/users"),
           },
           {
+            label: "سازمان‌ها",
+            description: "پرتال مشتریان سازمانی",
+            href: "/admin/organizations",
+            icon: Building2,
+            active: pathname.startsWith("/admin/organizations"),
+          },
+          {
             label: "مانیتورینگ",
             description: "پایش لحظه‌ای تیم پشتیبانی",
             href: "/admin/monitoring",
@@ -176,13 +185,13 @@ export default function SideBar() {
           },
         ]
       : []),
-    {
-      label: "تنظیمات",
-      description: "حساب و ترجیحات",
-      href: `/${userRole}/setting`,
-      icon: Settings2,
-      active: pathname.startsWith(`/${userRole}/setting`),
-    },
+    ...(["admin", "agent", "passive_agent", "active_agent", "customer"].includes(userRole) ? [{
+        label: "تنظیمات",
+        description: "حساب و ترجیحات",
+        href: `/${userRole}/setting`,
+        icon: Settings2,
+        active: pathname.startsWith(`/${userRole}/setting`),
+      }] : []),
   ];
   const bottomMenuItems =
     userRole === "admin"
@@ -222,6 +231,8 @@ export default function SideBar() {
                 "/customer/setting",
               ].includes(item.href),
             )
+          : userRole === "organization_manager"
+            ? menuItems.filter((item) => item.href === "/organization_manager/dashboard")
           : [];
 
   const moreMenuItems =
@@ -231,6 +242,7 @@ export default function SideBar() {
             "/admin/projects",
             "/admin/installation-projects",
             "/admin/users",
+            "/admin/organizations",
             "/admin/leads",
             "/admin/setting",
           ].includes(item.href),

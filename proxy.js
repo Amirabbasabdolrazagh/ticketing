@@ -44,7 +44,7 @@ export async function proxy(req) {
     profileComplete = decoded.profileComplete;
   }
 
-  const settingsPath = `/${role}/setting`;
+  const settingsPath = role === "organization_manager" ? "/organization_manager/dashboard" : `/${role}/setting`;
   if (profileComplete === false && pathname !== settingsPath) {
     const response = NextResponse.redirect(new URL(settingsPath, req.url));
     if (newAccessToken) {
@@ -120,6 +120,12 @@ export async function proxy(req) {
     return response;
   }
 
+  if (pathname.startsWith("/organization_manager") && role !== "organization_manager") {
+    const response = NextResponse.redirect(new URL(`/${role}`, req.url));
+    if (newAccessToken) response.cookies.set("accessToken", newAccessToken, { httpOnly: true, path: "/", maxAge: ACCESS_TOKEN_MAX_AGE, sameSite: "strict", secure: process.env.NODE_ENV === "production" });
+    return response;
+  }
+
   // 4) Continue request
   const response = NextResponse.next();
 
@@ -138,5 +144,5 @@ export async function proxy(req) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/agent/:path*", "/customer/:path*", "/passive_agent/:path*", "/active_agent/:path*"],
+  matcher: ["/admin/:path*", "/agent/:path*", "/customer/:path*", "/passive_agent/:path*", "/active_agent/:path*", "/organization_manager/:path*"],
 };
