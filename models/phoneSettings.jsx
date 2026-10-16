@@ -6,6 +6,17 @@ const phoneSettingsSchema = new Schema({
   sipDomain: { type: String, trim: true, maxlength: 160, default: "" },
   outboundProxy: { type: String, trim: true, maxlength: 300, default: "" },
   companyCallerId: { type: String, trim: true, maxlength: 40, default: "" },
+  issabelHost: { type: String, trim: true, maxlength: 160, default: "" },
+  provisioningStatus: { type: String, enum: ["not_checked", "ready", "action_required", "failed"], default: "not_checked" },
+  detectedAsteriskVersion: { type: String, trim: true, maxlength: 200, default: "" },
+  detectedAt: { type: Date, default: null },
+  detectedCapabilities: {
+    amiEnabled: { type: Boolean, default: false },
+    httpEnabled: { type: Boolean, default: false },
+    httpsEnabled: { type: Boolean, default: false },
+    pjsipEnabled: { type: Boolean, default: false },
+    websocketEnabled: { type: Boolean, default: false },
+  },
   iceServers: [{
     urls: { type: String, trim: true, maxlength: 300 },
     username: { type: String, trim: true, maxlength: 100, default: "" },
