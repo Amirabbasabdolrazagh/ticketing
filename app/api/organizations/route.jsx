@@ -65,6 +65,12 @@ function cleanContract(contract = {}) {
     startAt: parseContractDate(contract.startAt),
     endAt: parseContractDate(contract.endAt),
     notes: String(contract.notes || "").trim(),
+    features: {
+      onsiteService: Boolean(contract.features?.onsiteService),
+      secureCall: Boolean(contract.features?.secureCall),
+      remoteSupport: Boolean(contract.features?.remoteSupport),
+      prioritySupport: Boolean(contract.features?.prioritySupport),
+    },
   };
 }
 

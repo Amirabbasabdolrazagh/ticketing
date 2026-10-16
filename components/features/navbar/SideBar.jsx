@@ -8,11 +8,14 @@ import {
   Activity,
   BellRing,
   Building2,
+  CalendarCheck2,
   ClipboardList,
   FolderKanban,
+  FileCheck2,
   LayoutDashboard,
   Menu,
   MessageCircle,
+  PhoneCall,
   Settings2,
   Sparkles,
   TicketCheck,
@@ -47,6 +50,7 @@ export default function SideBar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [organizationFeatures, setOrganizationFeatures] = useState({});
   const pathname = usePathname();
 
   useEffect(() => {
@@ -69,6 +73,13 @@ export default function SideBar() {
     heartbeat();
     const presenceInterval = window.setInterval(heartbeat, 30000);
     return () => window.clearInterval(presenceInterval);
+  }, [user?.role]);
+
+  useEffect(() => {
+    if (user?.role !== "organization_manager") return;
+    axios.get("/api/organization/capabilities")
+      .then(({ data }) => setOrganizationFeatures(data.features || {}))
+      .catch(() => setOrganizationFeatures({}));
   }, [user?.role]);
 
   useEffect(() => {
@@ -122,6 +133,34 @@ export default function SideBar() {
       icon: TicketCheck,
       active: pathname.startsWith(`/${userRole}/tickets`),
     }] : []),
+    ...(userRole === "organization_manager" && organizationFeatures.onsiteService ? [{
+      label: "خدمات حضوری",
+      description: "درخواست اعزام و پیگیری مراجعه",
+      href: "/organization_manager/onsite-services",
+      icon: CalendarCheck2,
+      active: pathname.startsWith("/organization_manager/onsite-services"),
+    }] : []),
+    ...(userRole === "organization_manager" && organizationFeatures.secureCall ? [{
+      label: "تماس امن",
+      description: "ارتباط تلفنی سازمانی با پشتیبانی",
+      href: "/organization_manager/secure-call",
+      icon: PhoneCall,
+      active: pathname.startsWith("/organization_manager/secure-call"),
+    }] : []),
+    ...(userRole === "organization_manager" ? [{
+      label: "قرارداد من",
+      description: "اعتبار و امکانات فعال سازمان",
+      href: "/organization_manager/contract",
+      icon: FileCheck2,
+      active: pathname.startsWith("/organization_manager/contract"),
+    }] : []),
+    ...(["agent", "passive_agent", "active_agent"].includes(userRole) ? [{
+      label: "مأموریت‌های حضوری",
+      description: "برنامه مراجعه و گزارش فعالیت",
+      href: `/${userRole}/onsite-services`,
+      icon: CalendarCheck2,
+      active: pathname.startsWith(`/${userRole}/onsite-services`),
+    }] : []),
     ...(["passive_agent", "active_agent"].includes(userRole) ? [
       { label: "فرم ارزیابی", description: "ثبت اطلاعات اولیه پروژه", href: `/${userRole}/assessments`, icon: FolderKanban, active: pathname.startsWith(`/${userRole}/assessments`) },
       { label: "ابلاغ‌ها", description: "شرح وظایف و برنامه اجرا", href: `/${userRole}/briefs`, icon: ClipboardList, active: pathname.startsWith(`/${userRole}/briefs`) },
@@ -156,6 +195,20 @@ export default function SideBar() {
             href: "/admin/organizations",
             icon: Building2,
             active: pathname.startsWith("/admin/organizations"),
+          },
+          {
+            label: "قراردادها",
+            description: "وضعیت و امکانات قراردادهای سازمانی",
+            href: "/admin/contracts",
+            icon: FileCheck2,
+            active: pathname.startsWith("/admin/contracts"),
+          },
+          {
+            label: "خدمات حضوری",
+            description: "تخصیص و زمان‌بندی مأموریت‌ها",
+            href: "/admin/onsite-services",
+            icon: CalendarCheck2,
+            active: pathname.startsWith("/admin/onsite-services"),
           },
           {
             label: "مانیتورینگ",
@@ -209,6 +262,7 @@ export default function SideBar() {
               "/agent/dashboard",
               "/agent/tickets",
               "/agent/notifications",
+              "/agent/onsite-services",
             ].includes(item.href),
           )
         : ["passive_agent", "active_agent"].includes(userRole)
@@ -220,6 +274,7 @@ export default function SideBar() {
                 `/${userRole}/handovers`,
                 `/${userRole}/notifications`,
                 `/${userRole}/setting`,
+                `/${userRole}/onsite-services`,
               ].includes(item.href),
             )
         : userRole === "customer"
@@ -232,7 +287,7 @@ export default function SideBar() {
               ].includes(item.href),
             )
           : userRole === "organization_manager"
-            ? menuItems.filter((item) => ["/organization_manager/dashboard", "/organization_manager/setting"].includes(item.href))
+            ? menuItems.filter((item) => ["/organization_manager/dashboard", "/organization_manager/onsite-services", "/organization_manager/secure-call", "/organization_manager/contract", "/organization_manager/setting"].includes(item.href))
           : [];
 
   const moreMenuItems =
@@ -243,6 +298,8 @@ export default function SideBar() {
             "/admin/installation-projects",
             "/admin/users",
             "/admin/organizations",
+            "/admin/contracts",
+            "/admin/onsite-services",
             "/admin/leads",
             "/admin/setting",
           ].includes(item.href),

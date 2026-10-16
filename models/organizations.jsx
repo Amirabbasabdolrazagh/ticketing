@@ -19,6 +19,12 @@ const organizationSchema = new Schema({
     startAt: { type: Date, default: null },
     endAt: { type: Date, default: null },
     notes: { type: String, trim: true, maxlength: 1000, default: "" },
+    features: {
+      onsiteService: { type: Boolean, default: false },
+      secureCall: { type: Boolean, default: false },
+      remoteSupport: { type: Boolean, default: false },
+      prioritySupport: { type: Boolean, default: false },
+    },
   },
   equipment: [equipmentSchema],
   isActive: { type: Boolean, default: true, index: true },

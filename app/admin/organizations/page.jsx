@@ -9,7 +9,7 @@ import { formatJalaliInput, formatJalaliTyping } from "@/utils/jalaliDate";
 const emptyForm = {
   name: "", managerName: "", managerPhone: "", managerEmail: "", managerPassword: "", memberIds: [],
   equipment: [{ name: "", type: "", serial: "", status: "active" }],
-  supportContract: { title: "قرارداد پشتیبانی", level: "standard", status: "active", startAt: "", endAt: "", notes: "" },
+  supportContract: { title: "قرارداد پشتیبانی", level: "standard", status: "active", startAt: "", endAt: "", notes: "", features: { onsiteService: false, secureCall: false, remoteSupport: false, prioritySupport: false } },
 };
 
 const contractLabels = { basic: "پایه", standard: "استاندارد", premium: "ویژه" };
@@ -58,6 +58,12 @@ export default function OrganizationsPage() {
         startAt: formatJalaliInput(organization.supportContract?.startAt),
         endAt: formatJalaliInput(organization.supportContract?.endAt),
         notes: organization.supportContract?.notes || "",
+        features: {
+          onsiteService: Boolean(organization.supportContract?.features?.onsiteService),
+          secureCall: Boolean(organization.supportContract?.features?.secureCall),
+          remoteSupport: Boolean(organization.supportContract?.features?.remoteSupport),
+          prioritySupport: Boolean(organization.supportContract?.features?.prioritySupport),
+        },
       },
     });
     setOpen(true);
@@ -135,6 +141,12 @@ export default function OrganizationsPage() {
           <Field label="شروع قرارداد (شمسی)"><input dir="ltr" inputMode="numeric" value={form.supportContract.startAt} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, startAt: formatJalaliTyping(e.target.value) } })} placeholder="1405/07/24" /></Field>
           <Field label="پایان قرارداد (شمسی)"><input dir="ltr" inputMode="numeric" value={form.supportContract.endAt} onChange={(e) => setForm({ ...form, supportContract: { ...form.supportContract, endAt: formatJalaliTyping(e.target.value) } })} placeholder="1406/07/24" /></Field>
         </div>
+        <section className="mt-6 rounded-3xl border border-violet-100 bg-violet-50/60 p-4">
+          <div><h3 className="font-black text-slate-900">امکانات فعال قرارداد</h3><p className="mt-1 text-[11px] text-slate-500">مدیر سازمان فقط به گزینه‌هایی دسترسی دارد که در قرارداد فعال شده‌اند.</p></div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {[["onsiteService", "خدمات حضوری", "ثبت و پیگیری اعزام کارشناس"], ["secureCall", "تماس امن", "تماس سازمانی با پشتیبانی"], ["remoteSupport", "پشتیبانی از راه دور", "دسترسی ریموت به تجهیزات"], ["prioritySupport", "پشتیبانی ویژه", "اولویت بالاتر در رسیدگی"]].map(([key, label, description]) => <label key={key} className={`cursor-pointer rounded-2xl border p-4 transition ${form.supportContract.features[key] ? "border-violet-300 bg-white shadow-sm" : "border-violet-100 bg-white/50"}`}><span className="flex items-center justify-between gap-3"><span><b className="block text-xs text-slate-800">{label}</b><small className="mt-1 block text-[10px] leading-5 text-slate-500">{description}</small></span><input type="checkbox" checked={form.supportContract.features[key]} onChange={(event) => setForm({ ...form, supportContract: { ...form.supportContract, features: { ...form.supportContract.features, [key]: event.target.checked } } })} className="size-5 accent-violet-600" /></span></label>)}
+          </div>
+        </section>
         <section className="mt-6 overflow-hidden rounded-3xl border border-cyan-100 bg-gradient-to-br from-cyan-50/80 via-white to-blue-50/60">
           <div className="flex flex-col gap-3 border-b border-cyan-100 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-2xl bg-cyan-600 text-white shadow-lg shadow-cyan-200"><HardDrive className="size-5" /></span><div><h3 className="font-black text-slate-900">تجهیزات سازمان</h3><p className="mt-1 text-[11px] text-slate-500">هر تجهیز را در یک کارت جداگانه ثبت کنید.</p></div></div>

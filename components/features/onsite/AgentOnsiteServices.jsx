@@ -1,0 +1,36 @@
+"use client";
+
+import axios from "axios";
+import { CheckCircle2, Clock3, MapPin, Navigation, Pause, Play, Send, UserRound, Wrench, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+
+const statusLabels = { scheduled: "زمان‌بندی‌شده", accepted: "پذیرفته‌شده", en_route: "در مسیر", arrived: "در محل", in_progress: "در حال انجام", paused: "متوقف موقت", awaiting_customer_confirmation: "در انتظار تأیید مشتری", completed: "تکمیل‌شده", revisit_required: "مراجعه مجدد" };
+const actions = { scheduled: ["accepted", "پذیرش مأموریت", CheckCircle2], accepted: ["en_route", "شروع حرکت", Navigation], en_route: ["arrived", "رسیدم به محل", MapPin], arrived: ["in_progress", "شروع کار", Play], paused: ["in_progress", "ادامه کار", Play] };
+const emptyReport = { diagnosis: "", actions: "", result: "", parts: "", notes: "", followUpRequired: false, durationMinutes: "" };
+
+export default function AgentOnsiteServices() {
+  const [requests, setRequests] = useState([]);
+  const [reportFor, setReportFor] = useState(null);
+  const [report, setReport] = useState(emptyReport);
+  const [busy, setBusy] = useState("");
+  const load = async () => { const { data } = await axios.get("/api/onsite-services"); setRequests(data.requests || []); };
+  useEffect(() => {
+    let active = true;
+    axios.get("/api/onsite-services")
+      .then(({ data }) => {
+        if (active) setRequests(data.requests || []);
+      })
+      .catch((error) => toast.error(error.response?.data?.message || "دریافت مأموریت‌ها ناموفق بود"));
+    return () => { active = false; };
+  }, []);
+  const changeStatus = async (item, status, workReport) => { setBusy(item._id); try { const { data } = await axios.patch("/api/onsite-services", { requestId: item._id, status, ...(workReport ? { workReport } : {}) }); toast.success(data.message); setReportFor(null); setReport(emptyReport); await load(); } catch (error) { toast.error(error.response?.data?.message || "تغییر وضعیت ناموفق بود"); } finally { setBusy(""); } };
+
+  return <section className="app-page space-y-5" dir="rtl"><Toaster /><header className="glass-panel p-5 sm:p-7"><div className="flex items-center gap-4"><span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-violet-600 text-white"><Wrench /></span><div><h1 className="page-heading">مأموریت‌های حضوری من</h1><p className="mt-1 text-sm text-slate-500">زمان مراجعه، وضعیت حرکت و گزارش فعالیت را ثبت کنید.</p></div></div></header>
+    <div className="grid gap-4 xl:grid-cols-2">{requests.length ? requests.map((item) => { const action = actions[item.status]; const ActionIcon = action?.[2]; return <article key={item._id} className="glass-panel overflow-hidden p-5"><div className="flex items-start justify-between gap-3"><div><span className="text-[10px] font-black text-blue-600">{item.requestNumber}</span><h2 className="mt-1 font-black text-slate-950">{item.title}</h2></div><span className="rounded-full bg-blue-100 px-3 py-1 text-[10px] font-black text-blue-700">{statusLabels[item.status] || item.status}</span></div><p className="mt-3 text-xs leading-6 text-slate-500">{item.description}</p><div className="mt-4 grid grid-cols-2 gap-2"><Info icon={Clock3} label="زمان مراجعه" value={item.scheduledAt ? new Date(item.scheduledAt).toLocaleString("fa-IR", { dateStyle: "medium", timeStyle: "short" }) : "تعیین نشده"} /><Info icon={MapPin} label="آدرس" value={item.address} /><Info icon={UserRound} label="شخص حاضر" value={item.onsiteContact?.name || "—"} /><Info icon={Wrench} label="تجهیز" value={item.equipment?.name || "عمومی"} /></div><div className="mt-4 flex flex-wrap gap-2">{action && <button disabled={busy === item._id} onClick={() => changeStatus(item, action[0])} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-black text-white"><ActionIcon className="size-4" />{action[1]}</button>}{item.status === "in_progress" && <><button onClick={() => changeStatus(item, "paused")} className="inline-flex items-center gap-2 rounded-xl border border-amber-200 px-4 py-3 text-xs font-black text-amber-700"><Pause className="size-4" /> توقف</button><button onClick={() => setReportFor(item)} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white"><Send className="size-4" /> پایان و ثبت گزارش</button></>}</div></article>; }) : <div className="glass-panel col-span-full grid min-h-52 place-items-center text-slate-400">مأموریت حضوری به شما تخصیص داده نشده است.</div>}</div>
+    {reportFor && <div className="fixed inset-0 z-[120] grid place-items-center bg-slate-950/45 p-3 backdrop-blur-sm"><div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white p-5 shadow-2xl sm:p-7"><div className="flex items-start justify-between"><div><h2 className="text-xl font-black">گزارش پایان مأموریت</h2><p className="mt-1 text-xs text-slate-500">{reportFor.title}</p></div><button onClick={() => setReportFor(null)} className="grid size-10 place-items-center rounded-xl bg-slate-100"><X /></button></div><div className="mt-6 grid gap-4"><Field label="عیب مشاهده‌شده"><textarea rows="2" value={report.diagnosis} onChange={(e) => setReport({ ...report, diagnosis: e.target.value })} /></Field><Field label="اقدامات انجام‌شده"><textarea rows="3" value={report.actions} onChange={(e) => setReport({ ...report, actions: e.target.value })} /></Field><Field label="نتیجه نهایی"><textarea rows="2" value={report.result} onChange={(e) => setReport({ ...report, result: e.target.value })} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="قطعات مصرف‌شده"><input value={report.parts} onChange={(e) => setReport({ ...report, parts: e.target.value })} /></Field><Field label="زمان صرف‌شده (دقیقه)"><input dir="ltr" type="number" min="0" value={report.durationMinutes} onChange={(e) => setReport({ ...report, durationMinutes: e.target.value })} /></Field></div><label className="flex items-center gap-3 rounded-2xl border border-orange-100 bg-orange-50 p-4 text-xs font-black text-orange-800"><input type="checkbox" checked={report.followUpRequired} onChange={(e) => setReport({ ...report, followUpRequired: e.target.checked })} className="size-5" /> نیاز به مراجعه یا پیگیری مجدد دارد</label><button disabled={busy === reportFor._id} onClick={() => changeStatus(reportFor, "awaiting_customer_confirmation", report)} className="rounded-2xl bg-emerald-600 px-5 py-3 font-black text-white">ارسال گزارش برای تأیید مشتری</button></div></div></div>}
+  </section>;
+}
+
+function Info({ icon: Icon, label, value }) { return <div className="rounded-2xl bg-slate-50 p-3"><span className="flex items-center gap-2 text-[10px] text-slate-500"><Icon className="size-3.5 text-blue-600" />{label}</span><b className="mt-2 block truncate text-xs text-slate-800">{value}</b></div>; }
+function Field({ label, children }) { return <label className="text-xs font-black text-slate-700">{label}<span className="mt-2 block [&>input]:h-11 [&>input]:w-full [&>input]:rounded-xl [&>input]:border [&>input]:border-slate-200 [&>input]:px-3 [&>textarea]:w-full [&>textarea]:rounded-xl [&>textarea]:border [&>textarea]:border-slate-200 [&>textarea]:p-3">{children}</span></label>; }

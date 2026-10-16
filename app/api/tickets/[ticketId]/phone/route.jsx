@@ -2,6 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { originateCustomerCall, originateCustomerToSupportCall } from "@/lib/issabelAmi";
 import Ticket from "@/models/tickets";
 import User from "@/models/users";
+import Organization from "@/models/organizations";
 import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
 import { systemMessage } from "@/utils/createSystemMessage";
@@ -38,10 +39,25 @@ async function notifyCallbackRequest({ ticket, customer }) {
   await Promise.allSettled(recipients.map((recipient) => sendMessengerNotification(recipient, text)));
 }
 
-function isTicketMember(ticket, user) {
+async function isTicketMember(ticket, user) {
   if (user.role === "admin") return true;
   if (user.role === "agent") return ticket.assignedTo?.toString() === user._id.toString();
   if (user.role === "customer") return ticket.creator?.toString() === user._id.toString();
+  if (user.role === "organization_manager") {
+    const now = new Date();
+    const organization = await Organization.findOne({
+      isActive: true,
+      members: ticket.creator,
+      $or: [{ manager: user._id }, { _id: user.organization }],
+      "supportContract.status": "active",
+      "supportContract.features.secureCall": true,
+      $and: [
+        { $or: [{ "supportContract.startAt": null }, { "supportContract.startAt": { $lte: now } }] },
+        { $or: [{ "supportContract.endAt": null }, { "supportContract.endAt": { $gte: now } }] },
+      ],
+    }).select("_id");
+    return Boolean(organization);
+  }
   return false;
 }
 
@@ -52,12 +68,13 @@ async function load(ticketId) {
   await ConnectDb();
   const ticket = await Ticket.findById(ticketId);
   if (!ticket) return { error: Response.json({ success: false, message: "تیکت پیدا نشد." }, { status: 404 }) };
-  if (!isTicketMember(ticket, user)) return { error: Response.json({ success: false, message: "اجازه دسترسی به این تیکت را ندارید." }, { status: 403 }) };
+  if (!(await isTicketMember(ticket, user))) return { error: Response.json({ success: false, message: "اجازه دسترسی به این تیکت را ندارید." }, { status: 403 }) };
   return { user, ticket };
 }
 
 function publicState(ticket, user) {
   const isStaff = STAFF_ROLES.includes(user.role);
+  const isCustomerCaller = ["customer", "organization_manager"].includes(user.role);
   const isPhoneSystemConfigured = [
     "ISSABEL_AMI_HOST",
     "ISSABEL_AMI_USERNAME",
@@ -71,11 +88,11 @@ function publicState(ticket, user) {
   );
   return {
     callbackRequestedAt: ticket.callbackRequestedAt,
-    callbackRequestedByCustomer: Boolean(ticket.callbackRequestedAt && ticket.callbackRequestedBy?.toString() === ticket.creator?.toString()),
+    callbackRequestedByCustomer: Boolean(ticket.callbackRequestedAt && ticket.callbackRequestedBy?.toString() === user._id.toString()),
     lastPhoneCallAt: ticket.lastPhoneCallAt,
     lastCustomerPhoneCallAt: ticket.lastCustomerPhoneCallAt,
-    canRequestCallback: user.role === "customer" && ticket.status !== "closed",
-    canCallLastSupport: user.role === "customer" && ticket.status !== "closed" && hasSupportRoute && isPhoneSystemConfigured,
+    canRequestCallback: isCustomerCaller && ticket.status !== "closed",
+    canCallLastSupport: isCustomerCaller && ticket.status !== "closed" && hasSupportRoute && isPhoneSystemConfigured,
     hasLastPhoneSupport: hasSupportRoute,
     canCallCustomer: isStaff && ticket.status !== "closed" && Boolean(user.pbxExtension) && isPhoneSystemConfigured,
     hasPbxExtension: Boolean(user.pbxExtension),
@@ -103,7 +120,7 @@ export async function POST(req, { params }) {
     const { action } = await req.json();
 
     if (action === "request-callback") {
-      if (user.role !== "customer" || ticket.status === "closed") {
+      if (!["customer", "organization_manager"].includes(user.role) || ticket.status === "closed") {
         return Response.json({ success: false, message: "امکان ثبت درخواست تماس وجود ندارد." }, { status: 403 });
       }
       ticket.callbackRequestedAt = new Date();
@@ -115,7 +132,7 @@ export async function POST(req, { params }) {
     }
 
     if (action === "call-last-support") {
-      if (user.role !== "customer" || ticket.status === "closed") {
+      if (!["customer", "organization_manager"].includes(user.role) || ticket.status === "closed") {
         return Response.json({ success: false, message: "امکان تماس برای این تیکت وجود ندارد." }, { status: 403 });
       }
       const supportIds = [ticket.lastPhoneCallBy, ticket.assignedTo]
@@ -123,7 +140,7 @@ export async function POST(req, { params }) {
         .map((id) => id.toString())
         .filter((id, index, ids) => ids.indexOf(id) === index);
       const [customer, supportUsers] = await Promise.all([
-        User.findById(ticket.creator).select("phone name"),
+        user.role === "organization_manager" ? User.findById(user._id).select("phone name") : User.findById(ticket.creator).select("phone name"),
         supportIds.length
           ? User.find({ _id: { $in: supportIds }, role: { $in: STAFF_ROLES } }).select("role pbxExtension")
           : [],
