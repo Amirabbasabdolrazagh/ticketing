@@ -8,6 +8,22 @@ import sys
 import time
 import urllib.request
 
+CONFIG_PATH = "/etc/asterisk/itrasam-router.conf"
+
+def load_config():
+    config = {}
+    try:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as handle:
+            for raw_line in handle:
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                config[key.strip()] = value.strip()
+    except OSError:
+        pass
+    return config
+
 agi = {}
 for line in sys.stdin:
     line = line.strip()
@@ -22,8 +38,9 @@ def set_var(name, value):
     sys.stdin.readline()
 
 try:
-    secret = os.environ["ITRASAM_ROUTER_SECRET"]
-    url = os.environ.get("ITRASAM_ROUTER_URL", "https://phone.itrasam.com/api/phone/inbound-route")
+    config = load_config()
+    secret = os.environ.get("ITRASAM_ROUTER_SECRET") or config["ITRASAM_ROUTER_SECRET"]
+    url = os.environ.get("ITRASAM_ROUTER_URL") or config.get("ITRASAM_ROUTER_URL", "https://phone.itrasam.com/api/phone/inbound-route")
     timestamp = str(int(time.time()))
     raw = json.dumps({
         "callerNumber": agi.get("agi_callerid", ""),
@@ -38,9 +55,12 @@ try:
         result = json.loads(response.read().decode("utf-8"))
     set_var("ITRASAM_ROUTE_STATUS", "matched" if result.get("matched") else "fallback")
     set_var("ITRASAM_EXTENSION", result.get("extension", "102"))
+    web_endpoint = str(result.get("webEndpoint", ""))
+    set_var("ITRASAM_WEB_ENDPOINT", web_endpoint if web_endpoint.replace("-", "").replace("_", "").replace(".", "").isalnum() else "")
     set_var("ITRASAM_CUSTOMER_NAME", result.get("customerName", "مشتری ای تی رسام"))
     set_var("ITRASAM_CALL_ID", result.get("callId", ""))
 except Exception:
     set_var("ITRASAM_ROUTE_STATUS", "error")
-    set_var("ITRASAM_EXTENSION", os.environ.get("ITRASAM_FALLBACK_EXTENSION", "102"))
+    set_var("ITRASAM_EXTENSION", "")
+    set_var("ITRASAM_WEB_ENDPOINT", "")
     set_var("ITRASAM_CUSTOMER_NAME", "مشتری ای تی رسام")

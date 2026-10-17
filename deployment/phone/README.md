@@ -31,6 +31,6 @@
 
 ## تماس ورودی مشتری
 
-فایل `deployment/asterisk/itrasam_inbound_router.py` را در مسیر AGI ایزابل قرار دهید، executable کنید و دو متغیر `ITRASAM_ROUTER_URL` و `ITRASAM_ROUTER_SECRET` را برای سرویس Asterisk تنظیم کنید. نمونه dialplan در `deployment/asterisk/extensions_custom.conf.sample` قرار دارد. این مسیر شماره ورودی را فقط در سمت سرور با مشتری و آخرین تیکت فعال تطبیق می‌دهد، نام مشتری را روی تلفن نشان می‌دهد و تماس را ابتدا به آخرین پشتیبان تماس‌گیرنده و سپس به پشتیبان تخصیص‌یافته یا داخلی جایگزین می‌فرستد.
+فایل `deployment/asterisk/itrasam_inbound_router.py` را در مسیر AGI ایزابل قرار دهید و executable کنید. مقادیر `ITRASAM_ROUTER_URL` و `ITRASAM_ROUTER_SECRET` در فایل محافظت‌شدهٔ `/etc/asterisk/itrasam-router.conf` قرار می‌گیرند. نمونه dialplan در `deployment/asterisk/extensions_custom.conf.sample` قرار دارد. این مسیر شماره ورودی را فقط در سمت سرور با مشتری و آخرین تیکت فعال تطبیق می‌دهد، نام مشتری را روی تلفن نشان می‌دهد و تلفن وب و داخلی همان پشتیبان را هم‌زمان زنگ می‌زند؛ تماس ناشناس یا بدون تیکت فعال به IVR اصلی بازمی‌گردد.
 
 هشدار: مسیر WSS بدون مسیر امن رسانه کافی نیست. برای تماس خارج شبکه باید ICE/TURN یا SBC و رنج RTP محدودشده نیز در Asterisk و فایروال تنظیم شود.

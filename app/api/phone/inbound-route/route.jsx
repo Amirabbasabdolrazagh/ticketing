@@ -3,6 +3,7 @@ import ConnectDb from "@/utils/connectDB";
 import Ticket from "@/models/tickets";
 import User from "@/models/users";
 import PhoneCall from "@/models/phoneCalls";
+import PhoneDevice from "@/models/phoneDevices";
 import { customerHasSecureCall } from "@/lib/phoneAccess";
 
 export const runtime = "nodejs";
@@ -48,6 +49,11 @@ export async function POST(req) {
     let resolvedAgent = agent;
     if (!resolvedAgent) resolvedAgent = await User.findOne({ pbxExtension: process.env.ISSABEL_DEFAULT_SUPPORT_EXTENSION || "102", role: { $in: ["agent", "active_agent", "passive_agent"] } }).select("name pbxExtension role").lean();
     const extension = resolvedAgent?.pbxExtension || process.env.ISSABEL_DEFAULT_SUPPORT_EXTENSION || "102";
+    const webDevice = resolvedAgent ? await PhoneDevice.findOne({
+      user: resolvedAgent._id,
+      status: "active",
+      sipUsername: { $regex: /^[A-Za-z0-9_.-]{4,80}$/ },
+    }).sort({ lastSeenAt: -1, updatedAt: -1 }).select("sipUsername").lean() : null;
     const callId = /^[A-Za-z0-9_-]{8,100}$/.test(String(body.callId || "")) ? String(body.callId) : crypto.randomUUID();
     if (resolvedAgent) {
       await PhoneCall.findOneAndUpdate({ callId }, { $setOnInsert: {
@@ -61,6 +67,7 @@ export async function POST(req) {
       success: true,
       matched: Boolean(ticket && agent),
       extension,
+      webEndpoint: webDevice?.sipUsername || "",
       customerName: String(customer.name || "مشتری سازمانی").replace(/[\r\n"<>]/g, "").slice(0, 64),
       ticketNumber: ticket?.ticketNumber || "",
       callId,
