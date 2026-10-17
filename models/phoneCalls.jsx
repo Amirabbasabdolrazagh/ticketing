@@ -30,6 +30,13 @@ const phoneCallSchema = new Schema({
     error: { type: String, trim: true, maxlength: 500, default: "" },
     completedAt: { type: Date, default: null },
   },
+  googleTranscription: {
+    status: { type: String, enum: ["not_requested", "pending", "processing", "completed", "failed"], default: "not_requested" },
+    text: { type: String, trim: true, maxlength: 250000, default: "" },
+    error: { type: String, trim: true, maxlength: 500, default: "" },
+    startedAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
+  },
   analysis: {
     summary: { type: String, trim: true, maxlength: 12000, default: "" },
     issue: { type: String, trim: true, maxlength: 5000, default: "" },

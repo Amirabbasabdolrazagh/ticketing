@@ -38,33 +38,70 @@ function Metric({ icon: Icon, label, value, tone }) {
 }
 
 function ReportModal({ call, onClose, onSaved }) {
+  const [liveCall, setLiveCall] = useState(call);
   const [form, setForm] = useState({
     issue: call.report?.issue || "", customerRequests: call.report?.customerRequests || "",
     actions: call.report?.actions || "", result: call.report?.result || "",
     outcome: call.report?.outcome || "unknown", satisfaction: call.report?.satisfaction || "", notes: call.report?.notes || "",
   });
   const [busy, setBusy] = useState(false);
+  const [transcriptionNotice, setTranscriptionNotice] = useState("");
+  useEffect(() => {
+    if (!call.recording?.storedName) return;
+    let active = true;
+    const refresh = async () => {
+      try {
+        const result = await api(`/api/phone/transcriptions?callId=${encodeURIComponent(call.callId)}`);
+        if (active) setLiveCall((current) => ({ ...current, transcript: result.transcript,
+          transcription: result.transcription, googleTranscription: result.googleTranscription, analysis: result.analysis }));
+      } catch { /* The report remains usable if a background status check fails. */ }
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 5000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [call.callId, call.recording?.storedName]);
   const save = async () => {
     setBusy(true);
     try { await api("/api/phone/calls", { method: "PATCH", body: JSON.stringify({ callId: call.callId, report: form }) }); onSaved(); onClose(); }
     catch (error) { alert(error.message); } finally { setBusy(false); }
   };
-  const retryTranscription = async () => {
+  const runTranscription = async (engine) => {
+    if (engine === "google" && !window.confirm("فایل کامل این مکالمه برای تبدیل به Google Cloud ارسال می‌شود و ممکن است هزینه داشته باشد. ادامه می‌دهید؟")) return;
     setBusy(true);
-    try { const result = await api("/api/phone/transcriptions", { method: "POST", body: JSON.stringify({ callId: call.callId }) }); alert(result.message); onSaved(); }
-    catch (error) { alert(error.message); } finally { setBusy(false); }
+    setTranscriptionNotice("");
+    try {
+      const result = await api("/api/phone/transcriptions", { method: "POST", body: JSON.stringify({ callId: call.callId, engine }) });
+      setTranscriptionNotice(result.message);
+      setLiveCall((current) => engine === "google"
+        ? { ...current, googleTranscription: { ...current.googleTranscription, status: "pending", error: "" } }
+        : { ...current, transcription: { ...current.transcription, status: "pending", error: "" } });
+    } catch (error) { setTranscriptionNotice(error.message); }
+    finally { setBusy(false); }
   };
   return <div className={styles.modalBackdrop} onMouseDown={onClose}><section className={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
     <header><div><small>گزارش پس از تماس</small><h2>{call.customerDisplayName}</h2></div><button onClick={onClose}><X /></button></header>
     {call.recording?.storedName && <div className={styles.audioBox}><div><Play size={18}/><b>فایل کامل مکالمه</b></div><audio controls preload="none" src={`/api/phone/recordings?callId=${encodeURIComponent(call.callId)}`}/></div>}
     <section className={styles.autoReport}>
-      <div className={styles.sectionTitle}><div><Activity size={18}/><b>پیش‌نویس گزارش از متن مکالمه</b></div><span>{call.analysis?.model || "در انتظار تبدیل"}</span></div>
-      {call.analysis?.summary ? <div className={styles.analysisGrid}><article className={styles.full}><small>بخشی از متن مکالمه</small><p>{call.analysis.summary}</p></article><article><small>عبارت‌های مربوط به مشکل</small><p>{call.analysis.issue || "—"}</p></article><article><small>عبارت‌های مربوط به درخواست</small><p>{call.analysis.customerRequests || "—"}</p></article><article><small>اقدامات ذکرشده</small><p>{call.analysis.agentActions || "—"}</p></article><article><small>نتیجه ذکرشده</small><p>{call.analysis.resolution || "—"}</p></article><article><small>نشانه گفتاری رضایت</small><p>{call.analysis.satisfactionEvidence || "—"}</p></article><article><small>عبارت‌های پیگیری</small><p>{call.analysis.followUp || "—"}</p></article></div> : <p className={styles.mutedText}>پس از دریافت فایل صوتی، متن و پیش‌نویس قاعده‌محور بدون هوش مصنوعی تولید می‌شود.</p>}
+      <div className={styles.sectionTitle}><div><Activity size={18}/><b>پیش‌نویس گزارش از متن مکالمه</b></div><span>{liveCall.analysis?.model || "در انتظار تبدیل"}</span></div>
+      {liveCall.analysis?.summary ? <div className={styles.analysisGrid}><article className={styles.full}><small>بخشی از متن مکالمه</small><p>{liveCall.analysis.summary}</p></article><article><small>عبارت‌های مربوط به مشکل</small><p>{liveCall.analysis.issue || "—"}</p></article><article><small>عبارت‌های مربوط به درخواست</small><p>{liveCall.analysis.customerRequests || "—"}</p></article><article><small>اقدامات ذکرشده</small><p>{liveCall.analysis.agentActions || "—"}</p></article><article><small>نتیجه ذکرشده</small><p>{liveCall.analysis.resolution || "—"}</p></article><article><small>نشانه گفتاری رضایت</small><p>{liveCall.analysis.satisfactionEvidence || "—"}</p></article><article><small>عبارت‌های پیگیری</small><p>{liveCall.analysis.followUp || "—"}</p></article></div> : <p className={styles.mutedText}>پس از دریافت فایل صوتی، متن و پیش‌نویس قاعده‌محور بدون هوش مصنوعی تولید می‌شود.</p>}
       <p className={styles.mutedText}>این فیلدها فقط از عبارت‌های متن استخراج می‌شوند؛ قبل از ثبت، گوینده و صحت نتیجه را بررسی کنید. امتیاز رضایت خودکار تعیین نمی‌شود.</p>
     </section>
     <section className={styles.transcriptBox}>
-      <div className={styles.sectionTitle}><div><Headphones size={18}/><b>متن کامل مکالمه</b></div><span>{call.transcription?.status === "completed" ? "تکمیل‌شده" : call.transcription?.status === "processing" ? "در حال پردازش" : call.transcription?.status === "failed" ? "ناموفق" : "در صف"}</span></div>
-      {call.transcript ? <div className={styles.transcriptText}>{call.transcript}</div> : <div className={styles.transcriptEmpty}><p>{call.transcription?.error || "متن کامل هنوز آماده نشده است."}</p>{call.recording?.storedName && <button disabled={busy} onClick={retryTranscription}><RefreshCw size={16}/>تلاش مجدد برای تبدیل متن</button>}</div>}
+      <div className={styles.sectionTitle}><div><Headphones size={18}/><b>مقایسه تبدیل متن مکالمه</b></div></div>
+      <p className={styles.mutedText}>هر موتور روی همین فایل ضبط‌شده اجرا می‌شود؛ نتیجه‌ها جدا می‌مانند و گزارش ثبت‌شده تغییر نمی‌کند.</p>
+      {transcriptionNotice && <p className={styles.transcriptionNotice} role="status">{transcriptionNotice}</p>}
+      <div className={styles.transcriptionComparison}>
+        <article>
+          <header><b>شنوا کوچیک · محلی</b><span>{liveCall.transcription?.status === "completed" ? "آماده" : liveCall.transcription?.status === "processing" || liveCall.transcription?.status === "pending" ? "در حال پردازش" : liveCall.transcription?.status === "failed" ? "ناموفق" : "اجرا نشده"}</span></header>
+          {liveCall.transcript ? <div className={styles.transcriptText}>{liveCall.transcript}</div> : <p className={styles.mutedText}>{liveCall.transcription?.error || "هنوز متنی موجود نیست."}</p>}
+          <button disabled={busy || !call.recording?.storedName || ["pending", "processing"].includes(liveCall.transcription?.status)} onClick={() => runTranscription("shenava")}><RefreshCw size={16}/>تبدیل با شنوا</button>
+        </article>
+        <article>
+          <header><b>Google Cloud · آزمایشی</b><span>{liveCall.googleTranscription?.status === "completed" ? "آماده" : liveCall.googleTranscription?.status === "processing" || liveCall.googleTranscription?.status === "pending" ? "در حال پردازش" : liveCall.googleTranscription?.status === "failed" ? "ناموفق" : "اجرا نشده"}</span></header>
+          {liveCall.googleTranscription?.text ? <div className={styles.transcriptText}>{liveCall.googleTranscription.text}</div> : <p className={styles.mutedText}>{liveCall.googleTranscription?.error || "هنوز متنی موجود نیست."}</p>}
+          <button disabled={busy || !call.recording?.storedName || ["pending", "processing"].includes(liveCall.googleTranscription?.status)} onClick={() => runTranscription("google")}><RefreshCw size={16}/>تبدیل با گوگل</button>
+        </article>
+      </div>
     </section>
     <div className={styles.formGrid}>
       <label><span>موضوع و مشکل</span><textarea value={form.issue} onChange={(e) => setForm({ ...form, issue: e.target.value })} /></label>

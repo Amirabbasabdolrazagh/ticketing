@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@google-cloud/speech": "^8.2.0",
+    "@google-cloud/storage": "^8.4.0",
     "@shadcn/react": "^0.3.1",
     "axios": "^1.19.0",
     "bcrypt": "^6.0.0",

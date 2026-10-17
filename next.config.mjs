@@ -2,6 +2,7 @@
 const nextConfig = {
   output: "standalone",
   reactCompiler: true,
+  serverExternalPackages: ["@google-cloud/speech", "@google-cloud/storage"],
   async headers() {
     return [{
       source: "/:path*",
