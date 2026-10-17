@@ -28,6 +28,7 @@ export async function POST(req) {
     if (!/^[A-Za-z0-9_-]{16,100}$/.test(deviceId)) return Response.json({ success: false, message: "شناسه دستگاه معتبر نیست" }, { status: 400 });
     const existing = await PhoneDevice.findOne({ deviceId });
     if (existing && existing.user.toString() !== user._id.toString()) return Response.json({ success: false, message: "این دستگاه قبلاً ثبت شده است" }, { status: 409 });
+    const wasRevoked = existing?.status === "revoked";
     const device = existing || await PhoneDevice.create({
       user: user._id,
       deviceId,
@@ -35,7 +36,16 @@ export async function POST(req) {
       fingerprint: String(body.fingerprint || "").trim().slice(0, 180),
       ipHash: crypto.createHash("sha256").update(req.headers.get("x-forwarded-for") || "unknown").digest("hex"),
     });
-    return Response.json({ success: true, message: existing ? "درخواست این دستگاه قبلاً ثبت شده است" : "درخواست دستگاه برای تأیید مدیر ثبت شد", device: { id: device._id, status: device.status } }, { status: existing ? 200 : 201 });
+    if (wasRevoked) {
+      device.status = "pending";
+      device.approvedBy = null;
+      device.approvedAt = null;
+      device.revokedAt = null;
+      device.sipUsername = "";
+      device.secretCiphertext = ""; device.secretIv = ""; device.secretTag = "";
+      await device.save();
+    }
+    return Response.json({ success: true, message: wasRevoked ? "درخواست فعال‌سازی مجدد برای مدیر ارسال شد" : existing ? "درخواست این دستگاه قبلاً ثبت شده است" : "درخواست دستگاه برای تأیید مدیر ثبت شد", device: { id: device._id, status: device.status } }, { status: existing ? 200 : 201 });
   } catch (error) {
     console.error("PHONE DEVICE POST ERROR", error);
     return Response.json({ success: false, message: "ثبت دستگاه ناموفق بود" }, { status: 500 });

@@ -104,6 +104,36 @@ export default function WebPhone() {
   const sessionRef = useRef(null);
   const callIdRef = useRef("");
   const autoConnectAttemptedRef = useRef(false);
+  const ringtoneRef = useRef(null);
+
+  const stopRingtone = useCallback(() => {
+    const current = ringtoneRef.current;
+    if (!current) return;
+    window.clearInterval(current.timer);
+    current.context?.close().catch(() => {});
+    ringtoneRef.current = null;
+  }, []);
+
+  const startRingtone = useCallback(() => {
+    stopRingtone();
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const context = new AudioContextClass();
+      const beep = () => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.frequency.value = 440;
+        gain.gain.setValueAtTime(0.0001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.16, context.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.7);
+        oscillator.connect(gain); gain.connect(context.destination);
+        oscillator.start(); oscillator.stop(context.currentTime + 0.72);
+      };
+      context.resume().then(beep).catch(() => {});
+      ringtoneRef.current = { context, timer: window.setInterval(beep, 1800) };
+    } catch {}
+  }, [stopRingtone]);
 
   const load = useCallback(async () => {
     let id = localStorage.getItem("itrasam-phone-device");
@@ -142,23 +172,25 @@ export default function WebPhone() {
     callIdRef.current = session.request?.callId || crypto.randomUUID();
     const identity = safeCallerName(session.remoteIdentity?.displayName);
     setActiveName(identity); setSessionState(incoming ? "incoming" : "ringing"); setDuration(0);
+    if (incoming) startRingtone();
     sendEvent("ringing", { direction: incoming ? "inbound" : "internal", displayName: identity });
     const { SessionState } = await import("sip.js");
     session.stateChange.addListener((state) => {
       if (state === SessionState.Established) {
+        stopRingtone();
         setSessionState("active"); sendEvent("answered");
         const receiver = session.sessionDescriptionHandler?.peerConnection?.getReceivers().find((item) => item.track?.kind === "audio");
         if (receiver?.track && remoteAudio.current) { remoteAudio.current.srcObject = new MediaStream([receiver.track]); remoteAudio.current.play().catch(() => {}); }
       }
-      if (state === SessionState.Terminated) { setSessionState("idle"); setMuted(false); setHeld(false); sendEvent("completed"); sessionRef.current = null; }
+      if (state === SessionState.Terminated) { stopRingtone(); setSessionState("idle"); setMuted(false); setHeld(false); sendEvent("completed"); sessionRef.current = null; }
     });
-  }, [sendEvent]);
+  }, [sendEvent, startRingtone, stopRingtone]);
 
   const connectPhone = useCallback(async () => {
     if (!credentialRef.current || !data?.settings?.wssUrl || !data?.settings?.sipDomain) return setError("دستگاه یا تنظیمات مرکز تماس هنوز آماده نیست");
     try {
       setConnection("connecting"); setError("");
-      const { UserAgent, Registerer } = await import("sip.js");
+      const { UserAgent, Registerer, RegistererState } = await import("sip.js");
       const uri = UserAgent.makeURI(`sip:${credentialRef.current.username}@${data.settings.sipDomain}`);
       if (!uri) throw new Error("نشانی داخلی معتبر نیست");
       const ua = new UserAgent({
@@ -167,8 +199,34 @@ export default function WebPhone() {
         delegate: { onInvite: (invitation) => bindSession(invitation, true) },
       });
       const registerer = new Registerer(ua);
-      await ua.start(); await registerer.register();
-      userAgentRef.current = ua; registererRef.current = registerer; credentialRef.current = null; setConnection("online"); setNotice("تلفن سازمانی آماده است");
+      await ua.start();
+      await new Promise((resolve, reject) => {
+        let settled = false;
+        const finish = (callback, value) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timer);
+          registerer.stateChange.removeListener(onStateChange);
+          callback(value);
+        };
+        const onStateChange = (state) => {
+          if (state === RegistererState.Registered) finish(resolve);
+          else if (state === RegistererState.Terminated) finish(reject, new Error("ثبت داخلی توسط ایزابل متوقف شد"));
+        };
+        const timer = window.setTimeout(() => finish(reject, new Error("ایزابل ثبت داخلی WebRTC را در زمان مقرر تأیید نکرد")), 15000);
+        registerer.stateChange.addListener(onStateChange);
+        registerer.register({ requestDelegate: {
+          onReject: (response) => finish(reject, new Error(`ثبت داخلی توسط ایزابل رد شد (کد ${response.message.statusCode || "نامشخص"})`)),
+          onRedirect: () => finish(reject, new Error("ایزابل درخواست ثبت داخلی را به مقصد دیگری هدایت کرد")),
+        }}).catch((error) => finish(reject, error));
+      });
+      registerer.stateChange.addListener((state) => {
+        if (state === RegistererState.Unregistered || state === RegistererState.Terminated) {
+          setConnection("offline");
+          setError("ثبت تلفن روی ایزابل قطع شد؛ اتصال شبکه و تنظیمات WebRTC را بررسی کنید");
+        }
+      });
+      userAgentRef.current = ua; registererRef.current = registerer; credentialRef.current = null; setConnection("online"); setNotice("تلفن روی ایزابل ثبت شد و آماده پاسخ‌گویی است");
     } catch (e) { setConnection("offline"); setError(`اتصال تلفن ناموفق بود: ${e.message}`); }
   }, [bindSession, data]);
 
@@ -179,8 +237,9 @@ export default function WebPhone() {
     return () => window.clearTimeout(timer);
   }, [connectPhone, connection, data?.device?.status]);
 
-  const answer = async () => { try { await sessionRef.current?.accept(); } catch (e) { setError(e.message); } };
+  const answer = async () => { stopRingtone(); try { await sessionRef.current?.accept(); } catch (e) { setError(e.message); } };
   const end = async () => {
+    stopRingtone();
     const session = sessionRef.current;
     if (!session) return;
     try { if (sessionState === "incoming") await session.reject(); else if (sessionState === "active") await session.bye(); else session.cancel?.(); }

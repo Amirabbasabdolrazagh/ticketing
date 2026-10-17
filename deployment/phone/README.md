@@ -4,7 +4,7 @@
 
 ## پیش‌نیاز مرکز تماس
 
-- یک PJSIP endpoint مجزا برای هر دستگاه (نه رمز مشترک داخلی)
+- یک endpoint مجزای `chan_sip` برای هر دستگاه (نه رمز مشترک داخلی). در Issabel 4 موجود، زیرپروتکل SIP WebSocket در اختیار `chan_sip` است و سامانه endpoint را خودکار در `sip_custom.conf` می‌سازد.
 - HTTP/WebSocket در Asterisk روی مسیر `/ws` و فقط از طریق WireGuard/Nginx
 - `webrtc=yes` یا معادل آن شامل DTLS-SRTP، ICE، AVPF و `rtcp_mux`
 - گواهی معتبر برای WSS
@@ -27,7 +27,7 @@
 2. کلیدها را در `.env` قرار دهید و مقدار `AUTH_COOKIE_DOMAIN=.itrasam.com` را تنظیم کنید.
 3. فایل Nginx نمونه را نصب و گواهی TLS صادر کنید.
 4. سرویس‌ها را با `docker compose up -d --build` بسازید.
-5. مدیر فقط IP خصوصی ایزابل و رمز مدیریتی موقت را در صفحه تلفن وارد می‌کند. سامانه نسخه Asterisk، AMI، HTTPS/WebSocket و PJSIP را کشف می‌کند و WSS، دامنه SIP، Caller ID و TURN را از تنظیمات امن زیرساخت می‌سازد؛ رمز ایزابل ذخیره نمی‌شود.
+5. مدیر فقط IP خصوصی ایزابل و رمز مدیریتی موقت را در صفحه تلفن وارد می‌کند. سامانه نسخه Asterisk، AMI، HTTPS/WebSocket و SIP را کشف می‌کند و endpoint دستگاه، WSS، دامنه SIP، Caller ID و TURN را از تنظیمات امن زیرساخت می‌سازد؛ رمز ایزابل ذخیره نمی‌شود.
 
 ## تماس ورودی مشتری
 
