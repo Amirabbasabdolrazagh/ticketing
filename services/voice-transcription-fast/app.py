@@ -11,6 +11,12 @@ from pathlib import Path
 import numpy as np
 import sherpa_onnx
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from pydantic import BaseModel, Field
+from report import extract_report
+
+
+class ReportRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=250000)
 
 MODEL_DIR = Path(os.getenv("VOICE_MODEL_DIR", "/models/shenava-koochik-v1"))
 MODEL_REVISION = "8ec9237"
@@ -61,6 +67,11 @@ app = FastAPI(title="IT RASAM Fast Persian Voice Transcription", lifespan=lifesp
 @app.get("/health")
 def health():
     return {"status": "ok" if recognizer else "starting", "model": "shenava-koochik-v1"}
+
+
+@app.post("/analyze")
+def analyze(request: ReportRequest):
+    return extract_report(request.text)
 
 
 @app.post("/transcribe")

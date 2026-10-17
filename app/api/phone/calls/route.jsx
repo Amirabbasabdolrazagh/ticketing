@@ -4,6 +4,7 @@ import getCurrentUser from "@/utils/auth";
 import ConnectDb from "@/utils/connectDB";
 import PhoneCall from "@/models/phoneCalls";
 import PhoneDevice from "@/models/phoneDevices";
+import PhoneSettings from "@/models/phoneSettings";
 import Ticket from "@/models/tickets";
 import User from "@/models/users";
 import { canUsePhone, customerHasSecureCall } from "@/lib/phoneAccess";
@@ -55,7 +56,8 @@ export async function POST(req) {
         direction: "outbound", status: "initiated", customerDisplayName: customer.name || "مشتری", maskedTarget: maskPhone(customer.phone),
       });
       try {
-        await originateCustomerCall({ extension: user.pbxExtension, customerPhone: customer.phone, deviceEndpoint: device.sipUsername, callId });
+        const settings = await PhoneSettings.findOne({ key: "default" }).select("recordingEnabled").lean();
+        await originateCustomerCall({ extension: user.pbxExtension, customerPhone: customer.phone, deviceEndpoint: device.sipUsername, callId, recordingEnabled: settings?.recordingEnabled !== false });
         ticket.lastPhoneCallAt = new Date(); ticket.lastPhoneCallBy = user._id; await ticket.save();
       } catch (error) {
         call.status = "failed"; call.endedAt = new Date(); await call.save(); throw error;
@@ -65,12 +67,24 @@ export async function POST(req) {
 
     if (body.action === "session-event") {
       const callId = String(body.callId || crypto.randomUUID());
-      let call = await PhoneCall.findOne({ callId });
+      let call = await PhoneCall.findOne({ $or: [{ callId }, { sipCallId: callId }] });
+      if (!call && body.direction === "inbound") {
+        call = await PhoneCall.findOne({
+          agent: user._id, direction: "inbound", status: "ringing",
+          customerDisplayName: safeDisplayName(body.displayName),
+          startedAt: { $gte: new Date(Date.now() - 90000) },
+          sipCallId: { $in: ["", null] },
+        }).sort({ startedAt: -1 });
+        if (call) call.sipCallId = callId;
+      }
       if (!call) call = await PhoneCall.create({ callId, agent: user._id, direction: ["inbound", "internal"].includes(body.direction) ? body.direction : "internal", status: "ringing", customerDisplayName: safeDisplayName(body.displayName) });
       if (call.agent.toString() !== user._id.toString() && user.role !== "admin") return Response.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
-      if (["ringing", "answered", "completed", "missed", "rejected", "failed"].includes(body.status)) call.status = body.status;
+      const terminal = ["completed", "missed", "rejected", "failed"];
+      if (terminal.includes(call.status)) return Response.json({ success: true, callId: call.callId });
+      if (body.status === "answered") call.status = "answered";
+      else if (terminal.includes(body.status)) call.status = body.status;
       if (body.status === "answered" && !call.answeredAt) call.answeredAt = new Date();
-      if (["completed", "missed", "rejected", "failed"].includes(body.status)) {
+      if (terminal.includes(body.status)) {
         call.endedAt = new Date();
         call.durationSeconds = call.answeredAt ? Math.max(0, Math.round((call.endedAt - call.answeredAt) / 1000)) : 0;
       }

@@ -82,6 +82,8 @@ try:
         "callerNumber": agi.get("agi_callerid", ""),
         "did": agi.get("agi_dnid", ""),
         "callId": agi.get("agi_uniqueid", "").replace(".", "-"),
+        "event": agi.get("agi_arg_1", ""),
+        "durationSeconds": agi.get("agi_arg_2", ""),
     }, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
     signature = hmac.new(as_bytes(secret), as_bytes(timestamp + ".") + raw, hashlib.sha256).hexdigest()
     request = Request(url, data=raw, headers={
@@ -92,12 +94,14 @@ try:
         result = json.loads(response.read().decode("utf-8"))
     finally:
         response.close()
-    set_var("ITRASAM_ROUTE_STATUS", "matched" if result.get("matched") else "fallback")
-    set_var("ITRASAM_EXTENSION", result.get("extension", "102"))
-    web_endpoint = str(result.get("webEndpoint", ""))
-    set_var("ITRASAM_WEB_ENDPOINT", web_endpoint if web_endpoint.replace("-", "").replace("_", "").replace(".", "").isalnum() else "")
-    set_var("ITRASAM_CUSTOMER_NAME", result.get("customerName", "مشتری ای تی رسام"))
-    set_var("ITRASAM_CALL_ID", result.get("callId", ""))
+    if not agi.get("agi_arg_1"):
+        set_var("ITRASAM_ROUTE_STATUS", "matched" if result.get("matched") else "fallback")
+        set_var("ITRASAM_EXTENSION", result.get("extension", "102"))
+        web_endpoint = str(result.get("webEndpoint", ""))
+        set_var("ITRASAM_WEB_ENDPOINT", web_endpoint if web_endpoint.replace("-", "").replace("_", "").replace(".", "").isalnum() else "")
+        set_var("ITRASAM_RECORDING_ENABLED", "1" if result.get("recordingEnabled", True) else "0")
+        set_var("ITRASAM_CUSTOMER_NAME", result.get("customerName", "مشتری ای تی رسام"))
+        set_var("ITRASAM_CALL_ID", result.get("callId", ""))
 except Exception as error:
     error_message = u"ITRASAM inbound router error: {0}\n".format(as_text(error))
     if PYTHON3:
@@ -105,7 +109,9 @@ except Exception as error:
     else:
         sys.stderr.write(error_message.encode("utf-8"))
     sys.stderr.flush()
-    set_var("ITRASAM_ROUTE_STATUS", "error")
-    set_var("ITRASAM_EXTENSION", "")
-    set_var("ITRASAM_WEB_ENDPOINT", "")
-    set_var("ITRASAM_CUSTOMER_NAME", "مشتری ای تی رسام")
+    if not agi.get("agi_arg_1"):
+        set_var("ITRASAM_ROUTE_STATUS", "error")
+        set_var("ITRASAM_EXTENSION", "")
+        set_var("ITRASAM_WEB_ENDPOINT", "")
+        set_var("ITRASAM_RECORDING_ENABLED", "0")
+        set_var("ITRASAM_CUSTOMER_NAME", "مشتری ای تی رسام")

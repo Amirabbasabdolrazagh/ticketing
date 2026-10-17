@@ -137,6 +137,7 @@ export default function SideBar() {
       label: "تلفن سازمانی",
       description: "تماس امن و گزارش مکالمات",
       href: process.env.NEXT_PUBLIC_PHONE_URL || "/phone",
+      newTab: true,
       icon: PhoneCall,
       active: pathname.startsWith("/phone"),
     }] : []),
@@ -390,7 +391,7 @@ export default function SideBar() {
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
-                      render={<Link href={item.href} prefetch />}
+                      render={<Link href={item.href} prefetch={!item.newTab} target={item.newTab ? "_blank" : undefined} rel={item.newTab ? "noopener noreferrer" : undefined} />}
                       isActive={item.active}
                       tooltip={item.label}
                       className="group h-[4.35rem] gap-3 rounded-2xl border border-transparent px-3.5 text-right transition-all duration-300 hover:-translate-y-0.5 hover:border-white/80 hover:bg-white/60 hover:shadow-[0_12px_30px_rgba(30,64,175,0.12)] data-active:border-white/80 data-active:bg-gradient-to-l data-active:from-blue-600 data-active:to-indigo-500 data-active:shadow-[0_14px_32px_rgba(37,99,235,0.32)]"
@@ -465,7 +466,9 @@ export default function SideBar() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      prefetch
+                      prefetch={!item.newTab}
+                      target={item.newTab ? "_blank" : undefined}
+                      rel={item.newTab ? "noopener noreferrer" : undefined}
                       onClick={() => setIsMoreMenuOpen(false)}
                       className={`group flex min-h-[5.5rem] items-center gap-3 rounded-2xl border p-3.5 transition active:scale-[0.98] ${
                         item.active
@@ -563,7 +566,9 @@ export default function SideBar() {
               <Link
                 key={item.href}
                 href={item.href}
-                prefetch
+                prefetch={!item.newTab}
+                target={item.newTab ? "_blank" : undefined}
+                rel={item.newTab ? "noopener noreferrer" : undefined}
                 aria-current={item.active ? "page" : undefined}
                 className={`liquid-bottom-nav__item ${
                   item.active ? "is-active" : ""

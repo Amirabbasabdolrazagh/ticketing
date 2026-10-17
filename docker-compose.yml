@@ -39,6 +39,7 @@ services:
       PORT: 3001
       HOSTNAME: 0.0.0.0
       PHONE_APP_MODE: "1"
+      PHONE_TRANSCRIPTION_FAST_URL: ${PHONE_TRANSCRIPTION_FAST_URL:-http://voice-transcription-fast:9000}
     ports:
       - "127.0.0.1:3001:3001"
     volumes:
@@ -53,3 +54,26 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+
+  voice-transcription-fast:
+    build:
+      context: ./services/voice-transcription-fast
+      dockerfile: Dockerfile
+    container_name: itrasam-voice-fast-phone
+    restart: unless-stopped
+    environment:
+      VOICE_THREADS: 4
+    volumes:
+      - voice-transcription-fast-models:/models
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+
+volumes:
+  voice-transcription-fast-models:
+    name: itrasam-voice-trial_voice-transcription-fast-models

@@ -2,6 +2,7 @@ import mongoose, { model, models, Schema } from "mongoose";
 
 const phoneCallSchema = new Schema({
   callId: { type: String, required: true, unique: true, index: true },
+  sipCallId: { type: String, trim: true, maxlength: 150, default: "", index: true },
   agent: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
   customer: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
   ticket: { type: mongoose.Schema.Types.ObjectId, ref: "Ticket", default: null, index: true },

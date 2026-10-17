@@ -58,8 +58,9 @@ function ReportModal({ call, onClose, onSaved }) {
     <header><div><small>گزارش پس از تماس</small><h2>{call.customerDisplayName}</h2></div><button onClick={onClose}><X /></button></header>
     {call.recording?.storedName && <div className={styles.audioBox}><div><Play size={18}/><b>فایل کامل مکالمه</b></div><audio controls preload="none" src={`/api/phone/recordings?callId=${encodeURIComponent(call.callId)}`}/></div>}
     <section className={styles.autoReport}>
-      <div className={styles.sectionTitle}><div><Activity size={18}/><b>گزارش کاربردی خودکار</b></div><span>{call.analysis?.model || "در انتظار تحلیل"}</span></div>
-      {call.analysis?.summary ? <div className={styles.analysisGrid}><article className={styles.full}><small>خلاصه جامع</small><p>{call.analysis.summary}</p></article><article><small>مشکل اصلی</small><p>{call.analysis.issue || "—"}</p></article><article><small>خواسته مشتری</small><p>{call.analysis.customerRequests || "—"}</p></article><article><small>اقدام پشتیبان</small><p>{call.analysis.agentActions || "—"}</p></article><article><small>نتیجه و راهکار</small><p>{call.analysis.resolution || "—"}</p></article><article><small>نشانه رضایت مشتری</small><p>{call.analysis.satisfactionEvidence || "—"}</p></article><article><small>پیگیری بعدی</small><p>{call.analysis.followUp || "—"}</p></article></div> : <p className={styles.mutedText}>پس از دریافت فایل صوتی، متن و تحلیل مکالمه به‌صورت خودکار تولید می‌شود.</p>}
+      <div className={styles.sectionTitle}><div><Activity size={18}/><b>پیش‌نویس گزارش از متن مکالمه</b></div><span>{call.analysis?.model || "در انتظار تبدیل"}</span></div>
+      {call.analysis?.summary ? <div className={styles.analysisGrid}><article className={styles.full}><small>بخشی از متن مکالمه</small><p>{call.analysis.summary}</p></article><article><small>عبارت‌های مربوط به مشکل</small><p>{call.analysis.issue || "—"}</p></article><article><small>عبارت‌های مربوط به درخواست</small><p>{call.analysis.customerRequests || "—"}</p></article><article><small>اقدامات ذکرشده</small><p>{call.analysis.agentActions || "—"}</p></article><article><small>نتیجه ذکرشده</small><p>{call.analysis.resolution || "—"}</p></article><article><small>نشانه گفتاری رضایت</small><p>{call.analysis.satisfactionEvidence || "—"}</p></article><article><small>عبارت‌های پیگیری</small><p>{call.analysis.followUp || "—"}</p></article></div> : <p className={styles.mutedText}>پس از دریافت فایل صوتی، متن و پیش‌نویس قاعده‌محور بدون هوش مصنوعی تولید می‌شود.</p>}
+      <p className={styles.mutedText}>این فیلدها فقط از عبارت‌های متن استخراج می‌شوند؛ قبل از ثبت، گوینده و صحت نتیجه را بررسی کنید. امتیاز رضایت خودکار تعیین نمی‌شود.</p>
     </section>
     <section className={styles.transcriptBox}>
       <div className={styles.sectionTitle}><div><Headphones size={18}/><b>متن کامل مکالمه</b></div><span>{call.transcription?.status === "completed" ? "تکمیل‌شده" : call.transcription?.status === "processing" ? "در حال پردازش" : call.transcription?.status === "failed" ? "ناموفق" : "در صف"}</span></div>
@@ -162,6 +163,27 @@ export default function WebPhone() {
     return () => clearInterval(timer);
   }, [sessionState]);
 
+  useEffect(() => {
+    if (!deviceId || data?.device?.status !== "active") return;
+    const status = connection === "online" ? "online" : "offline";
+    const report = (nextStatus, keepalive = false) => fetch("/api/phone/presence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, status: nextStatus }),
+      keepalive,
+    }).catch(() => {});
+    report(status);
+    if (status !== "online") return;
+    const timer = window.setInterval(() => report("online"), 20000);
+    const offline = () => report("offline", true);
+    window.addEventListener("pagehide", offline);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("pagehide", offline);
+      offline();
+    };
+  }, [connection, data?.device?.status, deviceId]);
+
   const sendEvent = useCallback((status, extra = {}) => {
     if (!callIdRef.current) return;
     fetch("/api/phone/calls", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "session-event", callId: callIdRef.current, status, ...extra }) }).catch(() => {});
@@ -173,16 +195,19 @@ export default function WebPhone() {
     const identity = safeCallerName(session.remoteIdentity?.displayName);
     setActiveName(identity); setSessionState(incoming ? "incoming" : "ringing"); setDuration(0);
     if (incoming) startRingtone();
-    sendEvent("ringing", { direction: incoming ? "inbound" : "internal", displayName: identity });
+    const eventDetails = { direction: incoming ? "inbound" : "internal", displayName: identity };
+    sendEvent("ringing", eventDetails);
     const { SessionState } = await import("sip.js");
+    let established = false;
     session.stateChange.addListener((state) => {
       if (state === SessionState.Established) {
+        established = true;
         stopRingtone();
-        setSessionState("active"); sendEvent("answered");
+        setSessionState("active"); sendEvent("answered", eventDetails);
         const receiver = session.sessionDescriptionHandler?.peerConnection?.getReceivers().find((item) => item.track?.kind === "audio");
         if (receiver?.track && remoteAudio.current) { remoteAudio.current.srcObject = new MediaStream([receiver.track]); remoteAudio.current.play().catch(() => {}); }
       }
-      if (state === SessionState.Terminated) { stopRingtone(); setSessionState("idle"); setMuted(false); setHeld(false); sendEvent("completed"); sessionRef.current = null; }
+      if (state === SessionState.Terminated) { stopRingtone(); setSessionState("idle"); setMuted(false); setHeld(false); sendEvent(established ? "completed" : "missed", eventDetails); sessionRef.current = null; }
     });
   }, [sendEvent, startRingtone, stopRingtone]);
 
