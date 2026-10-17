@@ -28,7 +28,9 @@ except NameError:
 def as_text(value):
     if isinstance(value, TEXT_TYPE):
         return value
-    return value.decode("utf-8", "replace")
+    if isinstance(value, bytes):
+        return value.decode("utf-8", "replace")
+    return TEXT_TYPE(value)
 
 
 def as_bytes(value):
@@ -51,7 +53,10 @@ def load_config():
     return config
 
 agi = {}
-for line in sys.stdin:
+while True:
+    line = sys.stdin.readline()
+    if not line:
+        break
     line = line.strip()
     if not line:
         break
@@ -93,7 +98,13 @@ try:
     set_var("ITRASAM_WEB_ENDPOINT", web_endpoint if web_endpoint.replace("-", "").replace("_", "").replace(".", "").isalnum() else "")
     set_var("ITRASAM_CUSTOMER_NAME", result.get("customerName", "مشتری ای تی رسام"))
     set_var("ITRASAM_CALL_ID", result.get("callId", ""))
-except Exception:
+except Exception as error:
+    error_message = u"ITRASAM inbound router error: {0}\n".format(as_text(error))
+    if PYTHON3:
+        sys.stderr.write(error_message)
+    else:
+        sys.stderr.write(error_message.encode("utf-8"))
+    sys.stderr.flush()
     set_var("ITRASAM_ROUTE_STATUS", "error")
     set_var("ITRASAM_EXTENSION", "")
     set_var("ITRASAM_WEB_ENDPOINT", "")
