@@ -1,19 +1,45 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Signed AGI lookup for routing a known customer to the owner of their active ticket."""
+from __future__ import print_function
+
 import hashlib
 import hmac
+import io
 import json
 import os
 import sys
 import time
-import urllib.request
+
+try:
+    from urllib.request import Request, urlopen
+except ImportError:  # Python 2.7 on Issabel 4 / CentOS 7
+    from urllib2 import Request, urlopen
 
 CONFIG_PATH = "/etc/asterisk/itrasam-router.conf"
+PYTHON3 = sys.version_info[0] >= 3
+
+try:
+    TEXT_TYPE = unicode
+except NameError:
+    TEXT_TYPE = str
+
+
+def as_text(value):
+    if isinstance(value, TEXT_TYPE):
+        return value
+    return value.decode("utf-8", "replace")
+
+
+def as_bytes(value):
+    if isinstance(value, bytes):
+        return value
+    return value.encode("utf-8")
 
 def load_config():
     config = {}
     try:
-        with open(CONFIG_PATH, "r", encoding="utf-8") as handle:
+        with io.open(CONFIG_PATH, "r", encoding="utf-8") as handle:
             for raw_line in handle:
                 line = raw_line.strip()
                 if not line or line.startswith("#") or "=" not in line:
@@ -33,8 +59,13 @@ for line in sys.stdin:
     agi[key] = value.strip()
 
 def set_var(name, value):
-    safe = str(value or "").replace('"', "").replace("\r", " ").replace("\n", " ")
-    print(f'SET VARIABLE {name} "{safe}"', flush=True)
+    safe = as_text(value or "").replace('"', "").replace("\r", " ").replace("\n", " ")
+    output = u'SET VARIABLE {0} "{1}"\n'.format(name, safe)
+    if PYTHON3:
+        sys.stdout.write(output)
+    else:
+        sys.stdout.write(output.encode("utf-8"))
+    sys.stdout.flush()
     sys.stdin.readline()
 
 try:
@@ -47,12 +78,15 @@ try:
         "did": agi.get("agi_dnid", ""),
         "callId": agi.get("agi_uniqueid", "").replace(".", "-"),
     }, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-    signature = hmac.new(secret.encode("utf-8"), (timestamp + ".").encode("utf-8") + raw, hashlib.sha256).hexdigest()
-    request = urllib.request.Request(url, data=raw, headers={
+    signature = hmac.new(as_bytes(secret), as_bytes(timestamp + ".") + raw, hashlib.sha256).hexdigest()
+    request = Request(url, data=raw, headers={
         "Content-Type": "application/json", "x-phone-timestamp": timestamp, "x-phone-signature": signature,
     })
-    with urllib.request.urlopen(request, timeout=4) as response:
+    response = urlopen(request, timeout=4)
+    try:
         result = json.loads(response.read().decode("utf-8"))
+    finally:
+        response.close()
     set_var("ITRASAM_ROUTE_STATUS", "matched" if result.get("matched") else "fallback")
     set_var("ITRASAM_EXTENSION", result.get("extension", "102"))
     web_endpoint = str(result.get("webEndpoint", ""))
