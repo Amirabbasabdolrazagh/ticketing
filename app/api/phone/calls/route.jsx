@@ -9,7 +9,7 @@ import Ticket from "@/models/tickets";
 import User from "@/models/users";
 import { canUsePhone, customerHasSecureCall } from "@/lib/phoneAccess";
 import { maskPhone } from "@/lib/phoneCrypto";
-import { originateCustomerCall } from "@/lib/issabelAmi";
+import { adminDialNumber, originateAdminCall, originateCustomerCall } from "@/lib/issabelAmi";
 
 function cleanReport(report = {}) {
   return {
@@ -35,6 +35,27 @@ export async function POST(req) {
     const user = await getCurrentUser();
     if (!canUsePhone(user)) return Response.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
     const body = await req.json();
+
+    if (body.action === "admin-dial") {
+      if (user.role !== "admin") return Response.json({ success: false, message: "شماره‌گیری آزاد فقط برای مدیر سیستم مجاز است" }, { status: 403 });
+      const number = String(body.number || "").trim();
+      try { adminDialNumber(number); }
+      catch (error) { return Response.json({ success: false, message: error.message }, { status: 400 }); }
+      const device = body.deviceId ? await PhoneDevice.findOne({ user: user._id, deviceId: body.deviceId, status: "active" }).select("_id sipUsername") : null;
+      if (!device?.sipUsername) return Response.json({ success: false, message: "ابتدا دستگاه تلفن مدیر را تأیید و متصل کنید" }, { status: 403 });
+      const callId = crypto.randomUUID();
+      const call = await PhoneCall.create({
+        callId, agent: user._id, device: device._id, direction: "outbound", status: "initiated",
+        customerDisplayName: `تماس آزاد مدیر · ${maskPhone(number)}`, maskedTarget: maskPhone(number),
+      });
+      try {
+        const settings = await PhoneSettings.findOne({ key: "default" }).select("recordingEnabled").lean();
+        await originateAdminCall({ deviceEndpoint: device.sipUsername, phoneNumber: number, callId, recordingEnabled: settings?.recordingEnabled !== false });
+      } catch (error) {
+        call.status = "failed"; call.endedAt = new Date(); await call.save(); throw error;
+      }
+      return Response.json({ success: true, message: "ابتدا تلفن وب مدیر زنگ می‌خورد و پس از پاسخ، شماره مقصد گرفته می‌شود", callId });
+    }
 
     if (body.action === "customer-call") {
       if (!isValidObjectId(body.ticketId) || !isValidObjectId(body.customerId)) return Response.json({ success: false, message: "مخاطب یا تیکت معتبر نیست" }, { status: 400 });

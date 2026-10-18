@@ -65,16 +65,16 @@ export async function PATCH(req) {
     const issabelPassword = String(body.issabelPassword || "");
     if (!settings?.issabelHost) return Response.json({ success: false, message: "ابتدا ایزابل را در تنظیمات تلفن شناسایی کنید" }, { status: 409 });
     if (issabelPassword.length < 8) return Response.json({ success: false, message: "رمز SSH ایزابل برای این عملیات لازم است" }, { status: 400 });
-    const owner = await User.findById(device.user).select("name pbxExtension").lean();
+    const owner = await User.findById(device.user).select("name role pbxExtension").lean();
     if (body.action === "revoke") {
       if (device.sipUsername) await provisionWebRtcDevice({ host: settings.issabelHost, password: issabelPassword, username: device.sipUsername, secret: "", remove: true });
       device.status = "revoked";
       device.revokedAt = new Date();
       device.secretCiphertext = ""; device.secretIv = ""; device.secretTag = "";
     } else if (body.action === "approve") {
-      if (!owner?.pbxExtension || !/^\d{2,8}$/.test(owner.pbxExtension)) return Response.json({ success: false, message: "ابتدا داخلی پشتیبان را در حساب کاربری او تعریف کنید" }, { status: 422 });
+      if (owner?.role !== "admin" && (!owner?.pbxExtension || !/^\d{2,8}$/.test(owner.pbxExtension))) return Response.json({ success: false, message: "ابتدا داخلی پشتیبان را در حساب کاربری او تعریف کنید" }, { status: 422 });
       const suffix = crypto.createHash("sha256").update(device.deviceId).digest("hex").slice(0, 8);
-      const sipUsername = `web-${owner.pbxExtension}-${suffix}`;
+      const sipUsername = `web-${owner.role === "admin" && !/^\d{2,8}$/.test(owner.pbxExtension || "") ? "admin" : owner.pbxExtension}-${suffix}`;
       const sipSecret = crypto.randomBytes(24).toString("base64url");
       await provisionWebRtcDevice({ host: settings.issabelHost, password: issabelPassword, username: sipUsername, secret: sipSecret });
       const encrypted = encryptPhoneSecret(sipSecret);

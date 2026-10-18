@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity, ArrowLeft, ArrowRightLeft, BarChart3, BookUser, Check, Clock3, Headphones, History,
-  Mic, MicOff, Pause, Phone, PhoneCall, PhoneIncoming, PhoneOff, Play,
+  Delete, Mic, MicOff, Pause, Phone, PhoneCall, PhoneIncoming, PhoneOff, Play,
   LockKeyhole, RefreshCw, Search, Server, Settings, ShieldCheck, Smartphone, Star, UserCheck, X,
 } from "lucide-react";
 import styles from "./phone.module.css";
@@ -122,6 +122,8 @@ export default function WebPhone() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [adminNumber, setAdminNumber] = useState("");
+  const [adminDialing, setAdminDialing] = useState(false);
   const [deviceId, setDeviceId] = useState("");
   const [connection, setConnection] = useState("offline");
   const [sessionState, setSessionState] = useState("idle");
@@ -330,6 +332,16 @@ export default function WebPhone() {
     try { const result = await api("/api/phone/calls", { method: "POST", body: JSON.stringify({ action: "customer-call", customerId: contact.id, ticketId: contact.ticketId, deviceId }) }); setNotice(result.message); callIdRef.current = result.callId; }
     catch (e) { setError(e.message); }
   };
+  const dialAsAdmin = async (event) => {
+    event.preventDefault();
+    if (data?.user?.role !== "admin" || !adminNumber.trim() || connection !== "online" || sessionState !== "idle" || adminDialing) return;
+    setAdminDialing(true); setError(""); setNotice("");
+    try {
+      const result = await api("/api/phone/calls", { method: "POST", body: JSON.stringify({ action: "admin-dial", number: adminNumber, deviceId }) });
+      setNotice(result.message); callIdRef.current = result.callId;
+    } catch (e) { setError(e.message); }
+    finally { setAdminDialing(false); }
+  };
   const requestDevice = async () => {
     try { const result = await api("/api/phone/devices", { method: "POST", body: JSON.stringify({ deviceId, label: `مرورگر ${navigator.platform || "پشتیبان"}`, fingerprint: `${navigator.userAgent}|${screen.width}x${screen.height}` }) }); setNotice(result.message); load(); }
     catch (e) { setError(e.message); }
@@ -399,10 +411,20 @@ export default function WebPhone() {
           <article className={styles.dialer}>
             <div className={styles.deviceState}><span><ShieldCheck size={20}/> دستگاه امن</span><b className={data.device?.status === "active" ? styles.good : styles.wait}>{data.device?.status === "active" ? "تأییدشده" : data.device?.status === "pending" ? "در انتظار مدیر" : "ثبت نشده"}</b></div>
             <div className={styles.phoneOrb}><Phone size={34}/><h2>{sessionState === "idle" ? "آماده تماس" : activeName}</h2><p>{sessionState === "active" ? seconds(duration) : sessionState === "incoming" ? "تماس ورودی" : sessionState === "ringing" ? "در حال شماره‌گیری" : "شماره مشتری همیشه محرمانه می‌ماند"}</p></div>
-            {data.device?.status !== "active" ? <button className={styles.primary} onClick={requestDevice}><Smartphone size={19}/>ثبت این دستگاه</button> : connection !== "online" ? <button className={styles.primary} onClick={connectPhone}><PhoneCall size={19}/>فعال‌کردن تلفن</button> : sessionState === "incoming" ? <div className={styles.callButtons}><button className={styles.answer} onClick={answer}><PhoneIncoming/></button><button className={styles.hangup} onClick={end}><PhoneOff/></button></div> : sessionState !== "idle" ? <div className={styles.callButtons}><button className={muted ? styles.controlOn : ""} onClick={toggleMute}>{muted ? <MicOff/> : <Mic/>}</button><button className={held ? styles.controlOn : ""} onClick={toggleHold}>{held ? <Play/> : <Pause/>}</button>{data.settings.allowTransfer && <button onClick={transferCall} title="انتقال تماس"><ArrowRightLeft/></button>}<button className={styles.hangup} onClick={end}><PhoneOff/></button></div> : <div className={styles.ready}><Activity size={19}/>برای شروع، مشتری را از دفترچه انتخاب کنید</div>}
+            {data.device?.status !== "active" ? <button className={styles.primary} onClick={requestDevice}><Smartphone size={19}/>ثبت این دستگاه</button> : connection !== "online" ? <button className={styles.primary} onClick={connectPhone}><PhoneCall size={19}/>فعال‌کردن تلفن</button> : sessionState === "incoming" ? <div className={styles.callButtons}><button className={styles.answer} onClick={answer}><PhoneIncoming/></button><button className={styles.hangup} onClick={end}><PhoneOff/></button></div> : sessionState !== "idle" ? <div className={styles.callButtons}><button className={muted ? styles.controlOn : ""} onClick={toggleMute}>{muted ? <MicOff/> : <Mic/>}</button><button className={held ? styles.controlOn : ""} onClick={toggleHold}>{held ? <Play/> : <Pause/>}</button>{data.settings.allowTransfer && <button onClick={transferCall} title="انتقال تماس"><ArrowRightLeft/></button>}<button className={styles.hangup} onClick={end}><PhoneOff/></button></div> : <div className={styles.ready}><Activity size={19}/>{data.user.role === "admin" ? "از دفترچه یا شماره‌گیر مدیر تماس بگیرید" : "برای شروع، مشتری را از دفترچه انتخاب کنید"}</div>}
             <p className={styles.consent}>{data.settings.recordingEnabled ? `● ${data.settings.recordingConsentText}` : "ضبط مکالمه غیرفعال است"}</p>
           </article>
           <article className={styles.quickContacts}><header><div><h2>تماس سریع</h2><p>مشتریان دارای تیکت و قرارداد فعال</p></div><button onClick={() => setTab("contacts")}>مشاهده همه</button></header>{contacts.slice(0,5).map((contact) => <div className={styles.contactRow} key={contact.id}><span>{contact.name[0]}</span><div><b>{contact.name}</b><small>{contact.ticketTitle} · {contact.ticketNumber}</small></div><button disabled={connection !== "online"} onClick={() => callCustomer(contact)}><Phone size={18}/></button></div>)}{!contacts.length && <div className={styles.empty}>مخاطب مجازی وجود ندارد</div>}</article>
+          {data.user.role === "admin" && <article className={styles.adminDialPanel}>
+            <div className={styles.adminDialIntro}><span><PhoneCall size={21}/></span><div><h2>شماره‌گیر آزاد مدیر</h2><p>تماس با شماره دلخواه یا داخلی ایزابل؛ پیش‌شماره خروجی به‌صورت خودکار اعمال می‌شود.</p></div></div>
+            <form className={styles.adminDialForm} onSubmit={dialAsAdmin}>
+              <label htmlFor="admin-phone-number">شماره مقصد</label>
+              <div className={styles.adminDialInput}><input id="admin-phone-number" type="tel" dir="ltr" inputMode="tel" autoComplete="off" maxLength={24} placeholder="0912… یا 021… یا داخلی" value={adminNumber} onChange={(event) => setAdminNumber(event.target.value)} /><button type="button" aria-label="حذف رقم آخر" onClick={() => setAdminNumber((value) => value.slice(0, -1))}><Delete size={20}/></button></div>
+              <div className={styles.adminDialKeys}>{["1","2","3","4","5","6","7","8","9","","0", ""].map((digit, index) => digit ? <button type="button" key={digit} onClick={() => setAdminNumber((value) => `${value}${digit}`.slice(0, 24))}>{digit}</button> : <span key={`empty-${index}`}/>)}</div>
+              <button className={styles.primary} type="submit" disabled={!adminNumber.trim() || connection !== "online" || sessionState !== "idle" || adminDialing}>{adminDialing ? "در حال برقراری…" : <><Phone size={18}/>تماس با شماره</>}</button>
+              <small>فقط مدیر سیستم می‌تواند شماره‌گیری آزاد انجام دهد. تماس طبق تنظیمات مرکز تماس ضبط و در گزارش ثبت می‌شود.</small>
+            </form>
+          </article>}
         </section>
       </>}
 
