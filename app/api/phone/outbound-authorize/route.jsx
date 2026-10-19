@@ -55,7 +55,7 @@ export async function PUT(req) {
       "directDial.expiresAt": { $gt: new Date() },
       "directDial.consumedAt": null,
       direction: "outbound", status: "initiated",
-    }, { $set: { "directDial.consumedAt": new Date(), status: "ringing" } }, { new: true });
+    }, { $set: { "directDial.consumedAt": new Date(), status: "ringing" } }, { new: true }).select("+directDial.dialNumber +directDial.recordingEnabled");
     if (!call) return Response.json({ authorized: false }, { status: 403 });
     const device = await PhoneDevice.findOne({ _id: call.device, user: call.agent, status: "active", sipUsername }).select("_id").lean();
     if (!device) return Response.json({ authorized: false }, { status: 403 });
