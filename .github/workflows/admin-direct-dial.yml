@@ -1,5 +1,7 @@
 name: Admin direct dial validation
 on:
+  push:
+    branches: [feature/admin-direct-webrtc-dial]
   pull_request:
     paths:
       - 'app/api/phone/**'
