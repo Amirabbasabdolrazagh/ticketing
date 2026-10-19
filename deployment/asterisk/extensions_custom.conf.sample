@@ -43,3 +43,21 @@ exten => _X.,1,NoOp(ITRASAM secure outbound recording)
 ; مسیر ورودی DID شرکت در Issabel باید به context بالا هدایت شود.
 ; برای تماس دارای تیکت، تماس‌گیرنده حداکثر حدود ۵۰ ثانیه منتظر باز شدن و ثبت تلفن وب می‌ماند.
 ; تماس‌های ناشناس، بدون تیکت فعال، یا بی‌پاسخ به IVR فعلی (ivr-4) بازمی‌گردند.
+
+; Browser direct dial: assign ONLY to approved web-admin SIP peers after staged verification.
+; Never include this context from an untrusted inbound route.
+[itrasam-admin-direct]
+exten => _XXXXXXXXXXXXXXXXXXXXXXXX,1,NoOp(ITRASAM authorized browser direct call)
+ same => n,Set(ITRASAM_AUTHORIZED=0)
+ same => n,Set(ITRASAM_SIP_PEER=${CHANNEL(peername)})
+ same => n,GotoIf($["${CHANNEL(channeltype)}"!="SIP"]?denied)
+ same => n,GotoIf($["${ITRASAM_SIP_PEER:0:10}"!="web-admin-"]?denied)
+ same => n,AGI(itrasam_outbound_authorize.py,${EXTEN},${ITRASAM_SIP_PEER})
+ same => n,GotoIf($["${ITRASAM_AUTHORIZED}"!="1"]?denied)
+ same => n,GotoIf($["${ITRASAM_RECORDING_ENABLED}"!="1"]?dial-destination)
+ same => n,Set(ITRASAM_RECORDING=/var/spool/asterisk/monitor/itrasam-${ITRASAM_CALL_ID}.wav)
+ same => n,MixMonitor(${ITRASAM_RECORDING},b,/var/lib/asterisk/agi-bin/itrasam_recording_upload.py ${ITRASAM_CALL_ID} ${ITRASAM_RECORDING})
+ same => n(dial-destination),Dial(Local/${ITRASAM_DIAL_NUMBER}@from-internal/n,60,tT)
+ same => n,StopMixMonitor()
+ same => n,Hangup()
+ same => n(denied),Hangup(21)
