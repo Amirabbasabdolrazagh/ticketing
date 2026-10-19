@@ -53,7 +53,7 @@ try:
     timestamp = str(int(time.time()))
     raw = json.dumps({
         "token": agi.get("agi_arg_1", ""),
-        "sipUsername": agi.get("agi_callerid", ""),
+        "sipUsername": agi.get("agi_arg_2", ""),
         "requestedNumber": agi.get("agi_extension", ""),
     }, separators=(",", ":")).encode("utf-8")
     sig = hmac.new(secret.encode("utf-8"), timestamp.encode("ascii") + b"." + raw, hashlib.sha256).hexdigest()
@@ -62,6 +62,7 @@ try:
         "x-phone-timestamp": timestamp,
         "x-phone-signature": sig,
     })
+    request.get_method = lambda: "PUT"
     response = urlopen(request, timeout=4)
     try:
         data = json.loads(response.read().decode("utf-8"))
