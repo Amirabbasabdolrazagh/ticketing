@@ -196,6 +196,25 @@ export default function WebPhone() {
     const timer = window.setTimeout(load, 0);
     return () => window.clearTimeout(timer);
   }, [load]);
+  // Refresh coturn credentials only between calls. iOS may suspend timers while
+  // backgrounded, so also check when the tab becomes visible again.
+  useEffect(() => {
+    const expiresAt = data?.settings?.turnCredentialsExpireAt;
+    if (!expiresAt) return;
+    const check = () => {
+      if (document.hidden || sessionState !== "idle" || reportCall || tab !== "phone") return;
+      if (Date.now() + 30 * 60 * 1000 >= expiresAt) window.location.reload();
+    };
+    const timer = window.setInterval(check, 60 * 1000);
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+    };
+  }, [data?.settings?.turnCredentialsExpireAt, sessionState, reportCall, tab]);
+
   useEffect(() => {
     if (sessionState !== "active") return;
     const timer = setInterval(() => setDuration((value) => value + 1), 1000);
