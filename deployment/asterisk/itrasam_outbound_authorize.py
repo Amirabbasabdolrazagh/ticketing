@@ -49,11 +49,17 @@ while True:
 try:
     cfg = config()
     secret = cfg["ITRASAM_ROUTER_SECRET"]
+    peer = agi.get("agi_arg_2", "")
+    token = agi.get("agi_arg_1", "")
+    if not (peer.startswith("web-admin-") and 14 <= len(peer) <= 80 and peer.replace("-", "").isalnum()):
+        raise ValueError("invalid authenticated peer")
+    if not (len(token) == 24 and token.isdigit()):
+        raise ValueError("invalid token")
     url = cfg["ITRASAM_OUTBOUND_AUTH_URL"]
     timestamp = str(int(time.time()))
     raw = json.dumps({
-        "token": agi.get("agi_arg_1", ""),
-        "sipUsername": agi.get("agi_arg_2", ""),
+        "token": token,
+        "sipUsername": peer,
         "requestedNumber": agi.get("agi_extension", ""),
     }, separators=(",", ":")).encode("utf-8")
     sig = hmac.new(secret.encode("utf-8"), timestamp.encode("ascii") + b"." + raw, hashlib.sha256).hexdigest()
