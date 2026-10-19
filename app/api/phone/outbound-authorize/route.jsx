@@ -69,7 +69,7 @@ export async function PUT(req) {
       direction: "outbound", status: "initiated",
     }, { $set: { "directDial.consumedAt": new Date(), status: "ringing" } }, { new: true }).select("+directDial.dialNumber +directDial.recordingEnabled");
     if (!call) return Response.json({ authorized: false }, { status: 403 });
-    if (!/^\\d{2,24}$/.test(call.directDial?.dialNumber || "") || !/^[0-9a-f-]{36}$/i.test(call.callId || "")) return Response.json({ authorized: false }, { status: 403 });
+    if (!/^\d{2,24}$/.test(call.directDial?.dialNumber || "") || !/^[0-9a-f-]{36}$/i.test(call.callId || "")) return Response.json({ authorized: false }, { status: 403 });
     return Response.json({ authorized: true, dialNumber: call.directDial.dialNumber,
       callId: call.callId, recordingEnabled: call.directDial.recordingEnabled }, { headers: { "Cache-Control": "no-store" } });
   } catch {
