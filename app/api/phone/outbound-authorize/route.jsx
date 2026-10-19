@@ -24,6 +24,7 @@ export async function POST(req) {
     const user = await getCurrentUser();
     if (user?.role !== "admin") return Response.json({ success: false }, { status: 403 });
     const body = await req.json();
+    if (!/^[A-Za-z0-9_-]{16,100}$/.test(String(body.deviceId || ""))) return Response.json({ success: false }, { status: 400 });
     const device = await PhoneDevice.findOne({ user: user._id, deviceId: String(body.deviceId || ""), status: "active" }).select("sipUsername");
     if (!device?.sipUsername?.startsWith("web-admin-")) return Response.json({ success: false, message: "دستگاه ادمین تأیید نشده است" }, { status: 403 });
     const dialNumber = adminDialNumber(body.number);
@@ -68,6 +69,7 @@ export async function PUT(req) {
       direction: "outbound", status: "initiated",
     }, { $set: { "directDial.consumedAt": new Date(), status: "ringing" } }, { new: true }).select("+directDial.dialNumber +directDial.recordingEnabled");
     if (!call) return Response.json({ authorized: false }, { status: 403 });
+    if (!/^\\d{2,24}$/.test(call.directDial?.dialNumber || "") || !/^[0-9a-f-]{36}$/i.test(call.callId || "")) return Response.json({ authorized: false }, { status: 403 });
     return Response.json({ authorized: true, dialNumber: call.directDial.dialNumber,
       callId: call.callId, recordingEnabled: call.directDial.recordingEnabled }, { headers: { "Cache-Control": "no-store" } });
   } catch {
