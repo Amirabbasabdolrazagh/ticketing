@@ -1,0 +1,32 @@
+name: Admin direct dial validation
+on:
+  pull_request:
+    paths:
+      - 'app/api/phone/**'
+      - 'components/features/phone/**'
+      - 'deployment/asterisk/**'
+      - 'lib/issabelDiscovery.js'
+      - 'models/phoneCalls.jsx'
+      - '.github/workflows/admin-direct-dial.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: ESLint touched application modules
+        run: npx eslint app/api/phone/outbound-authorize/route.jsx app/api/phone/bootstrap/route.jsx components/features/phone/WebPhone.jsx lib/issabelDiscovery.js models/phoneCalls.jsx
+      - name: Python AGI syntax
+        run: python3 -m py_compile deployment/asterisk/itrasam_outbound_authorize.py
+      - name: Next production build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
