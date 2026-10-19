@@ -19,6 +19,7 @@ function signed(raw, signature, timestamp) {
 // Phase 1: prepare a short-lived, one-time authorization. No AMI originate is triggered.
 export async function POST(req) {
   try {
+    if (process.env.PHONE_ADMIN_DIRECT_DIAL_ENABLED !== "1") return Response.json({ success: false, message: "تماس مستقیم فعال نیست" }, { status: 503 });
     await ConnectDb();
     const user = await getCurrentUser();
     if (user?.role !== "admin") return Response.json({ success: false }, { status: 403 });
@@ -44,11 +45,21 @@ export async function POST(req) {
 
 export async function PUT(req) {
   try {
+    if (process.env.PHONE_ADMIN_DIRECT_DIAL_ENABLED !== "1") return Response.json({ authorized: false }, { status: 503 });
     const raw = await req.text();
     if (!signed(raw, req.headers.get("x-phone-signature"), req.headers.get("x-phone-timestamp"))) return Response.json({ authorized: false }, { status: 401 });
     const { token, sipUsername } = JSON.parse(raw);
     if (!/^\d{24}$/.test(token || "") || !/^web-admin-[a-z0-9-]{4,70}$/.test(sipUsername || "")) return Response.json({ authorized: false }, { status: 400 });
     await ConnectDb();
+    const eligible = await PhoneCall.findOne({
+      "directDial.tokenHash": crypto.createHash("sha256").update(token).digest("hex"),
+      "directDial.sipUsername": sipUsername,
+      "directDial.expiresAt": { $gt: new Date() },
+      "directDial.consumedAt": null, direction: "outbound", status: "initiated",
+    }).select("agent device").lean();
+    if (!eligible) return Response.json({ authorized: false }, { status: 403 });
+    const device = await PhoneDevice.findOne({ _id: eligible.device, user: eligible.agent, status: "active", sipUsername }).select("_id").lean();
+    if (!device) return Response.json({ authorized: false }, { status: 403 });
     const call = await PhoneCall.findOneAndUpdate({
       "directDial.tokenHash": crypto.createHash("sha256").update(token).digest("hex"),
       "directDial.sipUsername": sipUsername,
@@ -57,8 +68,6 @@ export async function PUT(req) {
       direction: "outbound", status: "initiated",
     }, { $set: { "directDial.consumedAt": new Date(), status: "ringing" } }, { new: true }).select("+directDial.dialNumber +directDial.recordingEnabled");
     if (!call) return Response.json({ authorized: false }, { status: 403 });
-    const device = await PhoneDevice.findOne({ _id: call.device, user: call.agent, status: "active", sipUsername }).select("_id").lean();
-    if (!device) return Response.json({ authorized: false }, { status: 403 });
     return Response.json({ authorized: true, dialNumber: call.directDial.dialNumber,
       callId: call.callId, recordingEnabled: call.directDial.recordingEnabled }, { headers: { "Cache-Control": "no-store" } });
   } catch {
