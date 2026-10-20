@@ -1,5 +1,6 @@
 import Ticket from "@/models/tickets";
 import { calculateTicketTimings } from "@/lib/ticketMetrics.mjs";
+import { getSlaStatus } from "@/lib/slaPolicy.mjs";
 import TicketResolution from "@/models/ticketResolution";
 import TicketMessage from "@/models/ticketMessage";
 import User from "@/models/users";
@@ -67,6 +68,8 @@ export async function GET() {
           "priority",
           "deadline",
           "deadlineAt",
+          "sla",
+          "resolvedAt",
           "unseenReminder2hSentAt",
           "unseenAlarm3hSentAt",
           "unseenEscalation4hSentAt",
@@ -184,6 +187,7 @@ export async function GET() {
         lastAgentReplyAt,
 
         ...calculateTicketTimings(ticket),
+        sla: ticket.sla?.responseDueAt ? { ...ticket.sla, status: getSlaStatus(ticket.sla, ticket) } : null,
         deadline: ticket.deadline || null,
         deadlineAt: ticket.deadlineAt || null,
 
