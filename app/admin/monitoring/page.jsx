@@ -363,6 +363,21 @@ export default function AdminMonitoringPage() {
         </div>
       ) : null}
 
+      <div className="glass-panel space-y-3 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-black text-slate-900">نظارت بر SLA قراردادها</h2>
+          <Link href="/admin/sla" className="text-xs font-bold text-blue-700">تنظیم SLA سازمان‌ها</Link>
+        </div>
+        <p className="text-xs text-slate-500">فقط تیکت‌هایی شمرده شده‌اند که هنگام ثبت، SLA معتبر و فعال داشته‌اند. آستانه نزدیک‌شدن به مهلت: ۳۰ دقیقه.</p>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <MetricCard icon={CheckCircle2} value={summary.slaTickets} label="تیکت دارای SLA" className="border-blue-200 bg-blue-50/70 text-blue-700" />
+          <MetricCard icon={Clock3} value={summary.slaResponseDueSoon} label="پاسخ در آستانه مهلت" className="border-amber-200 bg-amber-50/70 text-amber-700" />
+          <MetricCard icon={Clock3} value={summary.slaResolutionDueSoon} label="رفع در آستانه مهلت" className="border-amber-200 bg-amber-50/70 text-amber-700" />
+          <MetricCard icon={AlertTriangle} value={summary.slaResponseBreached} label="نقض SLA پاسخ" className="border-rose-200 bg-rose-50/70 text-rose-700" />
+          <MetricCard icon={AlertTriangle} value={summary.slaResolutionBreached} label="نقض SLA رفع" className="border-rose-200 bg-rose-50/70 text-rose-700" />
+        </div>
+      </div>
+
       {/* 8 KPI - 4 + 4 */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
