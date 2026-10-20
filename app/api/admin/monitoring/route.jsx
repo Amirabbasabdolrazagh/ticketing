@@ -1,4 +1,5 @@
 import Ticket from "@/models/tickets";
+import { calculateTicketTimings } from "@/lib/ticketMetrics.mjs";
 import TicketResolution from "@/models/ticketResolution";
 import TicketMessage from "@/models/ticketMessage";
 import User from "@/models/users";
@@ -8,17 +9,6 @@ import authorization from "@/utils/authorization";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function diffMs(from, to) {
-  if (!from || !to) return null;
-
-  const start = new Date(from).getTime();
-  const end = new Date(to).getTime();
-
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
-
-  return Math.max(0, end - start);
-}
 
 function average(values) {
   const valid = values.filter(
@@ -193,12 +183,7 @@ export async function GET() {
 
         lastAgentReplyAt,
 
-        firstViewDurationMs: diffMs(ticket.assignedAt, ticket.agentViewedAt),
-
-        firstReplyDurationMs: diffMs(
-          ticket.agentViewedAt,
-          ticket.agentFirstReplyAt,
-        ),
+        ...calculateTicketTimings(ticket),
         deadline: ticket.deadline || null,
         deadlineAt: ticket.deadlineAt || null,
 
