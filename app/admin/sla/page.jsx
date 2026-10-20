@@ -28,7 +28,6 @@ export default function AdminSlaPage() {
   useEffect(() => {
     if (!organizationId) return;
     let cancelled = false;
-    setLoading(true);
     axios.get(`/api/admin/organizations/${organizationId}/sla`)
       .then(({ data }) => {
         if (cancelled) return;
@@ -49,10 +48,8 @@ export default function AdminSlaPage() {
 
   const activeOrganization = organizations.find((org) => org._id === organizationId);
   const contract = activeOrganization?.supportContract;
-  const now = Date.now();
-  const contractValid = contract?.status === "active"
-    && (!contract.startAt || new Date(contract.startAt).getTime() <= now)
-    && (!contract.endAt || new Date(contract.endAt).getTime() >= now);
+  // The API is authoritative for contract dates and activation.
+  const contractValid = contract?.status === "active";
 
   function updateTarget(priority, field, value) {
     setPolicy((current) => ({
@@ -99,10 +96,10 @@ export default function AdminSlaPage() {
       </header>
       <form className="glass-panel space-y-5 p-6" onSubmit={save}>
         <label className="block text-sm font-bold" htmlFor="sla-org">سازمان</label>
-        <select id="sla-org" className="w-full rounded-xl border bg-white p-3" value={organizationId} onChange={(event) => setOrganizationId(event.target.value)}>
+        <select id="sla-org" className="w-full rounded-xl border bg-white p-3" value={organizationId} onChange={(event) => { setLoading(true); setOrganizationId(event.target.value); }}>
           {organizations.map((org) => <option key={org._id} value={org._id}>{org.name} ({org.code})</option>)}
         </select>
-        {!contractValid && activeOrganization && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">قرارداد این سازمان در حال حاضر فعال و معتبر نیست. حتی با روشن بودن سیاست، SLA برای تیکت جدید اعمال نمی‌شود.</p>}
+        {!contractValid && activeOrganization && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">وضعیت قرارداد این سازمان فعال نیست. اعمال SLA برای تیکت جدید، علاوه بر وضعیت فعال، به معتبر بودن تاریخ‌های قرارداد در سرور نیز وابسته است.</p>}
         <label className="flex items-center gap-3 rounded-xl border p-4">
           <input type="checkbox" checked={policy.enabled} onChange={(event) => setPolicy((current) => ({ ...current, enabled: event.target.checked }))} />
           <span className="font-bold">فعال‌سازی SLA برای تیکت‌های جدید این سازمان</span>
