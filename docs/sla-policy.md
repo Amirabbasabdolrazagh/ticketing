@@ -23,3 +23,24 @@ No changes are active until merged and deployed. Test with a staging customer or
 - Event-based SLA alerts and business hours.
 - Contract history/version changes.
 - Staging/prod Mongo compatibility and end-to-end ticket flow.
+
+
+## Admin UI and monitoring additions
+
+- Open `/admin/sla` to choose an organization, enter response and resolution minutes for each priority and enable/disable the policy.
+- Open `/admin/monitoring` for SLA coverage, due-soon counts (30 minutes), and overdue response/resolution counts.
+- No SLA is applied retroactively and it is not inferred for contracts without explicitly configured targets.
+
+## Sending alerts
+
+- The existing authenticated scheduler `POST /api/internal/ticket-attention` also evaluates SLA warnings and breaches.
+- Set `SLA_ALERTS_ENABLED=true` **only after** verifying the scheduler already runs periodically and messaging is configured. Default is disabled.
+- An SLA warning is attempted once per ticket/type while 0–30 minutes remain; a breach is attempted when overdue. Agents and admins are notified by existing messaging/SMS providers.
+- Alerts use conditional MongoDB claims and stored timestamps to reduce duplicates between simultaneous scheduler runs. If no recipient/provider reports success, the claim is released for retry.
+- Delivery outcome is currently at-least-once on some crash/failure boundaries; guaranteed exactly-once messaging, robust per-recipient outbox, and alert delivery audits are future work.
+- No application-side background scheduling was added. Without a configured scheduler, alerts are not automatically fired. The same scheduler must not be exposed without its Bearer secret.
+
+## Remaining work
+
+- Business-hours/holiday-aware SLA, SLA pause/reopen policy, extended escalation stages and per-recipient delivery logs.
+- Historical reconciliation for old resolved tickets without `resolvedAt`, plus integration tests for ticket resolution and role isolation.
