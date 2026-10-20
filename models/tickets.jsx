@@ -21,6 +21,12 @@ const ticketSchema = new Schema(
       resolveDueAt: { type: Date, index: true },
     },
     resolvedAt: { type: Date, default: null },
+    slaAlerts: {
+      responseWarningAt: { type: Date, default: null },
+      resolutionWarningAt: { type: Date, default: null },
+      responseBreachAt: { type: Date, default: null },
+      resolutionBreachAt: { type: Date, default: null },
+    },
     deadlineAt: {
       type: Date,
       default: null,
