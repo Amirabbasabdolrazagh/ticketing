@@ -332,6 +332,8 @@ export async function PATCH(req, { params }) {
         );
       }
 
+      if (ticket.status === "resolved" && oldStatus !== "resolved") ticket.resolvedAt = new Date();
+      if (oldStatus === "resolved" && ticket.status !== "resolved") ticket.resolvedAt = null;
       await ticket.save();
       const assignmentChanged =
         oldAssignedTo?.toString() !== ticket.assignedTo?.toString();
@@ -514,6 +516,7 @@ export async function PATCH(req, { params }) {
 
       if (ticket.status === "in-progress" && status === "resolved") {
         ticket.status = status;
+        ticket.resolvedAt = new Date();
 
         await ticket.save();
 
