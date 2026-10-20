@@ -21,7 +21,8 @@ const organizationSchema = new Schema({
     notes: { type: String, trim: true, maxlength: 1000, default: "" },
     slaPolicy: {
       enabled: { type: Boolean, default: false },
-      mode: { type: String, enum: ["24x7"], default: "24x7" },
+      mode: { type: String, enum: ["24x7", "business-hours"], default: "24x7" },
+      calendar: { type: Schema.Types.Mixed, default: undefined },
       targets: {
         low: { responseMinutes: Number, resolveMinutes: Number },
         medium: { responseMinutes: Number, resolveMinutes: Number },
