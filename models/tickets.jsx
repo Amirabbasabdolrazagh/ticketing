@@ -11,6 +11,16 @@ const ticketSchema = new Schema(
       default : null,
       maxlength: 500,
     },
+    sla: {
+      mode: { type: String, enum: ["24x7"], default: undefined },
+      priority: { type: String, enum: ["low", "medium", "high"] },
+      responseMinutes: Number,
+      resolveMinutes: Number,
+      startedAt: Date,
+      responseDueAt: { type: Date, index: true },
+      resolveDueAt: { type: Date, index: true },
+    },
+    resolvedAt: { type: Date, default: null },
     deadlineAt: {
       type: Date,
       default: null,
