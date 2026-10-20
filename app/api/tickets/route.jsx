@@ -1,4 +1,6 @@
 import Ticket from "@/models/tickets";
+import Organization from "@/models/organizations";
+import { calculateSlaSnapshot } from "@/lib/slaPolicy.mjs";
 import getCurrentUser from "@/utils/auth";
 import authorization from "@/utils/authorization";
 import ConnectDb from "@/utils/connectDB";
@@ -145,9 +147,26 @@ export async function POST(req) {
       { new: true, upsert: true },
     );
     const ticketNumber = `${service.code}-${String(counter.sequence).padStart(6, "0")}`;
+    // Snapshot only explicitly enabled, currently active organization SLA policies.
+    const organization = user.organization
+      ? await Organization.findOne({ _id: user.organization, isActive: true })
+          .select("supportContract").lean()
+      : null;
+    const contract = organization?.supportContract;
+    const now = new Date();
+    const contractActive = contract?.status === "active"
+      && (!contract.startAt || new Date(contract.startAt) <= now)
+      && (!contract.endAt || new Date(contract.endAt) >= now);
+    const selectedPriority = ["low", "medium", "high"].includes(priority) ? priority : "medium";
+    let sla = null;
+    if (contractActive && contract?.slaPolicy?.enabled) {
+      try { sla = calculateSlaSnapshot(contract.slaPolicy, selectedPriority, now); }
+      catch (error) { console.error("INVALID_ORGANIZATION_SLA_POLICY", error.message); }
+    }
     const ticket = await Ticket.create({
       title: title.trim(),
-      priority,
+      priority: selectedPriority,
+      ...(sla ? { sla } : {}),
       creator: user._id,
       attachment: attachmentData,
       project: service._id,

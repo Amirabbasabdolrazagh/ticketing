@@ -1,4 +1,6 @@
 import Ticket from "@/models/tickets";
+import { calculateTicketTimings } from "@/lib/ticketMetrics.mjs";
+import { getSlaStatus } from "@/lib/slaPolicy.mjs";
 import TicketResolution from "@/models/ticketResolution";
 import TicketMessage from "@/models/ticketMessage";
 import User from "@/models/users";
@@ -8,17 +10,6 @@ import authorization from "@/utils/authorization";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function diffMs(from, to) {
-  if (!from || !to) return null;
-
-  const start = new Date(from).getTime();
-  const end = new Date(to).getTime();
-
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
-
-  return Math.max(0, end - start);
-}
 
 function average(values) {
   const valid = values.filter(
@@ -73,10 +64,13 @@ export async function GET() {
           "assignedAt",
           "agentViewedAt",
           "agentFirstReplyAt",
+          "slaFirstResponseAt",
           "status",
           "priority",
           "deadline",
           "deadlineAt",
+          "sla",
+          "resolvedAt",
           "unseenReminder2hSentAt",
           "unseenAlarm3hSentAt",
           "unseenEscalation4hSentAt",
@@ -190,15 +184,12 @@ export async function GET() {
         agentViewedAt: ticket.agentViewedAt || null,
 
         agentFirstReplyAt: ticket.agentFirstReplyAt || null,
+        slaFirstResponseAt: ticket.slaFirstResponseAt || null,
 
         lastAgentReplyAt,
 
-        firstViewDurationMs: diffMs(ticket.assignedAt, ticket.agentViewedAt),
-
-        firstReplyDurationMs: diffMs(
-          ticket.agentViewedAt,
-          ticket.agentFirstReplyAt,
-        ),
+        ...calculateTicketTimings(ticket),
+        sla: ticket.sla?.responseDueAt ? { ...ticket.sla, status: getSlaStatus(ticket.sla, ticket) } : null,
         deadline: ticket.deadline || null,
         deadlineAt: ticket.deadlineAt || null,
 
@@ -325,6 +316,11 @@ export async function GET() {
     const allAgentTickets = agentRows.flatMap((agent) => agent.tickets);
 
     const summary = {
+      slaTickets: allAgentTickets.filter((ticket) => ticket.sla).length,
+      slaResponseBreached: allAgentTickets.filter((ticket) => ticket.sla?.status?.responseBreached).length,
+      slaResolutionBreached: allAgentTickets.filter((ticket) => ticket.sla?.status?.resolveBreached).length,
+      slaResponseDueSoon: allAgentTickets.filter((ticket) => ticket.sla?.status?.responsePending && ticket.sla.status.responseRemainingMs >= 0 && ticket.sla.status.responseRemainingMs <= 30 * 60 * 1000).length,
+      slaResolutionDueSoon: allAgentTickets.filter((ticket) => ticket.sla?.status?.resolvePending && ticket.sla.status.resolveRemainingMs >= 0 && ticket.sla.status.resolveRemainingMs <= 30 * 60 * 1000).length,
       totalAgents: agentRows.length,
 
       totalTickets: allAgentTickets.length,

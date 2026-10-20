@@ -216,7 +216,9 @@ export async function PATCH(req) {
     const previousMembers = organization.members;
     organization.name = String(body.name || organization.name).trim();
     organization.members = members.map((member) => member._id);
-    organization.supportContract = supportContract;
+    // Preserve independently configured SLA rules when updating basic contract details.
+    const existingSlaPolicy = organization.supportContract?.slaPolicy?.toObject?.() || organization.supportContract?.slaPolicy;
+    organization.supportContract = { ...supportContract, ...(existingSlaPolicy ? { slaPolicy: existingSlaPolicy } : {}) };
     organization.equipment = cleanEquipment(body.equipment);
     organization.isActive = body.isActive !== false;
     await organization.save();
