@@ -7,23 +7,27 @@ import Ticket from "@/models/tickets";
 import "@/models/projects";
 import { canUsePhone, customerHasSecureCall } from "@/lib/phoneAccess";
 import { decryptPhoneSecret } from "@/lib/phoneCrypto";
+import { createEphemeralTurnCredentials } from "@/lib/phoneTurn";
 
 export const dynamic = "force-dynamic";
 
-function publicSettings(settings) {
+function publicSettings(settings, device) {
+  const ephemeralTurn = createEphemeralTurnCredentials({ device });
   return {
     wssUrl: settings?.wssUrl || "",
     sipDomain: settings?.sipDomain || "",
     outboundProxy: settings?.outboundProxy || "",
     companyCallerId: settings?.companyCallerId || "",
-    iceServers: (settings?.iceServers || []).map((item) => {
+    iceServers: ephemeralTurn ? [ephemeralTurn.iceServer] : (process.env.PHONE_TURN_EPHEMERAL_ENABLED === "1" || device?.status !== "active") ? [] : (settings?.iceServers || []).map((item) => {
       let credential = "";
       if (item.credentialCiphertext) {
         credential = decryptPhoneSecret({ ciphertext: item.credentialCiphertext, iv: item.credentialIv, tag: item.credentialTag });
       }
       return { urls: item.urls, username: item.username || "", ...(credential ? { credential } : {}) };
     }),
+    turnCredentialsExpireAt: ephemeralTurn?.expiresAtMs || null,
     recordingEnabled: settings?.recordingEnabled !== false,
+    adminDirectDialEnabled: process.env.PHONE_ADMIN_DIRECT_DIAL_ENABLED === "1",
     recordingConsentText: settings?.recordingConsentText || "این مکالمه با هدف کنترل کیفیت و ثبت سوابق خدمات ضبط می‌شود.",
     retentionDays: settings?.retentionDays || 365,
     allowHold: settings?.allowHold !== false,
@@ -95,7 +99,7 @@ export async function GET(req) {
     return Response.json({
       success: true,
       user: { id: user._id.toString(), name: user.name, role: user.role, extension: user.pbxExtension || "" },
-      settings: publicSettings(settings),
+      settings: publicSettings(settings, device),
       device: device ? { id: device._id.toString(), deviceId: device.deviceId, label: device.label, status: device.status, sipUsername: device.sipUsername } : null,
       sip,
       contacts,

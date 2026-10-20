@@ -63,6 +63,10 @@ export async function POST(req, { params }) {
         type: "text",
       });
       await messages.populate("sender", "name role");
+      await Ticket.updateOne(
+        { _id: ticketId, slaFirstResponseAt: null },
+        { $set: { slaFirstResponseAt: messages.createdAt } },
+      );
       const customer = await User.findById(ticketInfo.creator).select(
         `${messengerUserSelect} siteLastSeenAt`,
       );
@@ -157,8 +161,16 @@ export async function POST(req, { params }) {
           type: "text",
         });
         if (!ticketInfo.agentFirstReplyAt) {
-          ticketInfo.agentFirstReplyAt = new Date();
+          ticketInfo.agentFirstReplyAt = messages.createdAt;
           await ticketInfo.save();
+        }
+        // SLA concerns the first response by any support staff, including administrators.
+        // A conditional update protects the earliest committed response.
+        await Ticket.updateOne(
+          { _id: ticketId, slaFirstResponseAt: null },
+          { $set: { slaFirstResponseAt: messages.createdAt } },
+        );
+        if (ticketInfo.agentFirstReplyAt?.getTime() === messages.createdAt.getTime()) {
 
           emitMonitoringEvent("ticket:first-replied", {
             ticketId: ticketInfo._id.toString(),

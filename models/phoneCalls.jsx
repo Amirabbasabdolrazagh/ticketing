@@ -15,6 +15,14 @@ const phoneCallSchema = new Schema({
   durationSeconds: { type: Number, min: 0, default: 0 },
   customerDisplayName: { type: String, trim: true, maxlength: 120, default: "مشتری" },
   maskedTarget: { type: String, trim: true, maxlength: 40, default: "شماره محرمانه" },
+  directDial: {
+    tokenHash: { type: String, select: false, default: "", index: true },
+    dialNumber: { type: String, select: false, default: "" },
+    sipUsername: { type: String, select: false, default: "" },
+    expiresAt: { type: Date, select: false, default: null },
+    consumedAt: { type: Date, select: false, default: null },
+    recordingEnabled: { type: Boolean, select: false, default: true },
+  },
   recording: {
     storedName: { type: String, trim: true, maxlength: 255, default: "" },
     mimeType: { type: String, trim: true, maxlength: 100, default: "" },

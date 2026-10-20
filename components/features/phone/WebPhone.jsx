@@ -196,6 +196,25 @@ export default function WebPhone() {
     const timer = window.setTimeout(load, 0);
     return () => window.clearTimeout(timer);
   }, [load]);
+  // Refresh coturn credentials only between calls. iOS may suspend timers while
+  // backgrounded, so also check when the tab becomes visible again.
+  useEffect(() => {
+    const expiresAt = data?.settings?.turnCredentialsExpireAt;
+    if (!expiresAt) return;
+    const check = () => {
+      if (document.hidden || sessionState !== "idle" || reportCall || tab !== "phone") return;
+      if (Date.now() + 30 * 60 * 1000 >= expiresAt) window.location.reload();
+    };
+    const timer = window.setInterval(check, 60 * 1000);
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+    };
+  }, [data?.settings?.turnCredentialsExpireAt, sessionState, reportCall, tab]);
+
   useEffect(() => {
     if (sessionState !== "active") return;
     const timer = setInterval(() => setDuration((value) => value + 1), 1000);
@@ -228,13 +247,13 @@ export default function WebPhone() {
     fetch("/api/phone/calls", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "session-event", callId: callIdRef.current, status, ...extra }) }).catch(() => {});
   }, []);
 
-  const bindSession = useCallback(async (session, incoming = false) => {
+  const bindSession = useCallback(async (session, incoming = false, trackedCallId = "") => {
     sessionRef.current = session;
-    callIdRef.current = session.request?.callId || crypto.randomUUID();
+    callIdRef.current = trackedCallId || session.request?.callId || crypto.randomUUID();
     const identity = safeCallerName(session.remoteIdentity?.displayName);
     setActiveName(identity); setSessionState(incoming ? "incoming" : "ringing"); setDuration(0);
     if (incoming) startRingtone();
-    const eventDetails = { direction: incoming ? "inbound" : "internal", displayName: identity };
+    const eventDetails = { direction: incoming ? "inbound" : trackedCallId ? "outbound" : "internal", displayName: identity };
     sendEvent("ringing", eventDetails);
     const { SessionState } = await import("sip.js");
     let established = false;
@@ -337,8 +356,20 @@ export default function WebPhone() {
     if (data?.user?.role !== "admin" || !adminNumber.trim() || connection !== "online" || sessionState !== "idle" || adminDialing) return;
     setAdminDialing(true); setError(""); setNotice("");
     try {
-      const result = await api("/api/phone/calls", { method: "POST", body: JSON.stringify({ action: "admin-dial", number: adminNumber, deviceId }) });
-      setNotice(result.message); callIdRef.current = result.callId;
+      if (data?.settings?.adminDirectDialEnabled === true) {
+        const result = await api("/api/phone/outbound-authorize", { method: "POST", body: JSON.stringify({ number: adminNumber, deviceId }) });
+        const { UserAgent, Inviter } = await import("sip.js");
+        const target = UserAgent.makeURI(`sip:${result.token}@${data.settings.sipDomain}`);
+        if (!target || !userAgentRef.current) throw new Error("اتصال SIP برای تماس مستقیم آماده نیست");
+        const session = new Inviter(userAgentRef.current, target);
+        await bindSession(session, false, result.callId);
+        setActiveName("تماس خروجی مدیر");
+        await session.invite();
+        setNotice("در حال برقراری تماس مستقیم از مرورگر");
+      } else {
+        const result = await api("/api/phone/calls", { method: "POST", body: JSON.stringify({ action: "admin-dial", number: adminNumber, deviceId }) });
+        setNotice(result.message); callIdRef.current = result.callId;
+      }
     } catch (e) { setError(e.message); }
     finally { setAdminDialing(false); }
   };
