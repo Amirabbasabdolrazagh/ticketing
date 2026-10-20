@@ -33,7 +33,7 @@ export async function processSlaAlerts(now = new Date()) {
         `🎫 تیکت: <b>${escapeHtml(ticket.ticketNumber || ticket._id)}</b>`,
         `📌 ${escapeHtml(ticket.title)}`,
         `⏳ سررسید: ${new Intl.DateTimeFormat("fa-IR", { timeZone: "Asia/Tehran", dateStyle: "short", timeStyle: "short" }).format(new Date(ticket.sla[alert.due]))}`,
-      ].join("\\n");
+      ].join("\n");
       const outcome = await deliverAlertWithClaim({
         ticket, alert, now, recipients, text, send: sendMessengerNotification,
         claim: (item, event, at) => Ticket.findOneAndUpdate(
