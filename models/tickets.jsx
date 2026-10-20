@@ -78,6 +78,7 @@ const ticketSchema = new Schema(
     lastCustomerPhoneCallAt: { type: Date, default: null },
     agentViewedAt: { type: Date, default: null },
     agentFirstReplyAt: { type: Date, default: null },
+    slaFirstResponseAt: { type: Date, default: null, index: true },
     unseenReminder2hSentAt: { type: Date, default: null },
     unseenAlarm3hSentAt: { type: Date, default: null },
     unseenEscalation4hSentAt: { type: Date, default: null },
