@@ -64,6 +64,7 @@ export async function GET() {
           "assignedAt",
           "agentViewedAt",
           "agentFirstReplyAt",
+          "slaFirstResponseAt",
           "status",
           "priority",
           "deadline",
@@ -183,6 +184,7 @@ export async function GET() {
         agentViewedAt: ticket.agentViewedAt || null,
 
         agentFirstReplyAt: ticket.agentFirstReplyAt || null,
+        slaFirstResponseAt: ticket.slaFirstResponseAt || null,
 
         lastAgentReplyAt,
 
