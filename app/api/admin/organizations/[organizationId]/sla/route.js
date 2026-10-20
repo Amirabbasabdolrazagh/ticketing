@@ -33,7 +33,7 @@ export async function PUT(req,{params}) {
   }
   let policy;
   try { policy = validateSlaPolicy(body); }
-  catch { return Response.json({success:false,message:"سیاست SLA باید دارای مقادیر معتبر برای اولویت کم، متوسط و بالا باشد (حالت ۲۴ ساعته)."},{status:400}); }
+  catch { return Response.json({success:false,message:"سیاست SLA باید دارای مقادیر معتبر برای اولویت کم، متوسط و بالا باشد (۲۴ ساعته یا ساعات کاری با تقویم معتبر)."},{status:400}); }
   result.org.set("supportContract.slaPolicy",policy);
   await result.org.save();
   return Response.json({success:true,policy:result.org.supportContract.slaPolicy});
