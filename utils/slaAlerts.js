@@ -6,9 +6,9 @@ import { getSlaStatus } from "@/lib/slaPolicy.mjs";
 
 const HALF_HOUR = 30 * 60 * 1000;
 const ALERTS = [
-  { id: "responseWarning", field: "slaAlerts.responseWarningAt", due: "responseDueAt", actual: "agentFirstReplyAt", text: "مهلت اولین پاسخ در حال پایان است", kind: "warning" },
+  { id: "responseWarning", field: "slaAlerts.responseWarningAt", due: "responseDueAt", actual: "slaFirstResponseAt", text: "مهلت اولین پاسخ در حال پایان است", kind: "warning" },
   { id: "resolutionWarning", field: "slaAlerts.resolutionWarningAt", due: "resolveDueAt", actual: "resolvedAt", text: "مهلت رفع مشکل در حال پایان است", kind: "warning" },
-  { id: "responseBreach", field: "slaAlerts.responseBreachAt", due: "responseDueAt", actual: "agentFirstReplyAt", text: "زمان مجاز اولین پاسخ نقض شده است", kind: "breach" },
+  { id: "responseBreach", field: "slaAlerts.responseBreachAt", due: "responseDueAt", actual: "slaFirstResponseAt", text: "زمان مجاز اولین پاسخ نقض شده است", kind: "breach" },
   { id: "resolutionBreach", field: "slaAlerts.resolutionBreachAt", due: "resolveDueAt", actual: "resolvedAt", text: "زمان مجاز رفع مشکل نقض شده است", kind: "breach" },
 ];
 function escapeHtml(value) {
@@ -19,7 +19,8 @@ export function shouldSendSlaAlert(ticket, alert, now) {
   const current = new Date(now).getTime();
   if (!Number.isFinite(due) || !Number.isFinite(current) || !ticket.sla?.responseDueAt || !ticket.sla?.resolveDueAt) return false;
   if (ticket.status === "closed" || ticket.status === "resolved") return false;
-  const actualAt = ticket[alert.actual] && new Date(ticket[alert.actual]).getTime();
+  const responseActual = alert.actual === "slaFirstResponseAt" ? (ticket.slaFirstResponseAt || ticket.agentFirstReplyAt) : ticket[alert.actual];
+  const actualAt = responseActual && new Date(responseActual).getTime();
   if (actualAt && Number.isFinite(actualAt)) return false;
   const pending = getSlaStatus(ticket.sla, ticket, now);
   if (!pending) return false;
@@ -33,7 +34,7 @@ export async function processSlaAlerts(now = new Date()) {
   const tickets = await Ticket.find({
     "sla.responseDueAt": { $exists: true, $ne: null },
     status: { $in: ["open", "in-progress"] },
-  }).select("title ticketNumber status assignedTo agentFirstReplyAt resolvedAt sla slaAlerts");
+  }).select("title ticketNumber status assignedTo agentFirstReplyAt slaFirstResponseAt resolvedAt sla slaAlerts");
   const admins = await User.find({ role: "admin" }).select(`name ${messengerUserSelect}`);
   let sent = 0;
   for (const ticket of tickets) {
@@ -41,7 +42,7 @@ export async function processSlaAlerts(now = new Date()) {
     for (const alert of ALERTS) {
       if (!shouldSendSlaAlert(ticket, alert, now)) continue;
       const claimed = await Ticket.findOneAndUpdate(
-        { _id: ticket._id, status: { $in: ["open", "in-progress"] }, [alert.actual]: null, [alert.field]: null },
+        { _id: ticket._id, status: { $in: ["open", "in-progress"] }, [alert.actual]: null, ...(alert.actual === "slaFirstResponseAt" ? { agentFirstReplyAt: null } : {}), [alert.field]: null },
         { $set: { [alert.field]: now } },
         { new: false },
       );
