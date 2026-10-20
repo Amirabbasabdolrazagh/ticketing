@@ -19,6 +19,15 @@ const organizationSchema = new Schema({
     startAt: { type: Date, default: null },
     endAt: { type: Date, default: null },
     notes: { type: String, trim: true, maxlength: 1000, default: "" },
+    slaPolicy: {
+      enabled: { type: Boolean, default: false },
+      mode: { type: String, enum: ["24x7"], default: "24x7" },
+      targets: {
+        low: { responseMinutes: Number, resolveMinutes: Number },
+        medium: { responseMinutes: Number, resolveMinutes: Number },
+        high: { responseMinutes: Number, resolveMinutes: Number },
+      },
+    },
     features: {
       onsiteService: { type: Boolean, default: false },
       secureCall: { type: Boolean, default: false },
