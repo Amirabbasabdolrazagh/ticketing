@@ -12,11 +12,12 @@ const ticketSchema = new Schema(
       maxlength: 500,
     },
     sla: {
-      mode: { type: String, enum: ["24x7"], default: undefined },
+      mode: { type: String, enum: ["24x7", "business-hours"], default: undefined },
       priority: { type: String, enum: ["low", "medium", "high"] },
       responseMinutes: Number,
       resolveMinutes: Number,
       startedAt: Date,
+      calendar: { type: Schema.Types.Mixed, default: undefined },
       responseDueAt: { type: Date, index: true },
       resolveDueAt: { type: Date, index: true },
     },
