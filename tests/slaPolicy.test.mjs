@@ -30,3 +30,18 @@ test("unresolved ticket is not considered resolved merely because it has status 
  const snap=calculateSlaSnapshot(policy,"high","2026-10-20T09:00:00Z");
  assert.equal(getSlaStatus(snap,{status:"resolved"},"2026-10-20T12:00:00Z").resolveBreached,true);
 });
+
+
+test("admin first reply satisfies SLA even when the agent has not replied", () => {
+  const snapshot = calculateSlaSnapshot(policy, "high", "2026-10-20T09:00:00Z");
+  const status = getSlaStatus(snapshot, {
+    slaFirstResponseAt: "2026-10-20T09:10:00Z",
+    agentFirstReplyAt: null,
+  }, "2026-10-20T09:50:00Z");
+  assert.equal(status.responseBreached, false);
+  assert.equal(status.responsePending, false);
+});
+test("legacy tickets with only an agent reply remain measurable", () => {
+  const snapshot = calculateSlaSnapshot(policy, "high", "2026-10-20T09:00:00Z");
+  assert.equal(getSlaStatus(snapshot, { agentFirstReplyAt: "2026-10-20T09:20:00Z" }, "2026-10-20T10:00:00Z").responseBreached, true);
+});
