@@ -314,6 +314,11 @@ export async function GET() {
     const allAgentTickets = agentRows.flatMap((agent) => agent.tickets);
 
     const summary = {
+      slaTickets: allAgentTickets.filter((ticket) => ticket.sla).length,
+      slaResponseBreached: allAgentTickets.filter((ticket) => ticket.sla?.status?.responseBreached).length,
+      slaResolutionBreached: allAgentTickets.filter((ticket) => ticket.sla?.status?.resolveBreached).length,
+      slaResponseDueSoon: allAgentTickets.filter((ticket) => ticket.sla?.status?.responsePending && ticket.sla.status.responseRemainingMs >= 0 && ticket.sla.status.responseRemainingMs <= 30 * 60 * 1000).length,
+      slaResolutionDueSoon: allAgentTickets.filter((ticket) => ticket.sla?.status?.resolvePending && ticket.sla.status.resolveRemainingMs >= 0 && ticket.sla.status.resolveRemainingMs <= 30 * 60 * 1000).length,
       totalAgents: agentRows.length,
 
       totalTickets: allAgentTickets.length,
