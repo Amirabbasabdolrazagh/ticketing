@@ -44,3 +44,11 @@ No changes are active until merged and deployed. Test with a staging customer or
 
 - Business-hours/holiday-aware SLA, SLA pause/reopen policy, extended escalation stages and per-recipient delivery logs.
 - Historical reconciliation for old resolved tickets without `resolvedAt`, plus integration tests for ticket resolution and role isolation.
+
+## Working-hours scheduling
+
+- The policy supports `mode: "business-hours"` with an explicit weekly schedule and an array of Gregorian `YYYY-MM-DD` closed dates (Iran's official holidays are **not** auto-fetched).
+- The timezone is `Asia/Tehran`; MongoDB timestamps and due dates are UTC instants. Each weekday is numbered Sunday=0 to Saturday=6, using `null` for non-working days.
+- Weekly shifts must fit within one calendar day with end strictly later than start; overnight shifts, exception working days, pauses and multiple shifts/day are not yet supported.
+- Business-hours policy data is frozen on each new ticket; changing an organization's schedule only changes **future** tickets.
+- The UI suggests regular shifts as editable examples, not contractual commitments. An admin must verify the actual weekly schedule, holiday closures, and SLA targets before activating a customer agreement.
