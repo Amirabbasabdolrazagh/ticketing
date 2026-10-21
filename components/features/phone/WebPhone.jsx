@@ -7,6 +7,8 @@ import {
   LockKeyhole, RefreshCw, Search, Server, Settings, ShieldCheck, Smartphone, Star, UserCheck, X,
 } from "lucide-react";
 import styles from "./phone.module.css";
+import { playDialTone } from "./dialTones";
+import { getMicrophoneOrSilence } from "./microphoneFallback";
 
 const faNumber = new Intl.NumberFormat("fa-IR");
 const faDate = new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" });
@@ -145,6 +147,40 @@ export default function WebPhone() {
   const callIdRef = useRef("");
   const autoConnectAttemptedRef = useRef(false);
   const ringtoneRef = useRef(null);
+  const outboundToneRef = useRef(null);
+
+  const stopOutboundTone = useCallback(() => {
+    const current = outboundToneRef.current;
+    if (!current) return;
+    outboundToneRef.current = null;
+    window.clearInterval(current.timer);
+    current.context.close().catch(() => {});
+  }, []);
+
+  const startOutboundTone = useCallback(() => {
+    stopOutboundTone();
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const context = new AudioContextClass();
+      const play = () => {
+        if (outboundToneRef.current?.context !== context) return;
+        if (context.state !== "running") return;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.value = 425;
+        gain.gain.setValueAtTime(0.0001, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.075, context.currentTime + 0.025);
+        gain.gain.setValueAtTime(0.075, context.currentTime + 0.75);
+        gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.9);
+        oscillator.connect(gain); gain.connect(context.destination);
+        oscillator.start(); oscillator.stop(context.currentTime + 0.91);
+      };
+      outboundToneRef.current = { context, timer: window.setInterval(play, 3500) };
+      context.resume().then(play).catch(() => stopOutboundTone());
+    } catch { stopOutboundTone(); }
+  }, [stopOutboundTone]);
 
   const stopRingtone = useCallback(() => {
     const current = ringtoneRef.current;
@@ -238,7 +274,6 @@ export default function WebPhone() {
     return () => {
       window.clearInterval(timer);
       window.removeEventListener("pagehide", offline);
-      offline();
     };
   }, [connection, data?.device?.status, deviceId]);
 
@@ -260,23 +295,24 @@ export default function WebPhone() {
     session.stateChange.addListener((state) => {
       if (state === SessionState.Established) {
         established = true;
-        stopRingtone();
+        stopRingtone(); stopOutboundTone();
         setSessionState("active"); sendEvent("answered", eventDetails);
         const receiver = session.sessionDescriptionHandler?.peerConnection?.getReceivers().find((item) => item.track?.kind === "audio");
         if (receiver?.track && remoteAudio.current) { remoteAudio.current.srcObject = new MediaStream([receiver.track]); remoteAudio.current.play().catch(() => {}); }
       }
-      if (state === SessionState.Terminated) { stopRingtone(); setSessionState("idle"); setMuted(false); setHeld(false); sendEvent(established ? "completed" : "missed", eventDetails); sessionRef.current = null; }
+      if (state === SessionState.Terminated) { stopRingtone(); stopOutboundTone(); setSessionState("idle"); setMuted(false); setHeld(false); sendEvent(established ? "completed" : "missed", eventDetails); sessionRef.current = null; }
     });
-  }, [sendEvent, startRingtone, stopRingtone]);
+  }, [sendEvent, startRingtone, stopRingtone, stopOutboundTone]);
 
   const connectPhone = useCallback(async () => {
     if (!credentialRef.current || !data?.settings?.wssUrl || !data?.settings?.sipDomain) return setError("دستگاه یا تنظیمات مرکز تماس هنوز آماده نیست");
     try {
       setConnection("connecting"); setError("");
-      const { UserAgent, Registerer, RegistererState } = await import("sip.js");
+      const { UserAgent, Registerer, RegistererState, Web } = await import("sip.js");
       const uri = UserAgent.makeURI(`sip:${credentialRef.current.username}@${data.settings.sipDomain}`);
       if (!uri) throw new Error("نشانی داخلی معتبر نیست");
       const ua = new UserAgent({
+        sessionDescriptionHandlerFactory: Web.defaultSessionDescriptionHandlerFactory(getMicrophoneOrSilence),
         uri, transportOptions: { server: data.settings.wssUrl }, authorizationUsername: credentialRef.current.username,
         authorizationPassword: credentialRef.current.password, sessionDescriptionHandlerFactoryOptions: { peerConnectionConfiguration: { iceServers: data.settings.iceServers || [] } },
         delegate: { onInvite: (invitation) => bindSession(invitation, true) },
@@ -322,7 +358,7 @@ export default function WebPhone() {
 
   const answer = async () => { stopRingtone(); try { await sessionRef.current?.accept(); } catch (e) { setError(e.message); } };
   const end = async () => {
-    stopRingtone();
+    stopRingtone(); stopOutboundTone();
     const session = sessionRef.current;
     if (!session) return;
     try { if (sessionState === "incoming") await session.reject(); else if (sessionState === "active") await session.bye(); else session.cancel?.(); }
@@ -355,6 +391,7 @@ export default function WebPhone() {
     event.preventDefault();
     if (data?.user?.role !== "admin" || !adminNumber.trim() || connection !== "online" || sessionState !== "idle" || adminDialing) return;
     setAdminDialing(true); setError(""); setNotice("");
+    if (data?.settings?.adminDirectDialEnabled === true) startOutboundTone();
     try {
       if (data?.settings?.adminDirectDialEnabled === true) {
         const result = await api("/api/phone/outbound-authorize", { method: "POST", body: JSON.stringify({ number: adminNumber, deviceId }) });
@@ -370,7 +407,7 @@ export default function WebPhone() {
         const result = await api("/api/phone/calls", { method: "POST", body: JSON.stringify({ action: "admin-dial", number: adminNumber, deviceId }) });
         setNotice(result.message); callIdRef.current = result.callId;
       }
-    } catch (e) { setError(e.message); }
+    } catch (e) { stopOutboundTone(); setError(e.message); }
     finally { setAdminDialing(false); }
   };
   const requestDevice = async () => {
@@ -450,8 +487,14 @@ export default function WebPhone() {
             <div className={styles.adminDialIntro}><span><PhoneCall size={21}/></span><div><h2>شماره‌گیر آزاد مدیر</h2><p>تماس با شماره دلخواه یا داخلی ایزابل؛ پیش‌شماره خروجی به‌صورت خودکار اعمال می‌شود.</p></div></div>
             <form className={styles.adminDialForm} onSubmit={dialAsAdmin}>
               <label htmlFor="admin-phone-number">شماره مقصد</label>
-              <div className={styles.adminDialInput}><input id="admin-phone-number" type="tel" dir="ltr" inputMode="tel" autoComplete="off" maxLength={24} placeholder="0912… یا 021… یا داخلی" value={adminNumber} onChange={(event) => setAdminNumber(event.target.value)} /><button type="button" aria-label="حذف رقم آخر" onClick={() => setAdminNumber((value) => value.slice(0, -1))}><Delete size={20}/></button></div>
-              <div className={styles.adminDialKeys}>{[["1",""],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]].map(([digit, letters]) => <button type="button" key={digit} disabled={digit === "*" || digit === "#"} title={digit === "*" || digit === "#" ? "شماره‌گیری کدهای دستوری هنوز فعال نیست" : undefined} aria-label={digit} onClick={() => setAdminNumber((value) => `${value}${digit}`.slice(0, 24))}><span className={styles.adminDialDigit}>{digit}</span><span className={styles.adminDialLetters}>{letters || "\u00a0"}</span></button>)}</div>
+              <div className={styles.adminDialInput}><input id="admin-phone-number" type="tel" dir="ltr" inputMode="tel" autoComplete="off" maxLength={24} placeholder="0912… یا 021… یا داخلی" value={adminNumber} onChange={(event) => {
+                const nativeEvent = event.nativeEvent;
+                if (nativeEvent?.inputType === "insertText" && /^[0-9]$/.test(nativeEvent.data || "")) {
+                  playDialTone(nativeEvent.data);
+                }
+                setAdminNumber(event.target.value);
+              }} /><button type="button" aria-label="حذف رقم آخر" onClick={() => setAdminNumber((value) => value.slice(0, -1))}><Delete size={20}/></button></div>
+              <div className={styles.adminDialKeys}>{[["1",""],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]].map(([digit, letters]) => <button type="button" key={digit} disabled={digit === "*" || digit === "#"} title={digit === "*" || digit === "#" ? "شماره‌گیری کدهای دستوری هنوز فعال نیست" : undefined} aria-label={digit} onClick={() => { if (adminNumber.length < 24) { playDialTone(digit); setAdminNumber((value) => `${value}${digit}`.slice(0, 24)); } }}><span className={styles.adminDialDigit}>{digit}</span><span className={styles.adminDialLetters}>{letters || "\u00a0"}</span></button>)}</div>
               <button className={styles.primary} type="submit" disabled={!adminNumber.trim() || connection !== "online" || sessionState !== "idle" || adminDialing}>{adminDialing ? "در حال برقراری…" : <><Phone size={18}/>تماس با شماره</>}</button>
               <small>فقط مدیر سیستم می‌تواند شماره‌گیری آزاد انجام دهد. تماس طبق تنظیمات مرکز تماس ضبط و در گزارش ثبت می‌شود.</small>
             </form>

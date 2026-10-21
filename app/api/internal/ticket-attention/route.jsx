@@ -1,4 +1,5 @@
 import { processTicketAttentionAlerts } from "@/utils/ticketAttention";
+import { processSlaAlerts } from "@/utils/slaAlerts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,8 +15,9 @@ export async function POST(req) {
   }
 
   try {
-    const result = await processTicketAttentionAlerts();
-    return Response.json({ success: true, ...result });
+    const attention = await processTicketAttentionAlerts();
+    const sla = await processSlaAlerts();
+    return Response.json({ success: true, ...attention, sla });
   } catch (error) {
     console.error("TICKET ATTENTION JOB ERROR:", error);
     return Response.json({ success: false }, { status: 500 });

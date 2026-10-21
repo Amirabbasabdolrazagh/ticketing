@@ -9,6 +9,7 @@ import {
   BellRing,
   Building2,
   CalendarCheck2,
+  ChevronDown,
   ClipboardList,
   FolderKanban,
   FileCheck2,
@@ -18,6 +19,7 @@ import {
   PhoneCall,
   Settings2,
   Sparkles,
+  ShieldAlert,
   TicketCheck,
   UsersRound,
   UserRoundPlus,
@@ -50,6 +52,7 @@ export default function SideBar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLiveChatOpen, setIsLiveChatOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [organizationMenuExpanded, setOrganizationMenuExpanded] = useState(null);
   const [organizationFeatures, setOrganizationFeatures] = useState({});
   const pathname = usePathname();
 
@@ -177,13 +180,6 @@ export default function SideBar() {
             active: pathname.startsWith("/admin/projects"),
           },
           {
-            label: "پروژه‌های اجرا",
-            description: "نصب و راه‌اندازی شبکه",
-            href: "/admin/installation-projects",
-            icon: FolderKanban,
-            active: pathname.startsWith("/admin/installation-projects"),
-          },
-          {
             label: "کاربران",
             description: "اعضا و دسترسی‌ها",
             href: "/admin/users",
@@ -191,25 +187,53 @@ export default function SideBar() {
             active: pathname.startsWith("/admin/users"),
           },
           {
-            label: "سازمان‌ها",
-            description: "پرتال مشتریان سازمانی",
-            href: "/admin/organizations",
+            label: "مدیریت سازمان‌ها",
+            description: "قراردادها، SLA و اجرای خدمات",
             icon: Building2,
-            active: pathname.startsWith("/admin/organizations"),
-          },
-          {
-            label: "قراردادها",
-            description: "وضعیت و امکانات قراردادهای سازمانی",
-            href: "/admin/contracts",
-            icon: FileCheck2,
-            active: pathname.startsWith("/admin/contracts"),
-          },
-          {
-            label: "خدمات حضوری",
-            description: "تخصیص و زمان‌بندی مأموریت‌ها",
-            href: "/admin/onsite-services",
-            icon: CalendarCheck2,
-            active: pathname.startsWith("/admin/onsite-services"),
+            active: [
+              "/admin/organizations",
+              "/admin/contracts",
+              "/admin/sla",
+              "/admin/onsite-services",
+              "/admin/installation-projects",
+            ].some((href) => pathname.startsWith(href)),
+            children: [
+              {
+                label: "سازمان‌ها",
+                description: "پرتال مشتریان سازمانی",
+                href: "/admin/organizations",
+                icon: Building2,
+                active: pathname.startsWith("/admin/organizations"),
+              },
+              {
+                label: "قراردادها",
+                description: "اعتبار و امکانات قراردادهای سازمانی",
+                href: "/admin/contracts",
+                icon: FileCheck2,
+                active: pathname.startsWith("/admin/contracts"),
+              },
+              {
+                label: "تنظیم SLA",
+                description: "تعهدات پاسخ و رفع مشکل",
+                href: "/admin/sla",
+                icon: ShieldAlert,
+                active: pathname.startsWith("/admin/sla"),
+              },
+              {
+                label: "خدمات حضوری",
+                description: "تخصیص و زمان‌بندی مأموریت‌ها",
+                href: "/admin/onsite-services",
+                icon: CalendarCheck2,
+                active: pathname.startsWith("/admin/onsite-services"),
+              },
+              {
+                label: "پروژه‌های اجرا",
+                description: "نصب و راه‌اندازی شبکه",
+                href: "/admin/installation-projects",
+                icon: FolderKanban,
+                active: pathname.startsWith("/admin/installation-projects"),
+              },
+            ],
           },
           {
             label: "مانیتورینگ",
@@ -294,13 +318,9 @@ export default function SideBar() {
   const moreMenuItems =
     userRole === "admin"
       ? menuItems.filter((item) =>
-          [
+          item.children || [
             "/admin/projects",
-            "/admin/installation-projects",
             "/admin/users",
-            "/admin/organizations",
-            "/admin/contracts",
-            "/admin/onsite-services",
             "/admin/leads",
             "/admin/setting",
           ].includes(item.href),
@@ -308,6 +328,9 @@ export default function SideBar() {
       : userRole === "agent"
         ? menuItems.filter((item) => ["/agent/setting"].includes(item.href) || item.label === "تلفن سازمانی")
         : [];
+
+  const isOrganizationMenuOpen =
+    organizationMenuExpanded ?? menuItems.some((item) => item.children && item.active);
 
   const isMoreMenuActive =
     isMoreMenuOpen ||
@@ -388,6 +411,55 @@ export default function SideBar() {
             <SidebarMenu className="gap-2.5">
               {menuItems.map((item) => {
                 const Icon = item.icon;
+                if (item.children) {
+                  return (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        render={
+                          <button
+                            type="button"
+                            aria-expanded={isOrganizationMenuOpen}
+                            aria-controls="organization-submenu"
+                            onClick={() => setOrganizationMenuExpanded(!isOrganizationMenuOpen)}
+                          />
+                        }
+                        isActive={item.active}
+                        tooltip={item.label}
+                        className="group h-[4.35rem] gap-3 rounded-2xl border border-transparent px-3.5 text-right transition-all duration-300 hover:border-white/80 hover:bg-white/60 data-active:border-white/80 data-active:bg-gradient-to-l data-active:from-blue-600 data-active:to-indigo-500"
+                      >
+                        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/75 text-blue-600 group-data-[active=true]/menu-button:bg-white/20 group-data-[active=true]/menu-button:text-white">
+                          <Icon className="size-[1.4rem]" strokeWidth={1.9} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[15px] font-bold">{item.label}</span>
+                          <span className="mt-1 block truncate text-[11px] text-slate-500 group-data-[active=true]/menu-button:text-blue-100">{item.description}</span>
+                        </span>
+                        <ChevronDown className={isOrganizationMenuOpen ? "size-4 rotate-180 transition-transform" : "size-4 transition-transform"} aria-hidden="true" />
+                      </SidebarMenuButton>
+                      {isOrganizationMenuOpen && (
+                        <div id="organization-submenu" className="mr-6 mt-2 space-y-1 border-r border-blue-200/70 pr-3" dir="rtl">
+                          {item.children.map((child) => {
+                            const ChildIcon = child.icon;
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                aria-current={child.active ? "page" : undefined}
+                                onClick={() => setOrganizationMenuExpanded(null)}
+                                className={child.active
+                                  ? "flex items-center gap-3 rounded-xl bg-blue-100 px-3 py-2.5 text-sm font-bold text-blue-800"
+                                  : "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-white/70 hover:text-blue-700"}
+                              >
+                                <ChildIcon className="size-4 shrink-0" aria-hidden="true" />
+                                <span>{child.label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </SidebarMenuItem>
+                  );
+                }
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
@@ -436,7 +508,7 @@ export default function SideBar() {
             className="fixed inset-x-3 bottom-[6.8rem] z-[90] mx-auto max-w-md lg:hidden"
             dir="rtl"
           >
-            <div className="overflow-hidden rounded-[2rem] border border-white/80 bg-white/85 shadow-[0_24px_80px_rgba(15,23,42,0.22)] backdrop-blur-2xl">
+            <div className="max-h-[70vh] overflow-y-auto rounded-[2rem] border border-white/80 bg-white/85 shadow-[0_24px_80px_rgba(15,23,42,0.22)] backdrop-blur-2xl">
               <div className="flex items-center justify-between border-b border-slate-100/80 px-5 py-4">
                 <div>
                   <h3 className="text-sm font-black text-slate-900">
@@ -461,6 +533,52 @@ export default function SideBar() {
               <div className="grid grid-cols-2 gap-3 p-4">
                 {moreMenuItems.map((item) => {
                   const Icon = item.icon;
+
+                  if (item.children) {
+                    return (
+                      <div key={item.label} className="col-span-2">
+                        <button
+                          type="button"
+                          aria-expanded={isOrganizationMenuOpen}
+                          aria-controls="mobile-organization-submenu"
+                          onClick={() => setOrganizationMenuExpanded(!isOrganizationMenuOpen)}
+                          className={item.active
+                            ? "flex w-full items-center gap-3 rounded-2xl bg-gradient-to-l from-blue-600 to-indigo-500 p-3.5 text-right text-white"
+                            : "flex w-full items-center gap-3 rounded-2xl border border-slate-100 bg-white/80 p-3.5 text-right text-slate-700"}
+                        >
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <Icon className="size-5" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0 flex-1 text-xs font-black">{item.label}</span>
+                          <ChevronDown className={isOrganizationMenuOpen ? "size-4 rotate-180" : "size-4"} aria-hidden="true" />
+                        </button>
+                        {isOrganizationMenuOpen && (
+                          <div id="mobile-organization-submenu" className="grid grid-cols-2 gap-2 pt-2">
+                            {item.children.map((child) => {
+                              const ChildIcon = child.icon;
+                              return (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  aria-current={child.active ? "page" : undefined}
+                                  onClick={() => {
+                                    setIsMoreMenuOpen(false);
+                                    setOrganizationMenuExpanded(null);
+                                  }}
+                                  className={child.active
+                                    ? "flex min-h-14 items-center gap-2 rounded-xl bg-blue-100 p-2.5 text-xs font-bold text-blue-800"
+                                    : "flex min-h-14 items-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-medium text-slate-700"}
+                                >
+                                  <ChildIcon className="size-4 shrink-0" aria-hidden="true" />
+                                  <span>{child.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
 
                   return (
                     <Link

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import ConnectDb from "@/utils/connectDB";
 import PhoneCall from "@/models/phoneCalls";
 import PhoneDevice from "@/models/phoneDevices";
+import User from "@/models/users";
 import PhoneSettings from "@/models/phoneSettings";
 import getCurrentUser from "@/utils/auth";
 import { adminDialNumber } from "@/lib/issabelAmi";
@@ -70,7 +71,39 @@ export async function PUT(req) {
     }, { $set: { "directDial.consumedAt": new Date(), status: "ringing" } }, { new: true }).select("+directDial.dialNumber +directDial.recordingEnabled");
     if (!call) return Response.json({ authorized: false }, { status: 403 });
     if (!/^\d{2,24}$/.test(call.directDial?.dialNumber || "") || !/^[0-9a-f-]{36}$/i.test(call.callId || "")) return Response.json({ authorized: false }, { status: 403 });
-    return Response.json({ authorized: true, dialNumber: call.directDial.dialNumber,
+    // DIRECT WEB ROUTING: find the currently active browser device of an internal extension.
+    let webEndpoint = "";
+    const extension = call.directDial.dialNumber;
+    if (/^[0-9]{2,8}$/.test(extension)) {
+      try {
+        const owner = await User.collection.findOne({
+          pbxExtension: extension,
+          role: { $in: ["agent", "active_agent", "passive_agent"] },
+        }, { projection: { _id: 1 } });
+
+        const webDevice = owner ? await PhoneDevice.collection.findOne({
+          user: owner._id,
+          status: "active",
+          lastRegisteredAt: { $gte: new Date(Date.now() - 65000) },
+          sipUsername: { $regex: `^web-${extension}-[a-z0-9-]{4,64}$` },
+        }, {
+          projection: { sipUsername: 1 },
+          sort: { lastSeenAt: -1, updatedAt: -1 },
+        }) : null;
+
+        webEndpoint = webDevice?.sipUsername || "";
+        console.info("PHONE ROUTE LOOKUP", {
+          extension,
+          ownerFound: Boolean(owner),
+          deviceFound: Boolean(webDevice),
+          webEndpoint,
+        });
+      } catch (error) {
+        console.error("PHONE DIRECT WEB ROUTING:", error);
+      }
+    }
+    console.info("PHONE ROUTE DIAG", { extension, webEndpoint });
+    return Response.json({ authorized: true, dialNumber: call.directDial.dialNumber, webEndpoint,
       callId: call.callId, recordingEnabled: call.directDial.recordingEnabled }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return Response.json({ authorized: false }, { status: 500 });
