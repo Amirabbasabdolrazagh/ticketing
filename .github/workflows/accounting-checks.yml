@@ -1,0 +1,35 @@
+name: Accounting archive checks
+on:
+  push:
+    branches:
+      - feature/accounting-document-archive-20261025
+  pull_request:
+    paths:
+      - 'app/accountant/**'
+      - 'app/admin/accounting/**'
+      - 'app/api/accounting/**'
+      - 'components/features/accounting/**'
+      - 'lib/accounting*.mjs'
+      - 'lib/accounting*.js'
+      - 'models/accountingDocument.js'
+      - 'tests/accounting-*.test.mjs'
+      - 'package.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify archive validation and permissions
+        run: npm run test:accounting
+      - name: Verify Next.js build
+        run: npm run build
