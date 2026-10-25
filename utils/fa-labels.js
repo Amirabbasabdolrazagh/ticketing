@@ -21,6 +21,7 @@ export const roleLabels = {
   active_agent: "پشتیبان اکتیو",
   customer: "مشتری",
   organization_manager: "مدیر سازمان",
+  accountant: "حسابداری",
 };
 
 export function faLabel(labels, value, fallback = "-") {

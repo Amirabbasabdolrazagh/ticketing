@@ -50,3 +50,6 @@ next-env.d.ts
 /remote-support/meshcentral-data/*
 !/remote-support/meshcentral-data/config.json.example
 !/remote-support/meshcentral-data/title-itrasam.png
+
+# Private accounting documents (never commit uploaded files)
+/storage/accounting-archive/

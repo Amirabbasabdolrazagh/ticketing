@@ -48,7 +48,7 @@ export async function PATCH(req, { params }) {
         { status: 401 },
       );
     }
-    const allowedRole = authorization(user, ["admin", "agent", "passive_agent", "active_agent", "customer", "organization_manager"]);
+    const allowedRole = authorization(user, ["admin", "agent", "passive_agent", "active_agent", "customer", "organization_manager", "accountant"]);
     if (!allowedRole) {
       return Response.json(
         { success: false, message: "Forbbiden" },
@@ -92,7 +92,8 @@ export async function PATCH(req, { params }) {
           userInfo.phone = phone;
         }
         if (role !== undefined) {
-          if (["admin", "customer", "agent", "passive_agent", "active_agent", "organization_manager"].includes(role)) {
+          if (["admin", "customer", "agent", "passive_agent", "active_agent", "organization_manager", "accountant"].includes(role)) {
+            if (role !== userInfo.role) userInfo.refreshToken = undefined;
             userInfo.role = role;
           } else {
             return Response.json(
@@ -124,7 +125,7 @@ export async function PATCH(req, { params }) {
           },
           { status: 200 },
         );
-      } else if (["customer", "organization_manager"].includes(user.role) && user._id.toString() === userId) {
+      } else if (["customer", "organization_manager", "accountant"].includes(user.role) && user._id.toString() === userId) {
         const userInfo = await User.findById(userId);
         if (!userInfo) {
           return Response.json(

@@ -3,7 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { CgCloseR } from "react-icons/cg";
 import { useState } from "react";
-const roles = [["customer", "مشتری"], ["organization_manager", "مدیر سازمان"], ["agent", "پشتیبان عمومی"], ["passive_agent", "پشتیبان پسیو"], ["active_agent", "پشتیبان اکتیو"], ["admin", "مدیر"]];
+const roles = [["customer", "مشتری"], ["organization_manager", "مدیر سازمان"], ["agent", "پشتیبان عمومی"], ["passive_agent", "پشتیبان پسیو"], ["active_agent", "پشتیبان اکتیو"], ["admin", "مدیر"], ["accountant", "حسابداری"]];
 export default function CreatUser({ setShowCreateModal, showCreateModal, setIsChangeInfo }) {
  const [info,setInfo]=useState({role:"customer"}); const [saving,setSaving]=useState(false);
  const submit=async()=>{setSaving(true);try{const {data}=await axios.post("/api/users",info);if(data.success){toast.success("کاربر با موفقیت ساخته شد");setIsChangeInfo(v=>!v);setShowCreateModal(false)}}catch(e){toast.error(e.response?.data?.message||"ساخت کاربر ناموفق بود")}finally{setSaving(false)}};

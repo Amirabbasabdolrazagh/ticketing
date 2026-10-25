@@ -6,7 +6,8 @@
     "dev": "next dev --turbo",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:accounting": "node --test tests/accounting-*.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
