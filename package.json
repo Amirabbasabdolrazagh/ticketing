@@ -7,7 +7,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test:accounting": "node --test tests/accounting-validation.test.mjs"
+    "test:accounting": "node --test tests/accounting-*.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

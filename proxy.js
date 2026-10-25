@@ -1,3 +1,4 @@
+import { accountantApiAllowed } from "./lib/accountingAccessPolicy.mjs";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import refreshAccessToken from "./utils/refreshAccessToken";
@@ -21,13 +22,7 @@ export async function proxy(req) {
       try { claims = jwt.verify(value, secret); break; } catch {}
     }
     if (claims?.role === "accountant") {
-      const ownProfile = pathname === `/api/users/${claims.userId}`;
-      const allowedIdentity = [
-        "/api/auth/me", "/api/auth/logout", "/api/auth/login",
-        "/api/auth/refreshToken", "/api/auth/change-password",
-        "/api/auth/register-email",
-      ].includes(pathname);
-      if (!pathname.startsWith("/api/accounting/") && !ownProfile && !allowedIdentity) {
+      if (!accountantApiAllowed(pathname, String(claims.userId || ""))) {
         return NextResponse.json({ success: false, message: "دسترسی غیرمجاز" }, { status: 403 });
       }
     }
