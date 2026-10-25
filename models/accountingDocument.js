@@ -1,5 +1,5 @@
 import { model, models, Schema } from "mongoose";
-export const CATEGORIES = ["quarterly_transactions", "tax_vat", "purchase_invoice", "sales_invoice"];
+import { CATEGORIES } from "@/lib/accountingValidation.mjs";
 const schema = new Schema({
   title: { type: String, required: true, trim: true, maxlength: 180 },
   category: { type: String, required: true, enum: CATEGORIES, index: true },
