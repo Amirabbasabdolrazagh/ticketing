@@ -16,6 +16,7 @@ services:
     volumes:
       - ./storage/ticket-attachments:/app/storage/ticket-attachments
       - ./storage/project-assessments:/app/storage/project-assessments
+      - ./storage/accounting-archive:/app/storage/accounting-archive
       - ./storage/call-recordings:/app/storage/call-recordings
     security_opt:
       - no-new-privileges:true

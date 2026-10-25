@@ -93,6 +93,7 @@ export async function PATCH(req, { params }) {
         }
         if (role !== undefined) {
           if (["admin", "customer", "agent", "passive_agent", "active_agent", "organization_manager", "accountant"].includes(role)) {
+            if (role !== userInfo.role) userInfo.refreshToken = undefined;
             userInfo.role = role;
           } else {
             return Response.json(

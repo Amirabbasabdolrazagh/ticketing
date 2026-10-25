@@ -23,7 +23,7 @@ export default async function getCurrentUser() {
       "+telegramChatId +baleChatId +preferredMessenger",
     );
 
-    if (!user) {
+    if (!user || (payload.role && payload.role !== user.role)) {
       return null;
     }
     return user;

@@ -34,6 +34,8 @@ export async function POST(req) {
   try {
     const access = await accountingAccess();
     if (access.error) return access.error;
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > MAX_SIZE + 1024 * 1024) return err("درخواست بیش از حد بزرگ است", 413);
     const data = await req.formData();
     const title = cleanText(data.get("title"), 180, true);
     const category = data.get("category");
