@@ -19,6 +19,7 @@ import {
   Settings2,
   Sparkles,
   TicketCheck,
+  FileArchive,
   UsersRound,
   UserRoundPlus,
   X,
@@ -43,6 +44,7 @@ const roleLabels = {
   active_agent: "پشتیبان اکتیو",
   customer: "مشتری",
   organization_manager: "مدیر سازمان",
+  accountant: "حسابداری",
 };
 
 export default function SideBar() {
@@ -66,7 +68,7 @@ export default function SideBar() {
   }, []);
 
   useEffect(() => {
-    if (!user?.role || user.role === "organization_manager") return;
+    if (!user?.role || ["organization_manager", "accountant"].includes(user.role)) return;
 
     const heartbeat = () =>
       axios.post("/api/live-chat/presence").catch(() => {});
@@ -91,7 +93,7 @@ export default function SideBar() {
   }, []);
 
   useEffect(() => {
-    if (!user?.role || user.role === "organization_manager") return;
+    if (!user?.role || ["organization_manager", "accountant"].includes(user.role)) return;
 
     async function getUnreadCount() {
       try {
@@ -119,6 +121,13 @@ export default function SideBar() {
 
   const userRole = user?.role;
   const menuItems = [
+    ...(["admin", "accountant"].includes(userRole) ? [{
+      label: "بایگانی اسناد حسابداری",
+      description: "فاکتورها، مالیات و معاملات فصلی",
+      href: userRole === "admin" ? "/admin/accounting" : "/accountant/dashboard",
+      icon: FileArchive,
+      active: pathname.startsWith("/admin/accounting") || pathname.startsWith("/accountant/dashboard"),
+    }] : []),
     ...(["admin", "agent", "customer", "passive_agent", "active_agent", "organization_manager"].includes(userRole) ? [{
       label: "داشبورد",
       description: userRole === "organization_manager" ? "گزارش مدیریتی سازمان" : "نمای کلی فعالیت‌ها",
@@ -239,7 +248,7 @@ export default function SideBar() {
           },
         ]
       : []),
-    ...(["admin", "agent", "passive_agent", "active_agent", "customer", "organization_manager"].includes(userRole) ? [{
+    ...(["admin", "agent", "passive_agent", "active_agent", "customer", "organization_manager", "accountant"].includes(userRole) ? [{
         label: "تنظیمات",
         description: "حساب و ترجیحات",
         href: `/${userRole}/setting`,
@@ -289,12 +298,15 @@ export default function SideBar() {
             )
           : userRole === "organization_manager"
             ? menuItems.filter((item) => ["/organization_manager/dashboard", "/organization_manager/onsite-services", "/organization_manager/contract", "/organization_manager/setting"].includes(item.href))
+          : userRole === "accountant"
+            ? menuItems.filter((item) => ["/accountant/dashboard", "/accountant/setting"].includes(item.href))
           : [];
 
   const moreMenuItems =
     userRole === "admin"
       ? menuItems.filter((item) =>
           [
+            "/admin/accounting",
             "/admin/projects",
             "/admin/installation-projects",
             "/admin/users",
