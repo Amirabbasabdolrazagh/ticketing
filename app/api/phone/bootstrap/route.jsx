@@ -24,6 +24,7 @@ function publicSettings(settings) {
       return { urls: item.urls, username: item.username || "", ...(credential ? { credential } : {}) };
     }),
     recordingEnabled: settings?.recordingEnabled !== false,
+    adminDirectDialEnabled: process.env.PHONE_ADMIN_DIRECT_DIAL_ENABLED === "1",
     recordingConsentText: settings?.recordingConsentText || "این مکالمه با هدف کنترل کیفیت و ثبت سوابق خدمات ضبط می‌شود.",
     retentionDays: settings?.retentionDays || 365,
     allowHold: settings?.allowHold !== false,
