@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { FileArchive, Download, Pencil, Trash2, Plus, Search, RefreshCw, X, Save } from "lucide-react";
+import { FileArchive, Download, Eye, Pencil, Trash2, Plus, Search, RefreshCw, X, Save } from "lucide-react";
 
 const CATEGORIES = [
   ["quarterly_transactions", "معاملات فصلی"],
@@ -143,6 +143,7 @@ export default function AccountingArchive() {
                 <td className="p-3">{doc.referenceNumber || "—"}</td>
                 <td className="p-3" dir="ltr">{displaySize(doc.size)}</td>
                 <td className="p-3"><div className="flex items-center gap-2">
+                  <a href={"/api/accounting/documents/" + doc._id + "/file?preview=1"} target="_blank" rel="noopener noreferrer" className="flex size-9 items-center justify-center rounded-xl bg-sky-50 text-sky-700" title="مشاهده"><Eye size={17} /></a>
                   <a href={"/api/accounting/documents/" + doc._id + "/file"} className="flex size-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700" download title="دانلود"><Download size={17} /></a>
                   <button type="button" onClick={() => startEdit(doc)} className="flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700" title="ویرایش"><Pencil size={17} /></button>
                   <button type="button" disabled={busy} onClick={() => remove(doc)} className="flex size-9 items-center justify-center rounded-xl bg-red-50 text-red-700" title="حذف"><Trash2 size={17} /></button>
